@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3000';
+const API_URL = 'https://api-seguradora.onrender.com';
 
 // ==========================================
 // 1. ESTILOS VISUAIS (BOTÕES EMPILHADOS)
