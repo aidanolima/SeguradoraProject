@@ -8,7 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 2. Configuração da API
-    const API_URL = 'https://api-seguradora.onrender.com'; // Ajuste se sua porta for diferente
+    const API_URL = 'https://https://seguradoraproject.onrender.com
+';
+ // Ajuste se sua porta for diferente
 
     // 3. Carregar dados iniciais (sem filtro ou filtro padrão)
     buscarDados();
