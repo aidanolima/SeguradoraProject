@@ -145,27 +145,35 @@
     </div>
 
     <script>
-        const API_URL = 'https://https://seguradoraproject.onrender.com
-';
+        // CORREÇÃO: Removido o 'https://' duplicado que estava aqui
+        const API_URL = 'https://seguradoraproject.onrender.com';
 
         const urlParams = new URLSearchParams(window.location.search);
         const idEdicao = urlParams.get('id');
         const token = localStorage.getItem('token');
         
-        console.log("Sistema v3.0 Iniciado");
+        console.log("Sistema v3.0 Iniciado em:", API_URL);
 
         document.addEventListener('DOMContentLoaded', () => {
-            // 1. Atualizar Nome do Usuário (Script do Cabeçalho)
+            // 1. Atualizar Nome do Usuário
             const nome = localStorage.getItem('usuario_logado');
             const tipo = localStorage.getItem('tipo_usuario');
-            if (nome) document.getElementById('user-name-display').innerText = nome.split(' ')[0];
-            if (tipo) document.getElementById('user-role-display').innerText = tipo.toUpperCase();
+            
+            // Verifica se o elemento existe antes de tentar preencher
+            const elNome = document.getElementById('user-name-display');
+            const elRole = document.getElementById('user-role-display');
+            
+            if (elNome && nome) elNome.innerText = nome.split(' ')[0];
+            if (elRole && tipo) elRole.innerText = tipo.toUpperCase();
             
             // Botão Sair
-            document.getElementById('btn-logout').addEventListener('click', function() {
-                localStorage.clear();
-                window.location.href = 'index.html';
-            });
+            const btnSair = document.getElementById('btn-logout');
+            if (btnSair) {
+                btnSair.addEventListener('click', function() {
+                    localStorage.clear();
+                    window.location.href = 'index.html';
+                });
+            }
 
             // 2. Lógica da Página
             if (!token) { window.location.href = 'index.html'; return; }
@@ -175,19 +183,27 @@
             if (idEdicao) {
                 document.getElementById('titulo-pagina').innerText = `Editando Apólice #${idEdicao}`;
                 document.getElementById('btn-acao-salvar').innerHTML = '<i class="fas fa-sync-alt"></i> ATUALIZAR DADOS';
-                document.getElementById('pdf_upload').disabled = true; 
+                const pdfInput = document.getElementById('pdf_upload');
+                if(pdfInput) pdfInput.disabled = true; 
                 carregarDadosParaEdicao(idEdicao);
             }
 
             // Listeners
-            document.getElementById('pdf_upload').addEventListener('change', function() {
-                const btn = document.getElementById('btn-ler-pdf');
-                if (this.files.length > 0) btn.style.display = 'inline-block';
-                else btn.style.display = 'none';
-            });
+            const pdfInput = document.getElementById('pdf_upload');
+            if (pdfInput) {
+                pdfInput.addEventListener('change', function() {
+                    const btn = document.getElementById('btn-ler-pdf');
+                    // Mostra o botão apenas se tiver arquivo selecionado
+                    if (this.files.length > 0) btn.style.display = 'inline-block';
+                    else btn.style.display = 'none';
+                });
+            }
 
-            document.getElementById('btn-ler-pdf').addEventListener('click', processarPDF);
-            document.getElementById('btn-acao-salvar').addEventListener('click', executarSalvamento);
+            const btnLerPdf = document.getElementById('btn-ler-pdf');
+            if(btnLerPdf) btnLerPdf.addEventListener('click', processarPDF);
+            
+            const btnSalvar = document.getElementById('btn-acao-salvar');
+            if(btnSalvar) btnSalvar.addEventListener('click', executarSalvamento);
         });
 
         // ======================================================
@@ -274,22 +290,27 @@
             const statusMsg = document.getElementById('status-pdf');
             if (fileInput.files.length === 0) return;
 
-            statusMsg.innerText = "Lendo arquivo...";
+            statusMsg.innerText = "Lendo arquivo... (Aguarde)";
             const formData = new FormData();
             formData.append('pdf', fileInput.files[0]);
 
             try {
+                // Aqui estava falhando por causa da URL errada
                 const response = await fetch(`${API_URL}/importar-pdf`, { method: 'POST', body: formData });
+                
                 if (response.ok) {
                     const dados = await response.json();
                     statusMsg.innerText = "Dados extraídos!";
                     preencherFormularioComPDF(dados);
                     Swal.fire({ icon: 'info', title: 'PDF Lido', text: 'Dados preenchidos.', timer: 1500, showConfirmButton: false });
                 } else {
-                    statusMsg.innerText = "Erro PDF.";
-                    Swal.fire('Erro', 'Falha ao ler PDF', 'error');
+                    statusMsg.innerText = "Erro ao ler PDF.";
+                    Swal.fire('Erro', 'O servidor não conseguiu ler o PDF. Verifique se é um arquivo válido.', 'error');
                 }
-            } catch (error) { statusMsg.innerText = "Erro conexão PDF."; }
+            } catch (error) { 
+                console.error(error);
+                statusMsg.innerText = "Erro conexão PDF."; 
+            }
         }
 
         function preencherFormularioComPDF(dados) {
@@ -304,7 +325,7 @@
                         break;
                     }
                 }
-                if(!encontrou) Swal.fire('Atenção', `Placa ${dados.placa} não encontrada.`, 'warning');
+                if(!encontrou) Swal.fire('Atenção', `Placa ${dados.placa} do PDF não foi encontrada no seu cadastro de propostas.`, 'warning');
             }
             if (dados.datas && dados.datas.length >= 2) {
                 document.getElementById('vigencia_inicio').value = formatData(dados.datas[0]);
@@ -359,7 +380,7 @@
                 document.getElementById('franquia_casco').value = dados.franquia_casco;
                 if (dados.vigencia_inicio) document.getElementById('vigencia_inicio').value = dados.vigencia_inicio.split('T')[0];
                 if (dados.vigencia_fim) document.getElementById('vigencia_fim').value = dados.vigencia_fim.split('T')[0];
-            } catch (error) { Swal.fire('Erro', 'Falha dados.', 'error'); }
+            } catch (error) { Swal.fire('Erro', 'Falha ao carregar dados.', 'error'); }
         }
     </script>
     <script src="js/auth.js"></script>
