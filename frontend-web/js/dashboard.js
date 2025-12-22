@@ -1,278 +1,236 @@
-const API_URL = 'https://https://seguradoraproject.onrender.com
-';
+// js/dashboard.js - VERSÃO FINAL PARA NUVEM
 
+// ⚠️ ATENÇÃO: Se estiver rodando local, mude para http://localhost:3000
+// Se estiver no Netlify, use a URL do Render:
+const API_URL = 'https://seguradoraproject.onrender.com';
 
-// ==========================================
-// 1. ESTILOS VISUAIS (BOTÕES EMPILHADOS)
-// ==========================================
-const TD_STYLE = 'vertical-align: middle; text-align: center; width: 100px; padding: 5px;'; 
-const BTN_BASE = 'display: block; width: 100%; margin-bottom: 4px; padding: 4px 0; font-size: 10px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; text-transform: uppercase; text-decoration: none; text-align: center;';
+const token = localStorage.getItem('token');
 
-const BTN_EDITAR = `background-color: #f39c12; color: white; ${BTN_BASE}`;
-const BTN_EXCLUIR = `background-color: #dc3545; color: white; ${BTN_BASE}`;
-const BTN_PDF = `background-color: #007bff; color: white; ${BTN_BASE}`;
-const TXT_SEM_PDF = 'display: block; font-size: 10px; color: #ccc; margin-bottom: 4px; font-style: italic;';
-
-// Variáveis do Modal
-let idParaExcluir = null;
-let tipoExclusao = null;
-
-// ==========================================
-// INICIALIZAÇÃO E SEGURANÇA
-// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Verifica token imediatamente. Se não tiver, tchau.
-    const token = localStorage.getItem('token');
+    // Verifica se está logado
     if (!token) {
         window.location.href = 'index.html';
         return;
     }
 
-    verificarPerfilUsuario();
+    console.log("🚀 Dashboard iniciado. Conectando em:", API_URL);
 
-    // Carrega dados (passando o token nos headers)
+    // Carrega todas as tabelas e contadores
+    carregarEstatisticas();
     carregarPropostas();
+    carregarUsuarios();
     carregarApolices();
-    carregarUsuarios(); // Esse só vai funcionar se for admin, o server bloqueia
-
-    configurarBusca('busca-proposta', 'lista-propostas');
-    configurarBusca('busca-usuario', 'lista-usuarios');
-    configurarBusca('busca-apolice', 'lista-apolices');
-
-    const btnLogout = document.getElementById('btn-logout');
-    if (btnLogout) btnLogout.addEventListener('click', logout);
-
-    const btnConfirmar = document.getElementById('btn-confirmar-modal');
-    if(btnConfirmar) btnConfirmar.addEventListener('click', executarExclusaoReal);
 });
 
-// Helper para gerar o cabeçalho com Token
-function getAuthHeaders() {
-    const token = localStorage.getItem('token');
-    return {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-    };
-}
-
 // ==========================================
-// FUNÇÃO DE PERFIL
+// 1. CARREGAR ESTATÍSTICAS (CARDS)
 // ==========================================
-function verificarPerfilUsuario() {
-    const nome = localStorage.getItem('usuario_logado');
-    const tipo = localStorage.getItem('tipo_usuario');
-    const elementoNome = document.getElementById('user-greeting');
-    
-    // Atualiza saudação
-    if (elementoNome && nome) {
-        const perfilTexto = tipo ? tipo.toUpperCase() : 'USER';
-        elementoNome.innerText = `Olá, ${nome} (${perfilTexto})`;
-        elementoNome.style.color = "#555"; 
-    }
-
-    // REGRA DE VISIBILIDADE: Se não for admin, esconde gestão de usuários
-    if (tipo !== 'admin' && tipo !== 'TI') {
-        const secaoUsuarios = document.getElementById('secao-usuarios');
-        const cardUsuarios = document.getElementById('card-stats-usuarios');
-        if (secaoUsuarios) secaoUsuarios.style.display = 'none';
-        if (cardUsuarios) cardUsuarios.style.display = 'none';
-    }
-}
-
-function logout() {
-    localStorage.clear(); // Limpa token, nome, email, tudo
-    window.location.href = 'index.html'; 
-}
-
-// ==========================================
-// FUNÇÕES DE NAVEGAÇÃO
-// ==========================================
-function editarRegistro(tipo, id) {
-    if (tipo === 'cliente') window.location.href = `cadastro.html?id=${id}`;
-    else if (tipo === 'usuario') window.location.href = `registro.html?id=${id}`;
-    else if (tipo === 'apolice') window.location.href = `apolice.html?id=${id}`;
-}
-
-// ==========================================
-// FUNÇÕES DO MODAL
-// ==========================================
-function abrirModal(tipo, id) {
-    idParaExcluir = id;
-    tipoExclusao = tipo;
-    const modal = document.getElementById('modal-confirmacao');
-    const texto = document.getElementById('texto-modal');
-    
-    if(tipo === 'cliente') texto.innerText = `Excluir Cliente ID: ${id}?`;
-    if(tipo === 'usuario') texto.innerText = `Excluir Usuário ID: ${id}?`;
-    if(tipo === 'apolice') texto.innerText = `Excluir Apólice ID: ${id}?`;
-
-    modal.style.display = 'flex'; 
-}
-
-function fecharModal() {
-    document.getElementById('modal-confirmacao').style.display = 'none';
-    idParaExcluir = null;
-    tipoExclusao = null;
-}
-
-async function executarExclusaoReal() {
-    if(!idParaExcluir || !tipoExclusao) return;
-    
-    let endpoint = '';
-    if(tipoExclusao === 'cliente') endpoint = `/propostas/${idParaExcluir}`;
-    if(tipoExclusao === 'usuario') endpoint = `/usuarios/${idParaExcluir}`;
-    if(tipoExclusao === 'apolice') endpoint = `/apolices/${idParaExcluir}`;
-
-    try {
-        // Agora envia o Token no DELETE também
-        const response = await fetch(`${API_URL}${endpoint}`, { 
-            method: 'DELETE',
-            headers: getAuthHeaders() 
-        });
-
-        if (response.ok) {
-            if(tipoExclusao === 'cliente') await carregarPropostas();
-            if(tipoExclusao === 'usuario') await carregarUsuarios();
-            if(tipoExclusao === 'apolice') await carregarApolices();
-        } else {
-            // Se for 403, significa proibido (não é admin)
-            if (response.status === 403 || response.status === 401) {
-                alert("Você não tem permissão para excluir este item.");
-            } else {
-                alert("Erro ao excluir.");
-            }
-        }
-    } catch (error) { console.error("Erro:", error); }
-    fecharModal();
-}
-
-// ==========================================
-// GERAIS
-// ==========================================
-function configurarBusca(idInput, idTabela) {
-    const input = document.getElementById(idInput);
-    if (!input) return;
-    input.addEventListener('keyup', function() {
-        const termo = this.value.toLowerCase();
-        const tbody = document.getElementById(idTabela);
-        if (!tbody) return;
-        const linhas = tbody.getElementsByTagName('tr');
-        for (let i = 0; i < linhas.length; i++) {
-            const linha = linhas[i];
-            linha.style.display = linha.textContent.toLowerCase().includes(termo) ? '' : 'none';
-        }
-    });
-}
-
 function atualizarCard(idElemento, valor) {
     const el = document.getElementById(idElemento);
     if (el) el.innerText = valor;
 }
 
+function carregarEstatisticas() {
+    // Como não temos uma rota só de stats, vamos deduzir das listas (ou criar rota futura)
+    // Por enquanto, as funções de carregar listas vão atualizar os cards
+}
+
 // ==========================================
-// LISTAGENS (COM AUTH HEADERS)
+// 2. LISTAR PROPOSTAS (CLIENTES)
 // ==========================================
 async function carregarPropostas() {
     try {
-        const res = await fetch(`${API_URL}/propostas`, { headers: getAuthHeaders() });
-        if (!res.ok) return; // Se der erro de auth, não carrega e o usuário não vê nada
+        const res = await fetch(`${API_URL}/propostas`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
         
-        const propostas = await res.json();
-        atualizarCard('total-clientes', propostas.length);
-        atualizarCard('total-veiculos', propostas.length);
+        if (!res.ok) throw new Error('Erro ao buscar propostas');
         
+        const lista = await res.json();
+        
+        // Atualiza Card
+        atualizarCard('total-clientes', lista.length);
+        atualizarCard('total-veiculos', lista.length); // Assumindo 1 veículo por cliente
+
+        // Preenche Tabela
         const tbody = document.getElementById('lista-propostas');
         if(!tbody) return;
-        tbody.innerHTML = '';
-        propostas.forEach(p => {
+
+        tbody.innerHTML = ''; // Limpa
+
+        if (lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Nenhum cliente cadastrado.</td></tr>';
+            return;
+        }
+
+        lista.forEach(p => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${p.id}</td>
                 <td>${p.nome}</td>
                 <td>${p.modelo}</td>
                 <td><strong>${p.placa}</strong></td>
-                <td style="${TD_STYLE}">
-                    <button style="${BTN_EDITAR}" onclick="editarRegistro('cliente', ${p.id})">EDITAR</button>
-                    <button style="${BTN_EXCLUIR}" onclick="abrirModal('cliente', ${p.id})">EXCLUIR</button>
+                <td>
+                    <a href="cadastro.html?id=${p.id}" class="btn-editar">Editar</a>
+                    <button onclick="excluirItem('propostas', ${p.id})" class="btn-excluir">Excluir</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
-    } catch (e) { console.error(e); }
+
+    } catch (error) {
+        console.error('Erro Propostas:', error);
+    }
 }
 
+// ==========================================
+// 3. LISTAR USUÁRIOS
+// ==========================================
 async function carregarUsuarios() {
-    // Verifica se o elemento existe (se não for admin, ele pode ter sido removido ou escondido)
     const tbody = document.getElementById('lista-usuarios');
-    if (!tbody || tbody.offsetParent === null) return; // Se estiver escondido, nem tenta carregar
+    if(!tbody) return; // Se não tiver tabela de usuários na tela, ignora
 
     try {
-        // Rota protegida no server.js
-        const res = await fetch(`${API_URL}/usuarios`, { headers: getAuthHeaders() });
-        
-        if (res.status === 403 || res.status === 401) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Acesso Restrito</td></tr>';
-            return;
+        const res = await fetch(`${API_URL}/usuarios`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            if (res.status === 403) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red">Acesso restrito a Admins.</td></tr>';
+                return;
+            }
+            throw new Error('Erro ao buscar usuários');
         }
 
-        const usuarios = await res.json();
-        atualizarCard('total-usuarios', usuarios.length);
-        
+        const lista = await res.json();
+        atualizarCard('total-usuarios', lista.length);
+
         tbody.innerHTML = '';
-        usuarios.forEach(u => {
-            // Formata data se existir, senão usa '-'
-            const data = u.data_criacao ? new Date(u.data_criacao).toLocaleDateString('pt-BR') : '-';
-            
+
+        lista.forEach(u => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${u.id}</td>
                 <td>${u.nome}</td>
                 <td>${u.email}</td>
-                <td>${u.tipo}</td>
-                <td style="${TD_STYLE}">
-                    <button style="${BTN_EDITAR}" onclick="editarRegistro('usuario', ${u.id})">EDITAR</button>
-                    <button style="${BTN_EXCLUIR}" onclick="abrirModal('usuario', ${u.id})">EXCLUIR</button>
+                <td><span class="badge ${u.tipo === 'admin' ? 'badge-admin' : 'badge-user'}">${u.tipo}</span></td>
+                <td style="text-align: center;">
+                    <button onclick="excluirItem('usuarios', ${u.id})" class="btn-excluir">Excluir</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
-    } catch (e) { console.error(e); }
+
+    } catch (error) {
+        console.error('Erro Usuários:', error);
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Erro ao carregar.</td></tr>';
+    }
 }
 
+// ==========================================
+// 4. LISTAR APÓLICES
+// ==========================================
 async function carregarApolices() {
+    const tbody = document.getElementById('lista-apolices');
+    if(!tbody) return;
+
     try {
-        const res = await fetch(`${API_URL}/apolices`, { headers: getAuthHeaders() });
-        if (!res.ok) return;
+        const res = await fetch(`${API_URL}/apolices`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
 
-        const apolices = await res.json();
-        atualizarCard('total-apolices', apolices.length);
-        
-        const tbody = document.getElementById('lista-apolices');
-        if(!tbody) return;
+        if (!res.ok) throw new Error('Erro ao buscar apólices');
+
+        const lista = await res.json();
+        atualizarCard('total-apolices', lista.length);
+
         tbody.innerHTML = '';
-        apolices.forEach(a => {
-            const dataFim = a.vigencia_fim ? new Date(a.vigencia_fim).toLocaleDateString('pt-BR') : '-';
-            
-            let htmlPDF = `<span style="${TXT_SEM_PDF}">Sem PDF</span>`;
-            if (a.arquivo_pdf) {
-                const url = `${API_URL}/${a.arquivo_pdf.replace(/\\/g, '/')}`;
-                htmlPDF = `<a href="${url}" target="_blank" style="${BTN_PDF}">PDF</a>`;
-            }
 
+        if (lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Nenhuma apólice emitida.</td></tr>';
+            return;
+        }
+
+        lista.forEach(a => {
             const tr = document.createElement('tr');
+            // Formata moeda
+            const premio = parseFloat(a.premio_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            // Formata data
+            const vigencia = a.vigencia_fim ? new Date(a.vigencia_fim).toLocaleDateString('pt-BR') : '-';
+
             tr.innerHTML = `
                 <td>${a.numero_apolice || 'S/N'}</td>
-                <td>${a.cliente}</td>
-                <td><strong>${a.placa}</strong></td>
-                <td>${dataFim}</td>
-                <td style="color:green; font-weight:bold">R$ ${a.premio_total}</td>
-                <td style="${TD_STYLE}">
-                    ${htmlPDF}
-                    <button style="${BTN_EDITAR}" onclick="editarRegistro('apolice', ${a.id})">EDITAR</button>
-                    <button style="${BTN_EXCLUIR}" onclick="abrirModal('apolice', ${a.id})">EXCLUIR</button>
+                <td>${a.cliente || 'Desconhecido'}</td>
+                <td>${a.placa || '-'}</td>
+                <td>${vigencia}</td>
+                <td>${premio}</td>
+                <td>
+                    <a href="apolice.html?id=${a.id}" class="btn-editar">Editar</a>
+                    <button onclick="excluirItem('apolices', ${a.id})" class="btn-excluir">Excluir</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
-    } catch (e) { console.error(e); }
+
+    } catch (error) {
+        console.error('Erro Apólices:', error);
+    }
+}
+
+// ==========================================
+// 5. FUNÇÃO DE EXCLUSÃO GENÉRICA
+// ==========================================
+let idParaExcluir = null;
+let tipoParaExcluir = null;
+
+function excluirItem(tipo, id) {
+    idParaExcluir = id;
+    tipoParaExcluir = tipo;
+    
+    // Abre o Modal (Função definida no modal.js ou inline no HTML)
+    const modal = document.getElementById('modal-confirmacao');
+    if(modal) {
+        modal.style.display = 'flex';
+        // Adiciona evento ao botão de confirmar do modal
+        const btnConfirm = document.getElementById('btn-confirmar-modal');
+        // Clona o botão para remover listeners antigos e evitar duplicação
+        const novoBtn = btnConfirm.cloneNode(true);
+        btnConfirm.parentNode.replaceChild(novoBtn, btnConfirm);
+        
+        novoBtn.addEventListener('click', confirmarExclusao);
+    } else {
+        // Fallback se não tiver modal
+        if(confirm("Tem certeza que deseja excluir?")) {
+            confirmarExclusao();
+        }
+    }
+}
+
+async function confirmarExclusao() {
+    if(!idParaExcluir || !tipoParaExcluir) return;
+
+    try {
+        const res = await fetch(`${API_URL}/${tipoParaExcluir}/${idParaExcluir}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+            fecharModal();
+            // Recarrega a lista correta
+            if (tipoParaExcluir === 'propostas') carregarPropostas();
+            if (tipoParaExcluir === 'usuarios') carregarUsuarios();
+            if (tipoParaExcluir === 'apolices') carregarApolices();
+        } else {
+            alert("Erro ao excluir. Verifique permissões.");
+        }
+    } catch (error) {
+        console.error("Erro exclusão:", error);
+    }
+}
+
+function fecharModal() {
+    const modal = document.getElementById('modal-confirmacao');
+    if(modal) modal.style.display = 'none';
 }

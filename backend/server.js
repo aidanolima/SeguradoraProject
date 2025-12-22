@@ -524,5 +524,10 @@ app.get('/', (req, res) => {
     res.status(200).send('API da Seguradora está ONLINE! 🚀');
 });
 
+// --- ROTA DE BOAS-VINDAS (Para não dar erro 404 na raiz) ---
+app.get('/', (req, res) => {
+    res.status(200).send('✅ API Seguradora funcionando 100%!');
+});
+
 
 app.listen(port, () => console.log(`🚀 Servidor rodando na porta ${port}`));
