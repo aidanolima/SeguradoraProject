@@ -84,7 +84,7 @@ async function carregarPropostas() {
 }
 
 // ==========================================
-// 3. LISTAR USUÁRIOS (COM BOTÃO EDITAR E VISUAL CORRIGIDO)
+// 3. LISTAR USUÁRIOS (BOTÕES SIMÉTRICOS)
 // ==========================================
 async function carregarUsuarios() {
     const tbody = document.getElementById('lista-usuarios');
@@ -104,7 +104,7 @@ async function carregarUsuarios() {
         }
 
         const lista = await res.json();
-        // Atualiza contador se a função existir
+        // Atualiza contador
         if (typeof atualizarCard === "function") atualizarCard('total-usuarios', lista.length);
 
         tbody.innerHTML = '';
@@ -112,7 +112,6 @@ async function carregarUsuarios() {
         lista.forEach(u => {
             const tr = document.createElement('tr');
             
-            // Badge visual
             const badgeClass = u.tipo === 'admin' ? 'badge-admin' : 'badge-user';
             const tipoLabel = u.tipo === 'admin' ? 'ADMIN' : u.tipo.toUpperCase();
 
@@ -124,13 +123,13 @@ async function carregarUsuarios() {
                 <td style="text-align: center; white-space: nowrap;">
                     <a href="registro.html?id=${u.id}&origin=dashboard" 
                        class="btn-editar"
-                       style="display: inline-block; padding: 6px 15px; margin-right: 5px; text-decoration: none; font-size: 13px; min-width: 70px;">
+                       style="display: inline-block; width: 80px; padding: 6px 0; margin-right: 5px; text-decoration: none; font-size: 13px; text-align: center;">
                        Editar
                     </a>
 
                     <button onclick="excluirItem('usuarios', ${u.id})" 
                             class="btn-excluir" 
-                            style="display: inline-block; padding: 6px 15px; font-size: 13px; min-width: 70px;">
+                            style="display: inline-block; width: 80px; padding: 6px 0; font-size: 13px; text-align: center; border: none; cursor: pointer;">
                         Excluir
                     </button>
                 </td>
