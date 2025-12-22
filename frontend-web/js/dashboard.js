@@ -84,7 +84,7 @@ async function carregarPropostas() {
 }
 
 // ==========================================
-// 3. LISTAR USUÁRIOS (COM CORREÇÃO DO BOTÃO)
+// 3. LISTAR USUÁRIOS (COM BOTÃO EDITAR E VISUAL CORRIGIDO)
 // ==========================================
 async function carregarUsuarios() {
     const tbody = document.getElementById('lista-usuarios');
@@ -104,17 +104,15 @@ async function carregarUsuarios() {
         }
 
         const lista = await res.json();
-        // Se tiver a função atualizarCard, ela roda aqui:
-        if (typeof atualizarCard === "function") {
-            atualizarCard('total-usuarios', lista.length);
-        }
+        // Atualiza contador se a função existir
+        if (typeof atualizarCard === "function") atualizarCard('total-usuarios', lista.length);
 
         tbody.innerHTML = '';
 
         lista.forEach(u => {
             const tr = document.createElement('tr');
             
-            // Tratamento visual para o tipo de perfil (Badge)
+            // Badge visual
             const badgeClass = u.tipo === 'admin' ? 'badge-admin' : 'badge-user';
             const tipoLabel = u.tipo === 'admin' ? 'ADMIN' : u.tipo.toUpperCase();
 
@@ -123,10 +121,16 @@ async function carregarUsuarios() {
                 <td>${u.nome}</td>
                 <td>${u.email}</td>
                 <td><span class="badge ${badgeClass}">${tipoLabel}</span></td>
-                <td style="text-align: center;">
+                <td style="text-align: center; white-space: nowrap;">
+                    <a href="registro.html?id=${u.id}&origin=dashboard" 
+                       class="btn-editar"
+                       style="display: inline-block; padding: 6px 15px; margin-right: 5px; text-decoration: none; font-size: 13px; min-width: 70px;">
+                       Editar
+                    </a>
+
                     <button onclick="excluirItem('usuarios', ${u.id})" 
                             class="btn-excluir" 
-                            style="width: auto; display: inline-block; padding: 6px 15px; min-width: 80px;">
+                            style="display: inline-block; padding: 6px 15px; font-size: 13px; min-width: 70px;">
                         Excluir
                     </button>
                 </td>
