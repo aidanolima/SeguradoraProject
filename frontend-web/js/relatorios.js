@@ -38,8 +38,8 @@ async function buscarDados(params = '') {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Carregando dados...</td></tr>';
 
     try {
-        // Faz a chamada ao Back-end (Ex: GET http://localhost:3000/relatorios?status=ativo)
-        const response = await fetch(`http://localhost:3000/relatorios${params}`, {
+        // Faz a chamada ao Back-end (Ex: GET https://https://seguradoraproject.onrender.com/relatorios?status=ativo)
+        const response = await fetch(`https://https://seguradoraproject.onrender.com/relatorios${params}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

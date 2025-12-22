@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         if(btnSubmit) btnSubmit.innerText = "Salvar Alterações";
         
         try {
-            const res = await fetch(`http://localhost:3000/propostas/${idEdicao}`);
+            const res = await fetch(`https://https://seguradoraproject.onrender.com/propostas/${idEdicao}`);
             if (res.ok) {
                 const dados = await res.json();
                 console.log("Dados recebidos do Banco:", dados);
@@ -154,11 +154,11 @@ document.addEventListener("DOMContentLoaded", async function() {
             data.zero_km = document.getElementById('zero_km')?.checked || false;
 
             // Define URL e Método
-            let url = 'http://localhost:3000/cadastrar-proposta';
+            let url = 'https://https://seguradoraproject.onrender.com/cadastrar-proposta';
             let method = 'POST';
 
             if (idEdicao) {
-                url = `http://localhost:3000/propostas/${idEdicao}`;
+                url = `https://https://seguradoraproject.onrender.com/propostas/${idEdicao}`;
                 method = 'PUT';
             }
 

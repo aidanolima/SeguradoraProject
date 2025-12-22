@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             btnProcessar.disabled = true;
 
             try {
-                const res = await fetch('http://localhost:3000/importar-pdf', { method: 'POST', body: formData });
+                const res = await fetch('https://https://seguradoraproject.onrender.com/importar-pdf', { method: 'POST', body: formData });
                 
                 if (!res.ok) throw new Error("Erro ao ler PDF.");
 
@@ -80,7 +80,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             try {
                 // Removemos o header 'Content-Type': 'application/json' 
                 // porque o fetch define automaticamente como multipart/form-data quando enviamos formData
-                const res = await fetch('http://localhost:3000/cadastrar-apolice', {
+                const res = await fetch('https://https://seguradoraproject.onrender.com/cadastrar-apolice', {
                     method: 'POST',
                     body: formData 
                 });
@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if(!select) return;
 
         try {
-            const res = await fetch('http://localhost:3000/propostas');
+            const res = await fetch('https://https://seguradoraproject.onrender.com/propostas');
             if(res.ok) {
                 const clientes = await res.json();
                 

@@ -1,8 +1,8 @@
 document.addEventListener("DOMContentLoaded", function() {
     
     // Configuração base da API
-    const API_URL = 'http://localhost:3000/auth';
-    const BASE_API_URL = 'http://localhost:3000'; 
+    const API_URL = 'https://seguradoraproject.onrender.com/auth';
+    const BASE_API_URL = 'https://seguradoraproject.onrender.com'; 
 
     // ======================================================
     // 0. FUNCIONALIDADE DO OLHO MÁGICO (SIMPLIFICADA)
