@@ -1,3 +1,86 @@
+// js/dashboard.js - VERSÃO FINAL CORRIGIDA
+
+// ⚠️ Se estiver no Netlify, use a URL do Render. 
+// Se estiver testando local, mude para http://localhost:3000
+const API_URL = 'https://seguradoraproject.onrender.com';
+
+const token = localStorage.getItem('token');
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Verifica se está logado
+    if (!token) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    console.log("🚀 Dashboard iniciado. Conectando em:", API_URL);
+
+    // Carrega todas as tabelas e contadores
+    // Verifica se as funções existem antes de chamar para evitar erros
+    if(typeof carregarEstatisticas === 'function') carregarEstatisticas();
+    carregarPropostas();
+    carregarUsuarios();
+    carregarApolices();
+});
+
+// ==========================================
+// 1. ATUALIZAR CARDS (ESTATÍSTICAS)
+// ==========================================
+function atualizarCard(idElemento, valor) {
+    const el = document.getElementById(idElemento);
+    if (el) el.innerText = valor;
+}
+
+function carregarEstatisticas() {
+    // Placeholder para lógica futura de stats
+}
+
+// ==========================================
+// 2. LISTAR PROPOSTAS (CLIENTES)
+// ==========================================
+async function carregarPropostas() {
+    const tbody = document.getElementById('lista-propostas');
+    if(!tbody) return;
+
+    try {
+        const res = await fetch(`${API_URL}/propostas`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!res.ok) throw new Error('Erro ao buscar propostas');
+        
+        const lista = await res.json();
+        
+        atualizarCard('total-clientes', lista.length);
+        atualizarCard('total-veiculos', lista.length); 
+
+        tbody.innerHTML = '';
+
+        if (lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Nenhum cliente cadastrado.</td></tr>';
+            return;
+        }
+
+        lista.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${p.id}</td>
+                <td>${p.nome}</td>
+                <td>${p.modelo}</td>
+                <td><strong>${p.placa}</strong></td>
+                <td>
+                    <a href="cadastro.html?id=${p.id}" class="btn-editar">Editar</a>
+                    <button onclick="excluirItem('propostas', ${p.id})" class="btn-excluir">Excluir</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch (error) {
+        console.error('Erro Propostas:', error);
+    }
+}
+
 // ==========================================
 // 3. LISTAR USUÁRIOS (BOTÕES IDÊNTICOS)
 // ==========================================
@@ -19,9 +102,12 @@ async function carregarUsuarios() {
         }
 
         const lista = await res.json();
-        if (typeof atualizarCard === "function") atualizarCard('total-usuarios', lista.length);
+        atualizarCard('total-usuarios', lista.length);
 
         tbody.innerHTML = '';
+
+        // Estilo CSS em linha única para evitar erros de quebra de linha no HTML
+        const btnStyle = "display: inline-block; width: 80px; padding: 8px 0; font-size: 13px; font-weight: bold; font-family: sans-serif; text-align: center; border-radius: 4px; border: none; cursor: pointer; text-decoration: none; line-height: normal; color: white;";
 
         lista.forEach(u => {
             const tr = document.createElement('tr');
@@ -29,37 +115,19 @@ async function carregarUsuarios() {
             const badgeClass = u.tipo === 'admin' ? 'badge-admin' : 'badge-user';
             const tipoLabel = u.tipo === 'admin' ? 'ADMIN' : u.tipo.toUpperCase();
 
-            // Estilo Comum para garantir identidade visual
-            const estiloBotao = `
-                display: inline-block; 
-                width: 80px; 
-                padding: 8px 0; 
-                font-size: 13px; 
-                font-weight: bold; 
-                font-family: sans-serif;
-                text-align: center; 
-                border-radius: 4px; 
-                border: none; 
-                cursor: pointer;
-                text-decoration: none;
-                line-height: normal;
-                color: white;
-            `;
-
             tr.innerHTML = `
                 <td>${u.id}</td>
                 <td>${u.nome}</td>
                 <td>${u.email}</td>
                 <td><span class="badge ${badgeClass}">${tipoLabel}</span></td>
                 <td style="text-align: center; white-space: nowrap;">
-                    
                     <a href="registro.html?id=${u.id}&origin=dashboard" 
-                       style="${estiloBotao} background-color: #ffa000; margin-right: 5px;">
+                       style="${btnStyle} background-color: #ffa000; margin-right: 5px;">
                        Editar
                     </a>
 
                     <button onclick="excluirItem('usuarios', ${u.id})" 
-                            style="${estiloBotao} background-color: #d32f2f;">
+                            style="${btnStyle} background-color: #d32f2f;">
                         Excluir
                     </button>
                 </td>
@@ -70,5 +138,118 @@ async function carregarUsuarios() {
     } catch (error) {
         console.error('Erro Usuários:', error);
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Erro ao carregar usuários.</td></tr>';
+    }
+}
+
+// ==========================================
+// 4. LISTAR APÓLICES
+// ==========================================
+async function carregarApolices() {
+    const tbody = document.getElementById('lista-apolices');
+    if(!tbody) return;
+
+    try {
+        const res = await fetch(`${API_URL}/apolices`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) throw new Error('Erro ao buscar apólices');
+
+        const lista = await res.json();
+        atualizarCard('total-apolices', lista.length);
+
+        tbody.innerHTML = '';
+
+        if (lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Nenhuma apólice emitida.</td></tr>';
+            return;
+        }
+
+        lista.forEach(a => {
+            const tr = document.createElement('tr');
+            // Tratamento de segurança para valores nulos
+            const premio = a.premio_total ? parseFloat(a.premio_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00';
+            const vigencia = a.vigencia_fim ? new Date(a.vigencia_fim).toLocaleDateString('pt-BR') : '-';
+
+            tr.innerHTML = `
+                <td>${a.numero_apolice || 'S/N'}</td>
+                <td>${a.cliente || 'Desconhecido'}</td>
+                <td>${a.placa || '-'}</td>
+                <td>${vigencia}</td>
+                <td>${premio}</td>
+                <td>
+                    <a href="apolice.html?id=${a.id}" class="btn-editar">Editar</a>
+                    <button onclick="excluirItem('apolices', ${a.id})" class="btn-excluir">Excluir</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+    } catch (error) {
+        console.error('Erro Apólices:', error);
+    }
+}
+
+// ==========================================
+// 5. FUNÇÃO DE EXCLUSÃO GENÉRICA
+// ==========================================
+let idParaExcluir = null;
+let tipoParaExcluir = null;
+
+function excluirItem(tipo, id) {
+    idParaExcluir = id;
+    tipoParaExcluir = tipo;
+    
+    // Tenta usar o modal se existir, senão usa confirm nativo
+    const modal = document.getElementById('modal-confirmacao');
+    
+    if(modal) {
+        modal.style.display = 'flex';
+        const btnConfirm = document.getElementById('btn-confirmar-modal');
+        // Clona para remover eventos anteriores
+        const novoBtn = btnConfirm.cloneNode(true);
+        btnConfirm.parentNode.replaceChild(novoBtn, btnConfirm);
+        novoBtn.addEventListener('click', confirmarExclusao);
+    } else {
+        if(confirm("Tem certeza que deseja excluir este item permanentemente?")) {
+            confirmarExclusao();
+        }
+    }
+}
+
+async function confirmarExclusao() {
+    if(!idParaExcluir || !tipoParaExcluir) return;
+
+    try {
+        const res = await fetch(`${API_URL}/${tipoParaExcluir}/${idParaExcluir}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+            // Fecha modal se existir
+            const modal = document.getElementById('modal-confirmacao');
+            if(modal) modal.style.display = 'none';
+            
+            // Recarrega a lista correta
+            if (tipoParaExcluir === 'propostas') carregarPropostas();
+            if (tipoParaExcluir === 'usuarios') carregarUsuarios();
+            if (tipoParaExcluir === 'apolices') carregarApolices();
+            
+            Swal.fire('Sucesso', 'Item excluído.', 'success');
+        } else {
+            Swal.fire('Erro', 'Erro ao excluir. Verifique permissões.', 'error');
+        }
+    } catch (error) {
+        console.error("Erro exclusão:", error);
+        Swal.fire('Erro', 'Falha de conexão.', 'error');
+    }
+}
+
+// Fecha modal ao clicar fora (se existir)
+window.onclick = function(event) {
+    const modal = document.getElementById('modal-confirmacao');
+    if (event.target == modal) {
+        modal.style.display = "none";
     }
 }
