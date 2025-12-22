@@ -10,7 +10,8 @@ const jwt = require('jsonwebtoken'); // <--- NOVO: Importando JWT
 
 const express = require('express');
 const app = express();
-const port = 3000;
+//const port = 3000; LOCAL
+const port = process.env.PORT || 3000; // NUVEM 
 
 // --- CONFIGURAÇÃO DA CHAVE SECRETA (Pode ser qualquer texto difícil) ---
 const JWT_SECRET = 'seguradora_chave_secreta_super_segura_2024';
@@ -43,16 +44,29 @@ const uploadSave = multer({ storage: storageDisk });
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
-// --- CONEXÃO BANCO DE DADOS ---
+// --- CONEXÃO BANCO DE DADOS LOCAL ---
+//const pool = mysql.createPool({
+//    host: 'localhost', 
+//    user: 'root', 
+//    password: '054622',  // Verifique se sua senha é esta mesma
+//    database: 'seguradoraauto',
+//    waitForConnections: true, 
+//    connectionLimit: 10, 
+//    queueLimit: 0
+//});
+
+// --- CONEXÃO BANCO DE DADOS (ADAPTADA PARA NUVEM) ---
 const pool = mysql.createPool({
-    host: 'localhost', 
-    user: 'root', 
-    password: '054622',  // Verifique se sua senha é esta mesma
-    database: 'seguradoraauto',
-    waitForConnections: true, 
-    connectionLimit: 10, 
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '054622', // Sua senha local como fallback
+    database: process.env.DB_NAME || 'seguradoraauto',
+    port: process.env.DB_PORT || 3306,
+    waitForConnections: true,
+    connectionLimit: 10,
     queueLimit: 0
 });
+
 
 pool.getConnection()
     .then(() => console.log("✅ MySQL Conectado com Sucesso!"))
