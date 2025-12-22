@@ -143,3 +143,304 @@
                         <label for="placa">Placa *</label>
                         <input type="text" id="placa" required placeholder="ABC-1234" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
                     </div>
+                    <div class="form-group">
+                        <label for="chassi">Chassi</label>
+                        <input type="text" id="chassi" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="ano_modelo">Ano Modelo</label>
+                        <input type="number" id="ano_modelo" placeholder="2024" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fipe">Código FIPE</label>
+                        <input type="text" id="fipe" placeholder="000000-0" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="utilizacao">Tipo de Utilização</label>
+                        <select id="utilizacao" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="particular">Passeio Particular</option>
+                            <option value="comercial" selected>Comercial / Profissional</option>
+                            <option value="aplicativo">Motorista de Aplicativo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="checkbox-group" style="display: flex; gap: 20px; align-items: center; margin-top: 15px;">
+                        <div>
+                            <input type="checkbox" id="blindado"> <label for="blindado">Blindado?</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="kit_gas"> <label for="kit_gas">Kit Gás?</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="zero_km"> <label for="zero_km">Zero KM?</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row" style="margin-top: 15px;">
+                    <div class="form-group">
+                        <label for="cep_pernoite">CEP de Pernoite</label>
+                        <input type="text" id="cep_pernoite" placeholder="00000-000" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                </div>
+            </fieldset>
+
+            <h3 style="margin:0 0 20px 0; color:#4caf50; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                <i class="fas fa-shield-alt"></i> 3. Cobertura e Pagamento
+            </h3>
+
+            <fieldset style="border: 1px solid #ddd; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                <legend style="font-weight: bold; color: #555; padding: 0 5px;">Condições</legend>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cobertura_casco">Cobertura Casco (%)</label>
+                        <input type="number" id="cobertura_casco" value="100" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="carro_reserva">Carro Reserva</label>
+                        <select id="carro_reserva" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="nao">Não contratar</option>
+                            <option value="7_dias" selected>7 dias (Básico)</option>
+                            <option value="15_dias">15 dias</option>
+                            <option value="30_dias">30 dias</option>
+                        </select>
+                    </div>
+                </div>
+                 <div class="form-row">
+                    <div class="form-group">
+                        <label for="forma_pagamento">Forma de Pagamento</label>
+                        <select id="forma_pagamento" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="cartao_credito">Cartão de Crédito</option>
+                            <option value="boleto">Boleto Bancário</option>
+                            <option value="debito">Débito em Conta</option>
+                        </select>
+                    </div>
+                </div>
+            </fieldset>
+
+            <button type="button" onclick="salvarCliente()" id="btn-salvar" class="btn-novo" style="width:100%; margin-top:10px; padding: 15px; background-color: #4caf50; color: white; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; font-size: 16px;">
+                <i class="fas fa-save"></i> SALVAR NOVO CLIENTE
+            </button>
+        </div>
+
+        <div class="system-credits" style="text-align: center;">
+            By Áidano Lima - ASL TECH
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÃO DA API ---
+        // CORREÇÃO: URL limpa, sem duplicação de https://
+        const API_URL = 'https://seguradoraproject.onrender.com';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const idEdicao = urlParams.get('id');
+        const token = localStorage.getItem('token');
+
+        // --- MÁSCARAS (JQuery) ---
+        $(document).ready(function(){
+            $('#documento').mask('000.000.000-00'); 
+            $('#telefone').mask('(00) 00000-0000');
+            $('#cep').mask('00000-000');
+            $('#cep_pernoite').mask('00000-000');
+        });
+
+        // --- INICIALIZAÇÃO ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Validar Token
+            if (!token) { 
+                console.warn("Sem token de acesso. Redirecionando...");
+                window.location.href = 'index.html'; 
+                return; 
+            }
+
+            // 2. Exibir Usuário Logado
+            const nomeUser = localStorage.getItem('usuario_logado');
+            const tipoUser = localStorage.getItem('tipo_usuario');
+            
+            console.log("Status Usuário:", nomeUser, tipoUser); // Debug no Console
+
+            if (nomeUser) {
+                document.getElementById('user-name-display').innerText = nomeUser.split(' ')[0];
+            }
+            if (tipoUser) {
+                document.getElementById('user-role-display').innerText = tipoUser.toUpperCase();
+            }
+
+            // 3. Configurar Botão Sair
+            document.getElementById('btn-logout').addEventListener('click', function() {
+                localStorage.clear();
+                window.location.href = 'index.html';
+            });
+
+            // 4. Configurar Modo Edição
+            if (idEdicao) {
+                document.getElementById('titulo-pagina').innerText = `Editando Cliente #${idEdicao}`;
+                const btn = document.getElementById('btn-salvar');
+                btn.innerHTML = '<i class="fas fa-sync-alt"></i> ATUALIZAR CLIENTE';
+                btn.style.backgroundColor = "#ffa000"; 
+                carregarDadosCliente(idEdicao);
+            }
+        });
+
+        // --- BUSCA DE ENDEREÇO (VIA CEP) ---
+        async function buscarEndereco(cep) {
+            console.log("Pesquisando CEP:", cep);
+            const cepLimpo = cep.replace(/\D/g, '');
+            if (cepLimpo.length !== 8) return;
+
+            try {
+                // A URL deve ser exata. O CSP já permite viacep.com.br
+                const res = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+                const data = await res.json();
+                
+                if (!data.erro) {
+                    document.getElementById('endereco').value = data.logradouro;
+                    document.getElementById('bairro').value = data.bairro;
+                    document.getElementById('cidade').value = data.localidade;
+                    document.getElementById('uf').value = data.uf;
+                    document.getElementById('numero').focus();
+                } else {
+                    Swal.fire('CEP', 'CEP não encontrado.', 'info');
+                    // Limpa campos se não encontrar
+                    document.getElementById('endereco').value = "";
+                    document.getElementById('bairro').value = "";
+                    document.getElementById('cidade').value = "";
+                    document.getElementById('uf').value = "";
+                }
+            } catch (e) { 
+                console.error("Erro na busca de CEP:", e); 
+                Swal.fire('Erro', 'Falha ao buscar CEP.', 'error');
+            }
+        }
+
+        // --- SALVAR / ATUALIZAR CLIENTE ---
+        async function salvarCliente() {
+            // Validação simples
+            const nome = document.getElementById('nome').value;
+            const doc = document.getElementById('documento').value;
+            const placa = document.getElementById('placa').value;
+
+            if (!nome || !doc || !placa) {
+                Swal.fire('Atenção', 'Preencha Nome, Documento e Placa.', 'warning');
+                return;
+            }
+
+            // Monta payload
+            const dados = {
+                nome: document.getElementById('nome').value,
+                documento: document.getElementById('documento').value,
+                email: document.getElementById('email').value,
+                telefone: document.getElementById('telefone').value,
+                cep: document.getElementById('cep').value,
+                endereco: document.getElementById('endereco').value,
+                bairro: document.getElementById('bairro').value,
+                cidade: document.getElementById('cidade').value,
+                uf: document.getElementById('uf').value,
+                numero: document.getElementById('numero').value,
+                complemento: document.getElementById('complemento').value,
+                fabricante: document.getElementById('fabricante').value,
+                modelo: document.getElementById('modelo').value,
+                placa: document.getElementById('placa').value,
+                chassi: document.getElementById('chassi').value,
+                ano_modelo: document.getElementById('ano_modelo').value,
+                fipe: document.getElementById('fipe').value,
+                utilizacao: document.getElementById('utilizacao').value,
+                blindado: document.getElementById('blindado').checked,
+                kit_gas: document.getElementById('kit_gas').checked,
+                zero_km: document.getElementById('zero_km').checked,
+                cep_pernoite: document.getElementById('cep_pernoite').value,
+                cobertura_casco: document.getElementById('cobertura_casco').value,
+                carro_reserva: document.getElementById('carro_reserva').value,
+                forma_pagamento: document.getElementById('forma_pagamento').value
+            };
+
+            const endpoint = idEdicao ? `${API_URL}/propostas/${idEdicao}` : `${API_URL}/cadastrar-proposta`;
+            const method = idEdicao ? 'PUT' : 'POST';
+
+            try {
+                Swal.fire({
+                    title: 'Salvando...',
+                    didOpen: () => Swal.showLoading()
+                });
+
+                const res = await fetch(endpoint, {
+                    method: method,
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(dados)
+                });
+
+                if (res.ok) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Sucesso',
+                        text: idEdicao ? "Cliente atualizado!" : "Cliente cadastrado!",
+                        confirmButtonColor: '#4caf50'
+                    });
+                    window.location.href = 'dashboard.html';
+                } else {
+                    const err = await res.json();
+                    Swal.fire('Erro', err.message || 'Erro ao salvar', 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Erro', 'Falha na conexão com o servidor.', 'error');
+            }
+        }
+
+        // --- CARREGAR DADOS (MODO EDIÇÃO) ---
+        async function carregarDadosCliente(id) {
+            try {
+                const res = await fetch(`${API_URL}/propostas/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error("Erro ao buscar dados");
+                const d = await res.json();
+
+                // Preenchimento
+                document.getElementById('nome').value = d.nome || '';
+                document.getElementById('documento').value = d.documento || '';
+                document.getElementById('email').value = d.email || '';
+                document.getElementById('telefone').value = d.telefone || '';
+                document.getElementById('cep').value = d.cep || '';
+                document.getElementById('endereco').value = d.endereco || '';
+                document.getElementById('bairro').value = d.bairro || '';
+                document.getElementById('cidade').value = d.cidade || '';
+                document.getElementById('uf').value = d.uf || '';
+                document.getElementById('numero').value = d.numero || '';
+                document.getElementById('complemento').value = d.complemento || '';
+                
+                document.getElementById('fabricante').value = d.fabricante || '';
+                document.getElementById('modelo').value = d.modelo || '';
+                document.getElementById('placa').value = d.placa || '';
+                document.getElementById('chassi').value = d.chassi || '';
+                document.getElementById('ano_modelo').value = d.ano_modelo || '';
+                document.getElementById('fipe').value = d.fipe || '';
+                document.getElementById('utilizacao').value = d.utilizacao || 'particular';
+                
+                document.getElementById('blindado').checked = !!d.blindado;
+                document.getElementById('kit_gas').checked = !!d.kit_gas;
+                document.getElementById('zero_km').checked = !!d.zero_km;
+                
+                document.getElementById('cep_pernoite').value = d.cep_pernoite || '';
+                document.getElementById('cobertura_casco').value = d.cobertura_casco || 100;
+                document.getElementById('carro_reserva').value = d.carro_reserva || 'nao';
+                document.getElementById('forma_pagamento').value = d.forma_pagamento || 'boleto';
+
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Erro', 'Não foi possível carregar os dados do cliente.', 'error');
+            }
+        }
+    </script>
+    <script src="js/auth.js"></script>
+</body>
+</html>
