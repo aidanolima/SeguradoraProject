@@ -23,6 +23,11 @@ const upload = multer({ storage: storage });
 app.use(cors());
 app.use(express.json());
 
+// Rota de Teste para a Raiz (Evita o 404 no navegador)
+app.get('/', (req, res) => {
+    res.send('API Seguradora funcionando! 🚀');
+});
+
 // --- CONFIGURAÇÃO DE UPLOAD (DISCO) ---
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)){
