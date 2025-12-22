@@ -84,11 +84,11 @@ async function carregarPropostas() {
 }
 
 // ==========================================
-// 3. LISTAR USUÁRIOS
+// 3. LISTAR USUÁRIOS (COM CORREÇÃO DO BOTÃO)
 // ==========================================
 async function carregarUsuarios() {
     const tbody = document.getElementById('lista-usuarios');
-    if(!tbody) return; // Se não tiver tabela de usuários na tela, ignora
+    if(!tbody) return; 
 
     try {
         const res = await fetch(`${API_URL}/usuarios`, {
@@ -104,19 +104,31 @@ async function carregarUsuarios() {
         }
 
         const lista = await res.json();
-        atualizarCard('total-usuarios', lista.length);
+        // Se tiver a função atualizarCard, ela roda aqui:
+        if (typeof atualizarCard === "function") {
+            atualizarCard('total-usuarios', lista.length);
+        }
 
         tbody.innerHTML = '';
 
         lista.forEach(u => {
             const tr = document.createElement('tr');
+            
+            // Tratamento visual para o tipo de perfil (Badge)
+            const badgeClass = u.tipo === 'admin' ? 'badge-admin' : 'badge-user';
+            const tipoLabel = u.tipo === 'admin' ? 'ADMIN' : u.tipo.toUpperCase();
+
             tr.innerHTML = `
                 <td>${u.id}</td>
                 <td>${u.nome}</td>
                 <td>${u.email}</td>
-                <td><span class="badge ${u.tipo === 'admin' ? 'badge-admin' : 'badge-user'}">${u.tipo}</span></td>
+                <td><span class="badge ${badgeClass}">${tipoLabel}</span></td>
                 <td style="text-align: center;">
-                    <button onclick="excluirItem('usuarios', ${u.id})" class="btn-excluir">Excluir</button>
+                    <button onclick="excluirItem('usuarios', ${u.id})" 
+                            class="btn-excluir" 
+                            style="width: auto; display: inline-block; padding: 6px 15px; min-width: 80px;">
+                        Excluir
+                    </button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -124,7 +136,7 @@ async function carregarUsuarios() {
 
     } catch (error) {
         console.error('Erro Usuários:', error);
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Erro ao carregar.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Erro ao carregar usuários.</td></tr>';
     }
 }
 
