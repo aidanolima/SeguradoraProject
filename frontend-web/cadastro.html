@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Cliente - Gestor</title>
+    
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' blob: data: gap:; style-src * 'self' 'unsafe-inline' blob: data: gap:; script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; object-src * 'self' blob: data: gap:; img-src * 'self' 'unsafe-inline' blob: data: gap:; connect-src 'self' * 'unsafe-inline' blob: data: gap:; frame-src * 'self' blob: data: gap:;">
+
+    <link rel="icon" href="assets/logo.png" type="image/png">
+    <link rel="stylesheet" href="css/style.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="dashboard-body">
+
+    <header class="app-header">
+        <div class="header-brand">
+            <a href="dashboard.html">
+                <img src="assets/logo.png" alt="Logo" class="header-logo">
+            </a>
+        </div>
+
+        <nav class="header-nav">
+            <a href="dashboard.html" class="header-link active">PROPOSTAS</a>
+            <a href="apolice.html" class="header-link">APÓLICES</a>
+            <a href="registro.html?origin=dashboard" class="header-link">USUÁRIOS</a>
+            <a href="relatorios.html" class="header-link">RELATÓRIOS</a>
+        </nav>
+
+        <div class="header-user-area">
+            <div class="user-info">
+                <span class="user-name">Olá, <strong id="user-name-display">...</strong></span>
+                <span class="user-role" id="user-role-display">...</span>
+            </div>
+            <button id="btn-logout" class="btn-logout-panel">SAIR</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        
+        <div style="margin-bottom: 20px; border-left: 5px solid #4caf50; padding-left: 15px;">
+            <h2 id="titulo-pagina" style="color: #444; margin:0;">Cadastro de Cliente</h2>
+            <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Preencha os dados completos para gerar a proposta.</p>
+        </div>
+
+        <div class="card" id="painel-cadastro">
+            
+            <h3 style="margin:0 0 20px 0; color:#4caf50; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                <i class="fas fa-user"></i> 1. Dados do Segurado
+            </h3>
+            
+            <fieldset style="border: 1px solid #ddd; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                <legend style="font-weight: bold; color: #555; padding: 0 5px;">Informações Pessoais</legend>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nome">Nome Completo / Razão Social *</label>
+                        <input type="text" id="nome" required placeholder="Ex: Maria Silva" class="campo-obrigatorio" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="documento">CPF / CNPJ *</label>
+                        <input type="text" id="documento" required placeholder="000.000.000-00" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">E-mail *</label>
+                        <input type="email" id="email" required placeholder="cliente@email.com" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="telefone">Celular / Telefone</label>
+                        <input type="tel" id="telefone" placeholder="(XX) 9XXXX-XXXX" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cep">CEP</label>
+                        <input type="text" id="cep" maxlength="9" placeholder="00000-000" onblur="buscarEndereco(this.value)" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div class="form-group" style="flex: 2;">
+                        <label for="endereco">Endereço</label>
+                        <input type="text" id="endereco" readonly style="background-color: #f1f8e9; width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bairro">Bairro</label>
+                        <input type="text" id="bairro" readonly style="background-color: #f1f8e9; width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="cidade">Cidade</label>
+                        <input type="text" id="cidade" readonly style="background-color: #f1f8e9; width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div class="form-group" style="flex: 0 0 80px;">
+                        <label for="uf">UF</label>
+                        <input type="text" id="uf" readonly style="background-color: #f1f8e9; width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="numero">Número</label>
+                        <input type="text" id="numero" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="complemento">Complemento</label>
+                        <input type="text" id="complemento" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                </div>
+            </fieldset>
+
+            <h3 style="margin:0 0 20px 0; color:#4caf50; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                <i class="fas fa-car"></i> 2. Dados do Veículo
+            </h3>
+
+            <fieldset style="border: 1px solid #ddd; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                <legend style="font-weight: bold; color: #555; padding: 0 5px;">Características</legend>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fabricante">Fabricante</label>
+                        <input type="text" id="fabricante" placeholder="Ex: Toyota" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="modelo">Modelo *</label>
+                        <input type="text" id="modelo" required placeholder="Ex: Corolla XEi" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="placa">Placa *</label>
+                        <input type="text" id="placa" required placeholder="ABC-1234" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="chassi">Chassi</label>
+                        <input type="text" id="chassi" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="ano_modelo">Ano Modelo</label>
+                        <input type="number" id="ano_modelo" placeholder="2024" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fipe">Código FIPE</label>
+                        <input type="text" id="fipe" placeholder="000000-0" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="utilizacao">Tipo de Utilização</label>
+                        <select id="utilizacao" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="particular">Passeio Particular</option>
+                            <option value="comercial" selected>Comercial / Profissional</option>
+                            <option value="aplicativo">Motorista de Aplicativo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="checkbox-group" style="display: flex; gap: 20px; align-items: center; margin-top: 15px;">
+                        <div>
+                            <input type="checkbox" id="blindado"> <label for="blindado">Blindado?</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="kit_gas"> <label for="kit_gas">Kit Gás?</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="zero_km"> <label for="zero_km">Zero KM?</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row" style="margin-top: 15px;">
+                    <div class="form-group">
+                        <label for="cep_pernoite">CEP de Pernoite</label>
+                        <input type="text" id="cep_pernoite" placeholder="00000-000" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                </div>
+            </fieldset>
+
+            <h3 style="margin:0 0 20px 0; color:#4caf50; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                <i class="fas fa-shield-alt"></i> 3. Cobertura e Pagamento
+            </h3>
+
+            <fieldset style="border: 1px solid #ddd; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                <legend style="font-weight: bold; color: #555; padding: 0 5px;">Condições</legend>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cobertura_casco">Cobertura Casco (%)</label>
+                        <input type="number" id="cobertura_casco" value="100" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="carro_reserva">Carro Reserva</label>
+                        <select id="carro_reserva" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="nao">Não contratar</option>
+                            <option value="7_dias" selected>7 dias (Básico)</option>
+                            <option value="15_dias">15 dias</option>
+                            <option value="30_dias">30 dias</option>
+                        </select>
+                    </div>
+                </div>
+                 <div class="form-row">
+                    <div class="form-group">
+                        <label for="forma_pagamento">Forma de Pagamento</label>
+                        <select id="forma_pagamento" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="cartao_credito">Cartão de Crédito</option>
+                            <option value="boleto">Boleto Bancário</option>
+                            <option value="debito">Débito em Conta</option>
+                        </select>
+                    </div>
+                </div>
+            </fieldset>
+
+            <button type="button" onclick="salvarCliente()" id="btn-salvar" class="btn-novo" style="width:100%; margin-top:10px; padding: 15px; background-color: #4caf50; color: white; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; font-size: 16px;">
+                <i class="fas fa-save"></i> SALVAR NOVO CLIENTE
+            </button>
+        </div>
+
+        <div class="system-credits" style="text-align: center;">
+            By Áidano Lima - ASL TECH
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+        const urlParams = new URLSearchParams(window.location.search);
+        const idEdicao = urlParams.get('id');
+        const token = localStorage.getItem('token');
+
+        // MÁSCARAS JQUERY
+        $(document).ready(function(){
+            $('#documento').mask('000.000.000-00'); // Ou lógica mista CPF/CNPJ se precisar
+            $('#telefone').mask('(00) 00000-0000');
+            $('#cep').mask('00000-000');
+            $('#cep_pernoite').mask('00000-000');
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Atualizar Nome do Usuário
+            const nome = localStorage.getItem('usuario_logado');
+            const tipo = localStorage.getItem('tipo_usuario');
+            if (nome) document.getElementById('user-name-display').innerText = nome.split(' ')[0];
+            if (tipo) document.getElementById('user-role-display').innerText = tipo.toUpperCase();
+
+            // Botão Sair
+            document.getElementById('btn-logout').addEventListener('click', function() {
+                localStorage.clear();
+                window.location.href = 'index.html';
+            });
+
+            // 2. Lógica da Página
+            if (!token) { window.location.href = 'index.html'; return; }
+
+            if (idEdicao) {
+                document.getElementById('titulo-pagina').innerText = `Editando Cliente #${idEdicao}`;
+                document.getElementById('btn-salvar').innerHTML = '<i class="fas fa-sync-alt"></i> ATUALIZAR CLIENTE';
+                document.getElementById('btn-salvar').style.backgroundColor = "#ffa000"; 
+                carregarDadosCliente(idEdicao);
+            }
+        });
+
+        // --- BUSCA CEP ---
+        async function buscarEndereco(cep) {
+            const cepLimpo = cep.replace(/\D/g, '');
+            if (cepLimpo.length !== 8) return;
+
+            try {
+                const res = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+                const data = await res.json();
+                if (!data.erro) {
+                    document.getElementById('endereco').value = data.logradouro;
+                    document.getElementById('bairro').value = data.bairro;
+                    document.getElementById('cidade').value = data.localidade;
+                    document.getElementById('uf').value = data.uf;
+                    document.getElementById('numero').focus();
+                }
+            } catch (e) { console.error("Erro CEP:", e); }
+        }
+
+        // --- FUNÇÃO SALVAR BLINDADA ---
+        async function salvarCliente() {
+            // 1. Validação Manual
+            const nome = document.getElementById('nome').value;
+            const doc = document.getElementById('documento').value;
+            const placa = document.getElementById('placa').value;
+
+            if (!nome || !doc || !placa) {
+                Swal.fire('Atenção', 'Preencha Nome, Documento e Placa obrigatoriamente.', 'warning');
+                return;
+            }
+
+            // 2. Monta Objeto JSON
+            const dados = {
+                nome: document.getElementById('nome').value,
+                documento: document.getElementById('documento').value,
+                email: document.getElementById('email').value,
+                telefone: document.getElementById('telefone').value,
+                cep: document.getElementById('cep').value,
+                endereco: document.getElementById('endereco').value,
+                bairro: document.getElementById('bairro').value,
+                cidade: document.getElementById('cidade').value,
+                uf: document.getElementById('uf').value,
+                numero: document.getElementById('numero').value,
+                complemento: document.getElementById('complemento').value,
+                fabricante: document.getElementById('fabricante').value,
+                modelo: document.getElementById('modelo').value,
+                placa: document.getElementById('placa').value,
+                chassi: document.getElementById('chassi').value,
+                ano_modelo: document.getElementById('ano_modelo').value,
+                fipe: document.getElementById('fipe').value,
+                utilizacao: document.getElementById('utilizacao').value,
+                blindado: document.getElementById('blindado').checked,
+                kit_gas: document.getElementById('kit_gas').checked,
+                zero_km: document.getElementById('zero_km').checked,
+                cep_pernoite: document.getElementById('cep_pernoite').value,
+                cobertura_casco: document.getElementById('cobertura_casco').value,
+                carro_reserva: document.getElementById('carro_reserva').value,
+                forma_pagamento: document.getElementById('forma_pagamento').value
+            };
+
+            const endpoint = idEdicao ? `${API_URL}/propostas/${idEdicao}` : `${API_URL}/cadastrar-proposta`;
+            const method = idEdicao ? 'PUT' : 'POST';
+
+            try {
+                Swal.fire({
+                    title: 'Salvando...',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading() }
+                });
+
+                const res = await fetch(endpoint, {
+                    method: method,
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(dados)
+                });
+
+                if (res.ok) {
+                    const msg = idEdicao ? "Cliente atualizado!" : "Cliente cadastrado com sucesso!";
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Sucesso',
+                        text: msg,
+                        confirmButtonColor: '#4caf50'
+                    });
+                    window.location.href = 'dashboard.html';
+                } else {
+                    const err = await res.json();
+                    Swal.fire('Erro', err.message || 'Erro ao salvar', 'error');
+                }
+            } catch (error) {
+                Swal.fire('Erro', 'Falha na conexão', 'error');
+            }
+        }
+
+        // --- CARREGAR DADOS EDIÇÃO ---
+        async function carregarDadosCliente(id) {
+            try {
+                const res = await fetch(`${API_URL}/propostas/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error("Erro");
+                const d = await res.json();
+
+                // Preencher campos
+                document.getElementById('nome').value = d.nome;
+                document.getElementById('documento').value = d.documento;
+                document.getElementById('email').value = d.email;
+                document.getElementById('telefone').value = d.telefone;
+                document.getElementById('cep').value = d.cep;
+                document.getElementById('endereco').value = d.endereco;
+                document.getElementById('bairro').value = d.bairro;
+                document.getElementById('cidade').value = d.cidade;
+                document.getElementById('uf').value = d.uf;
+                document.getElementById('numero').value = d.numero;
+                document.getElementById('complemento').value = d.complemento;
+                
+                document.getElementById('fabricante').value = d.fabricante;
+                document.getElementById('modelo').value = d.modelo;
+                document.getElementById('placa').value = d.placa;
+                document.getElementById('chassi').value = d.chassi;
+                document.getElementById('ano_modelo').value = d.ano_modelo;
+                document.getElementById('fipe').value = d.fipe;
+                document.getElementById('utilizacao').value = d.utilizacao;
+                
+                // Checkboxes (0 ou 1 do banco vira true ou false)
+                document.getElementById('blindado').checked = !!d.blindado;
+                document.getElementById('kit_gas').checked = !!d.kit_gas;
+                document.getElementById('zero_km').checked = !!d.zero_km;
+                
+                document.getElementById('cep_pernoite').value = d.cep_pernoite;
+                document.getElementById('cobertura_casco').value = d.cobertura_casco;
+                document.getElementById('carro_reserva').value = d.carro_reserva;
+                document.getElementById('forma_pagamento').value = d.forma_pagamento;
+
+            } catch (e) {
+                Swal.fire('Erro', 'Não foi possível carregar o cliente.', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

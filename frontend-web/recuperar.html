@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' blob: data: gap:; style-src * 'self' 'unsafe-inline' blob: data: gap:; script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; object-src * 'self' blob: data: gap:; img-src * 'self' 'unsafe-inline' blob: data: gap:; connect-src 'self' * 'unsafe-inline' blob: data: gap:; frame-src * 'self' blob: data: gap:;">
+    
+    <link rel="icon" href="assets/logo.png" type="image/png">
+    <title>Recuperação de Acesso</title>
+    <link rel="stylesheet" href="css/style.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="login-body">
+
+    <div id="global-header"></div>
+
+    <div class="login-container" style="margin-top: 50px;">
+        
+        <div class="login-header">
+            <h1 style="color: #2e7d32;">Recuperação</h1>
+            <p>Digite seu e-mail para receber as instruções</p>
+        </div>
+
+        <form id="form-recuperar" onsubmit="event.preventDefault(); return false;">
+            <div class="form-group">
+                <label for="rec_email">E-mail Cadastrado</label>
+                <input type="email" id="rec_email" required placeholder="exemplo@email.com" 
+                       style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+            </div>
+            
+            <button type="button" onclick="enviarRecuperacao()" 
+                    style="width: 100%; padding: 12px; background-color: #2e7d32; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px;">
+                Enviar Instruções
+            </button>
+        </form>
+
+        <div style="margin-top: 20px; text-align: center;">
+            <a href="index.html" style="color: #666; text-decoration: none; font-size: 14px;">Voltar para Login</a>
+        </div>
+
+    </div>
+    
+    <script>
+        // URL Base (Ajuste se necessário, geralmente é /auth para login/recuperação)
+        const API_URL = 'http://localhost:3000/auth';
+
+        async function enviarRecuperacao() {
+            const email = document.getElementById('rec_email').value;
+
+            // 1. Validação Simples
+            if (!email) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Atenção',
+                    text: 'Por favor, digite seu e-mail.',
+                    confirmButtonColor: '#fbc02d'
+                });
+                return;
+            }
+
+            try {
+                // Loading
+                Swal.fire({
+                    title: 'Enviando...',
+                    text: 'Verificando seu cadastro.',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading() }
+                });
+
+                // 2. Fetch para o Backend
+                const response = await fetch(`${API_URL}/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // SUCESSO
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'E-mail Enviado!',
+                        text: result.message || 'Verifique sua caixa de entrada.',
+                        confirmButtonColor: '#2e7d32'
+                    });
+                    // Redireciona para login
+                    window.location.href = 'index.html';
+                } else {
+                    // ERRO DO SERVIDOR (Ex: E-mail não encontrado)
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: result.message || 'Não foi possível processar.',
+                        confirmButtonColor: '#d32f2f'
+                    });
+                }
+
+            } catch (error) {
+                console.error(error);
+                // ERRO DE CONEXÃO (Servidor desligado ou Rota inexistente)
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro de Conexão',
+                    text: 'Não foi possível conectar ao servidor. Verifique se o backend está rodando.',
+                    confirmButtonColor: '#d32f2f'
+                });
+            }
+        }
+    </script>
+
+    <script src="js/navbar.js"></script>
+    </body>
+</html>

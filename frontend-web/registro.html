@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Usuário - Gestor</title>
+    
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' http://localhost:3000 ws://localhost:3000 https://viacep.com.br; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+
+    <link rel="icon" href="assets/logo.png" type="image/png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="dashboard-body">
+
+    <header class="app-header">
+        <div class="header-brand">
+            <a href="dashboard.html">
+                <img src="assets/logo.png" alt="Logo" class="header-logo">
+            </a>
+        </div>
+
+        <nav class="header-nav">
+            <a href="dashboard.html" class="header-link">PROPOSTAS</a>
+            <a href="apolice.html" class="header-link">APÓLICES</a>
+            <a href="registro.html?origin=dashboard" class="header-link active">USUÁRIOS</a>
+            <a href="relatorios.html" class="header-link">RELATÓRIOS</a>
+        </nav>
+
+        <div class="header-user-area">
+            <div class="user-info">
+                <span class="user-name">Olá, <strong id="user-name-display">...</strong></span>
+                <span class="user-role" id="user-role-display">...</span>
+            </div>
+            <button id="btn-logout" class="btn-logout-panel">SAIR</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        
+        <div style="margin-bottom: 20px; border-left: 5px solid #2e7d32; padding-left: 15px;">
+            <h2 style="color: #444; margin:0;">Novo Usuário</h2>
+            <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Crie um acesso ao sistema.</p>
+        </div>
+
+        <div class="card" style="max-width: 600px; margin: 0 auto;">
+            <h3 style="margin:0 0 20px 0; color:#2e7d32; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                <i class="fas fa-user-plus"></i> Dados de Acesso
+            </h3>
+
+            <form id="form-registro">
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="reg_nome">Nome Completo</label>
+                    <input type="text" id="reg_nome" required placeholder="Ex: João Silva" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="reg_email">E-mail de Acesso</label>
+                    <input type="email" id="reg_email" required placeholder="usuario@empresa.com" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                
+                <div class="form-group" id="container-tipo" style="display: none; margin-bottom: 15px;">
+                    <label for="reg_tipo" style="color: #d84315;">Tipo de Perfil (Permissão)</label>
+                    <select id="reg_tipo" style="width: 100%; padding: 10px; border: 1px solid #d84315; border-radius: 4px; background-color: #fbe9e7;">
+                        <option value="operacional">Operacional (Vendedor)</option>
+                        <option value="admin">Administrador (Total)</option>
+                        <option value="TI">TI / Suporte</option>
+                    </select>
+                </div>
+
+                <div class="form-row" style="display: flex; gap: 15px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="reg_senha">Senha</label>
+                        <input type="password" id="reg_senha" required placeholder="******" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label for="reg_confirma_senha">Confirmar Senha</label>
+                        <input type="password" id="reg_confirma_senha" required placeholder="******" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-novo" style="width: 100%; margin-top: 25px; padding: 15px; background-color: #2e7d32; color: white; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; font-size: 16px;">
+                    <i class="fas fa-save"></i> SALVAR USUÁRIO
+                </button>
+            </form>
+        </div>
+
+        <div class="system-credits" style="text-align: center;">
+            By Áidano Lima - ASL TECH
+        </div>
+    </div>
+
+    <script src="js/modal.js"></script>
+    <script src="js/auth.js"></script> <script>
+        // Script simples para garantir o nome no topo
+        document.addEventListener('DOMContentLoaded', () => {
+            const nome = localStorage.getItem('usuario_logado');
+            const tipo = localStorage.getItem('tipo_usuario');
+            
+            if (nome) document.getElementById('user-name-display').innerText = nome.split(' ')[0];
+            if (tipo) document.getElementById('user-role-display').innerText = tipo.toUpperCase();
+
+            // Botão Sair
+            const btnSair = document.getElementById('btn-logout');
+            if(btnSair) {
+                btnSair.addEventListener('click', function() {
+                    localStorage.clear();
+                    window.location.href = 'index.html';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,699 @@
+/* ==========================================================================
+   1. DEFINIÇÕES GERAIS E RESET
+   ========================================================================== */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f1f8e9; /* Verde muito claro fundo */
+    color: #333;
+    margin: 0;
+    padding: 0;
+    /* REMOVIDO padding-top GLOBAL para não estragar o Login. 
+       O espaçamento será dado nos containers específicos. */
+}
+
+/* Container Principal (Usado no Dashboard Antigo) */
+.container {
+    max-width: 1000px;
+    margin: 30px auto;
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border-top: 5px solid #4caf50;
+    
+    /* ADICIONADO: Empurra o conteúdo para baixo por causa do Menu Fixo */
+    margin-top: 100px; 
+}
+
+/* ==========================================================================
+   2. TELA DE LOGIN E REGISTRO
+   ========================================================================== */
+.login-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+    background: linear-gradient(135deg, #f1f8e9 0%, #c8e6c9 100%);
+    /* Como removemos o padding do body, o login vai centralizar perfeito agora */
+}
+
+.login-container {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
+    border-top: 5px solid #4caf50;
+    text-align: center;
+}
+
+.login-header h1 {
+    font-size: 24px;
+    margin-bottom: 5px;
+    color: #2e7d32;
+}
+
+.login-header p {
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 14px;
+}
+
+.logo-sistema {
+    max-width: 180px;
+    height: auto;
+    display: block;
+    margin: 0 auto 20px auto;
+}
+
+/* ==========================================================================
+   3. FORMULÁRIOS E BOTÕES GERAIS
+   ========================================================================== */
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    flex: 1;
+    min-width: 200px;
+    text-align: left;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #388e3c;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #a5d6a7;
+    border-radius: 4px;
+    box-sizing: border-box;
+    background-color: #fff;
+    transition: border-color 0.3s;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #2e7d32;
+    box-shadow: 0 0 5px #c8e6c9;
+}
+
+input[readonly] {
+    background-color: #e8f5e9;
+    color: #555;
+    cursor: not-allowed;
+}
+
+/* Botões Globais */
+button {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    background-color: #43a047;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 10px; 
+}
+
+button:hover {
+    background-color: #2e7d32;
+}
+
+/* Botão Voltar */
+.btn-voltar {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    color: #666;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 8px 15px;
+    border-radius: 50px;
+    background-color: #f5f5f5;
+    transition: all 0.3s ease;
+    margin-right: 20px;
+    border: 1px solid #ddd;
+}
+
+.btn-voltar::before {
+    content: '←';
+    font-size: 18px;
+    margin-right: 8px;
+}
+
+.btn-voltar:hover {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border-color: #a5d6a7;
+}
+
+/* ==========================================================================
+   4. BLINDAGEM DO CAMPO DE SENHA (OLHO MÁGICO)
+   ========================================================================== */
+.password-wrapper {
+    position: relative; 
+    width: 100%;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 45px; 
+    background-color: #fff;
+    letter-spacing: 2px;
+    box-sizing: border-box; 
+}
+
+.password-toggle-icon {
+    position: absolute;
+    top: 50%;                
+    transform: translateY(-50%); 
+    right: 10px;              
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;                
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    z-index: 10;
+    width: auto;              
+}
+
+.password-toggle-icon:hover { 
+    color: #2e7d32; 
+    background: transparent;
+}
+.password-toggle-icon:focus { outline: none; }
+
+
+/* ==========================================================================
+   5. NAVBAR DO DASHBOARD (ANTIGA) - ATUALIZADA PARA VISUAL NOVO
+   Esta seção garante que o Dashboard continue funcionando, mas com o visual novo
+   ========================================================================== */
+.app-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 70px; /* Altura nova */
+    background-color: #fff;
+    
+    /* AQUI ESTÁ A MÁGICA: A linha verde grossa no Dashboard antigo */
+    border-bottom: 4px solid #2e7d32; 
+    
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+    box-sizing: border-box;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    text-decoration: none;
+}
+
+.header-logo {
+    height: 40px;
+    width: auto;
+}
+
+.header-title {
+    color: #2e7d32;
+    margin: 0;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.header-nav {
+    display: flex;
+    gap: 20px;
+}
+
+.header-nav a {
+    text-decoration: none;
+    color: #555;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: background 0.3s;
+}
+
+.header-nav a:hover {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.header-user-area {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.btn-logout {
+    padding: 6px 15px;
+    font-size: 12px;
+    background-color: #e53935;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: background 0.3s;
+}
+.btn-logout:hover { background-color: #c62828; }
+@media (max-width: 768px) {
+    .header-title { display: none; }
+    .header-nav { display: none; } 
+}
+
+
+/* ==========================================================================
+   6. NAVBAR DO RELATÓRIO (NOVA) - UNIFICADA
+   Esta seção formata a Navbar do Relatórios para ficar igual ao Dashboard
+   ========================================================================== */
+.navbar {
+    background-color: #ffffff;
+    height: 70px; /* Mesma altura */
+    padding: 0 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    
+    /* A Mesma Linha Verde */
+    border-bottom: 4px solid #2e7d32; 
+    
+    position: fixed; 
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    box-sizing: border-box;
+}
+
+.nav-left .brand-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+/* Reutiliza estilos se os nomes de classe baterem, ou define aqui */
+.nav-logo { height: 40px; }
+.nav-brand { display: flex; align-items: center; gap: 10px; font-weight: bold; color: #2e7d32; font-size: 18px; }
+.nav-menu, .nav-right { display: flex; align-items: center; gap: 20px; }
+
+.nav-item, .nav-link {
+    text-decoration: none;
+    color: #555;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: 0.3s;
+}
+
+.nav-item:hover, .nav-item.active,
+.nav-link:hover, .nav-link.active {
+    color: #2e7d32;
+    font-weight: bold;
+}
+
+.user-greeting {
+    margin-right: 15px;
+    font-size: 13px;
+    color: #666;
+}
+.user-greeting strong { color: #333; }
+
+/* Ajuste do container principal para o Relatório */
+.main-container.with-navbar {
+    margin-top: 90px; /* Altura do header (70) + respiro (20) */
+}
+
+
+/* ==========================================================================
+   7. DASHBOARD, CARDS E TABELAS
+   ========================================================================== */
+.stats-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 40px; 
+    flex-wrap: wrap; 
+}
+
+.stat-card {
+    flex: 1; 
+    min-width: 200px;
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    text-align: center;
+    border-left: 5px solid #ccc; 
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover { transform: translateY(-5px); }
+.stat-number { display: block; font-size: 36px; font-weight: bold; color: #333; margin-bottom: 5px; }
+.stat-label { font-size: 14px; color: #666; text-transform: uppercase; font-weight: 600; letter-spacing: 1px; }
+
+/* Cores dos Cards */
+.card-clientes { border-left-color: #4caf50; } .card-clientes .stat-number { color: #4caf50; }
+.card-usuarios { border-left-color: #2e7d32; } .card-usuarios .stat-number { color: #2e7d32; }
+.card-apolices { border-left-color: #ff9800; } .card-apolices .stat-number { color: #ff9800; }
+.card-veiculos { border-left-color: #00897b; } .card-veiculos .stat-number { color: #00897b; }
+
+/* Cards Genéricos */
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+    border-top: 4px solid #2e7d32; 
+}
+
+/* Filtros */
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+/* Botões de Ação Específicos */
+.btn-action {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.3s;
+    width: auto; margin-top: 0;
+}
+.btn-search { background-color: #2e7d32; } 
+.btn-print { background-color: #1565c0; }  
+.btn-clear { background-color: #757575; }  
+.btn-action:hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* Tabela CRUD e Relatórios (Unificadas) */
+.tabela-crud, .report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+.tabela-crud th, .report-table th {
+    background-color: #e8f5e9;
+    color: #1b5e20;
+    padding: 12px;
+    text-align: left;
+    border-bottom: 2px solid #2e7d32;
+}
+.tabela-crud td, .report-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+.tabela-crud tr:hover, .report-table tr:hover { background-color: #f9f9f9; }
+
+/* Botões Pequenos de Tabela */
+.btn-novo { background-color: #4caf50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; }
+.btn-acao { width: auto; padding: 5px 10px; font-size: 12px; margin-right: 5px; border-radius: 4px; display: inline-block; margin-top: 0; }
+.btn-editar { background-color: #ff9800; color: white; }
+.btn-excluir { background-color: #e53935; color: white; }
+
+/* Badges */
+.badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; text-transform: uppercase; display: inline-block; }
+.badge-admin { background-color: #f3e5f5; color: #7b1fa2; border: 1px solid #e1bee7; }
+.badge-operacional { background-color: #e3f2fd; color: #1976d2; border: 1px solid #bbdefb; }
+.status-ativo { background-color: #c8e6c9; color: #2e7d32; }
+.status-pendente { background-color: #fff9c4; color: #fbc02d; }
+.status-cancelado { background-color: #ffcdd2; color: #c62828; }
+
+/* Rodapé Relatórios */
+.report-footer {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 2px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.1em;
+}
+
+/* Rodapé Créditos */
+.system-credits {
+    width: 100%;
+    text-align: right;       
+    margin-top: 25px;       
+    font-size: 11px;         
+    color: #999;            
+    font-weight: 500;
+    letter-spacing: 0.5px;   
+    opacity: 0.8;
+    user-select: none;       
+    padding-bottom: 5px;    
+}
+.system-credits:hover {
+    color: #2e7d32;
+    opacity: 1;
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+/* Modais Customizados */
+.custom-modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 9999; opacity: 0; visibility: hidden; transition: all 0.3s ease;
+}
+.custom-modal-overlay.active { opacity: 1; visibility: visible; }
+.custom-modal-box {
+    background: #ffffff; width: 90%; max-width: 400px; padding: 25px;
+    border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    text-align: center; transform: translateY(-20px); transition: transform 0.3s ease;
+    border-top: 6px solid #4caf50;
+}
+.custom-modal-overlay.active .custom-modal-box { transform: translateY(0); }
+.custom-modal-title { font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #2e7d32; }
+.custom-modal-text { font-size: 16px; color: #555; margin-bottom: 25px; line-height: 1.5; }
+.custom-modal-btn { background-color: #4caf50; color: white; border: none; padding: 12px 30px; font-size: 16px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 0;}
+.custom-modal-box.error { border-top-color: #e53935; }
+.custom-modal-box.error .custom-modal-title { color: #c62828; }
+.custom-modal-box.error .custom-modal-btn { background-color: #e53935; }
+
+/* Barra de Pesquisa (Dashboard) */
+.search-container { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+.search-input {
+    width: 250px; padding: 8px 12px; border: 1px solid #ccc; border-radius: 20px; font-size: 14px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>');
+    background-repeat: no-repeat; background-position: 10px center; padding-left: 35px; transition: width 0.3s ease;
+}
+.search-input:focus { width: 300px; border-color: #4caf50; box-shadow: 0 0 5px rgba(76, 175, 80, 0.2); }
+
+/* --- AJUSTES DE IMPRESSÃO --- */
+@media print {
+    body { background: white; padding: 0; }
+    .navbar, .app-header, .btn-back, .filter-card, .btn-action, .search-container, .btn-novo, .btn-logout, .btn-voltar {
+        display: none !important; 
+    }
+    .card, .container, .main-container {
+        box-shadow: none; border: none; padding: 0; margin: 0; max-width: 100%;
+    }
+    .report-header h1 { color: black; font-size: 24px; }
+    .tabela-crud th, .report-table th {
+        background-color: #ddd !important;
+        color: black !important;
+        -webkit-print-color-adjust: exact;
+    }
+}
+
+/* ==========================================================================
+   CABEÇALHO ESTILO PAINEL (Botão Sair Vermelho)
+   ========================================================================== */
+
+/* Ajuste do corpo para o cabeçalho fixo */
+body {
+    padding-top: 90px; /* Espaço para o topo não cobrir o conteúdo */
+}
+
+.app-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 80px; /* Altura um pouco maior conforme seu print */
+    background-color: #fff;
+    border-bottom: 4px solid #2e7d32; /* A linha verde grossa */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+    box-sizing: border-box;
+    z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* Lado Esquerdo: Logo e Título */
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    text-decoration: none;
+}
+
+.header-logo {
+    height: 45px; /* Logo um pouco maior */
+    width: auto;
+}
+
+.header-title {
+    color: #2e7d32;
+    margin: 0;
+    font-size: 22px;
+    font-weight: bold;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* Centro: Navegação com visual de "Botão Suave" */
+.header-nav {
+    display: flex;
+    gap: 15px;
+}
+
+.header-link {
+    text-decoration: none;
+    color: #555;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 10px 15px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.header-link:hover, .header-link.active {
+    background-color: #e8f5e9; /* Fundo verde bem claro ao passar o mouse */
+    color: #2e7d32;
+}
+
+/* Lado Direito: Usuário e Botão Vermelho */
+.header-user-area {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-size: 13px;
+    line-height: 1.2;
+}
+
+.user-name {
+    font-weight: bold;
+    color: #333;
+}
+
+.user-role {
+    color: #777;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+/* O BOTÃO VERMELHO (SAIR) */
+.btn-logout-panel {
+    background-color: #e53935; /* Vermelho forte */
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background 0.3s;
+    text-decoration: none; /* Caso seja link */
+    display: inline-block;
+    margin-top: 0; /* Remove margem padrão de buttons */
+}
+
+.btn-logout-panel:hover {
+    background-color: #c62828; /* Vermelho mais escuro */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Ajuste para impressão (Esconder cabeçalho) */
+@media print {
+    .app-header { display: none !important; }
+    body { padding-top: 0; }
+}
+
+/* --- CORREÇÃO: NEGRITO DO USUÁRIO --- */
+.user-name {
+    color: #333;
+    font-size: 13px;
+}
+
+/* Força o negrito no nome do usuário especificamente */
+.user-name strong, 
+#user-name-display {
+    font-weight: 800 !important; /* Peso extra para garantir */
+    color: #000; /* Preto absoluto para contraste */
+}
+
+/* --- ATUALIZAÇÃO MENU (Espaçamento) --- */
+.header-nav {
+    display: flex;
+    gap: 10px; /* Ajuste fino do espaço entre os botões */
+}
+
+.header-link {
+    text-decoration: none;
+    color: #555;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 15px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    text-transform: uppercase; /* Deixa em MAIÚSCULO para ficar igual ao botão SAIR */
+}

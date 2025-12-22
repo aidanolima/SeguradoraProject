@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta http-equiv="Content-Security-Policy" 
+    content="default-src 'self'; 
+    connect-src 'self' http://localhost:3000 ws://localhost:3000 https://viacep.com.br; 
+    script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; 
+    style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; 
+    img-src 'self' data:;">
+
+    <title>Relatórios - Gestor Clientes</title>
+    
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="header-brand">
+            <img src="assets/logo.png" alt="Logo" class="header-logo">
+            <h1 class="header-title">Relatórios Gerais</h1>
+        </div>
+
+        <nav class="header-nav">
+            <a href="dashboard.html" class="header-link">
+                <i class="fas fa-arrow-left"></i> Voltar ao Painel
+            </a>
+            <a href="#" class="header-link active">
+                <i class="fas fa-file-alt"></i> Relatórios
+            </a>
+        </nav>
+
+        <div class="header-user-area">
+            <div class="user-info">
+                <span class="user-name">Olá, <span id="user-name-display">Administrador</span></span>
+                <span class="user-role" id="user-role-display">Global (ADMIN)</span>
+            </div>
+            <button id="btn-logout" class="btn-logout-panel">SAIR</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        
+        <div class="card filter-card">
+            <h3><i class="fas fa-filter"></i> Filtros de Pesquisa</h3>
+            <form id="form-filtros" class="filter-grid">
+                
+                <div class="form-group">
+                    <label>Data Início</label>
+                    <input type="date" id="data_inicio">
+                </div>
+
+                <div class="form-group">
+                    <label>Data Fim</label>
+                    <input type="date" id="data_fim">
+                </div>
+
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="status_filtro">
+                        <option value="">Todos</option>
+                        <option value="ativo">Ativo</option>
+                        <option value="pendente">Pendente</option>
+                        <option value="cancelado">Cancelado</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Buscar (Nome/Email)</label>
+                    <input type="text" id="busca_geral" placeholder="Digite para filtrar...">
+                </div>
+            </form>
+
+            <div class="filter-buttons">
+                <button type="button" class="btn-action btn-search" onclick="aplicarFiltros()">
+                    <i class="fas fa-search"></i> Visualizar em Tela
+                </button>
+                <button type="button" class="btn-action btn-print" onclick="window.print()">
+                    <i class="fas fa-print"></i> Imprimir Relatório
+                </button>
+                <button type="button" class="btn-action btn-clear" onclick="limparFiltros()">
+                    <i class="fas fa-eraser"></i> Limpar
+                </button>
+            </div>
+        </div>
+
+        <div class="card results-card">
+            <div class="table-responsive">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente / Nome</th>
+                            <th>E-mail</th>
+                            <th>Data Cadastro</th>
+                            <th>Status</th>
+                            <th>Valor (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-corpo">
+                        </tbody>
+                </table>
+            </div>
+            
+            <div class="report-footer">
+                <span>Registros: <strong id="total-registros">0</strong></span>
+                <span>Total: <strong id="valor-total">R$ 0,00</strong></span>
+            </div>
+        </div>
+
+        <div class="system-credits" style="text-align: center;">
+            By Áidano Lima - ASL TECH
+        </div>
+
+    </div>
+
+    <script src="js/relatorios.js"></script>
+    <script>
+        // Pequeno script extra para garantir que o nome/cargo apareçam corretamente neste layout
+        document.addEventListener('DOMContentLoaded', () => {
+            const nome = localStorage.getItem('usuario_logado');
+            const tipo = localStorage.getItem('tipo_usuario');
+            
+            if(nome) document.getElementById('user-name-display').innerText = nome.split(' ')[0];
+            if(tipo) document.getElementById('user-role-display').innerText = tipo.toUpperCase();
+        });
+    </script>
+</body>
+</html>
