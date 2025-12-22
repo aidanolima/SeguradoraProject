@@ -518,5 +518,11 @@ app.get('/relatorios', authenticateToken, async (req, res) => {
     }
 });
 
+// --- ROTA DE TESTE (RAIZ) ---
+// Isso evita o erro 404 ao acessar https://seguradoraproject.onrender.com/
+app.get('/', (req, res) => {
+    res.status(200).send('API da Seguradora está ONLINE! 🚀');
+});
+
 
 app.listen(port, () => console.log(`🚀 Servidor rodando na porta ${port}`));
