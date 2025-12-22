@@ -1,13 +1,29 @@
-// js/dashboard.js - VERSÃO FINAL CORRIGIDA
+// js/dashboard.js - VERSÃO FINAL PADRONIZADA
 
-// ⚠️ Se estiver no Netlify, use a URL do Render. 
-// Se estiver testando local, mude para http://localhost:3000
+// URL do Backend
 const API_URL = 'https://seguradoraproject.onrender.com';
 
 const token = localStorage.getItem('token');
 
+// Estilo unificado para garantir que <button> e <a> fiquem idênticos
+// Width fixo de 80px para simetria total.
+const btnStyle = `
+    display: inline-block; 
+    width: 80px; 
+    padding: 8px 0; 
+    font-size: 13px; 
+    font-weight: bold; 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    text-align: center; 
+    border-radius: 4px; 
+    border: none; 
+    cursor: pointer; 
+    text-decoration: none; 
+    line-height: normal; 
+    color: white;
+`;
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Verifica se está logado
     if (!token) {
         window.location.href = 'index.html';
         return;
@@ -15,8 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log("🚀 Dashboard iniciado. Conectando em:", API_URL);
 
-    // Carrega todas as tabelas e contadores
-    // Verifica se as funções existem antes de chamar para evitar erros
     if(typeof carregarEstatisticas === 'function') carregarEstatisticas();
     carregarPropostas();
     carregarUsuarios();
@@ -24,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 1. ATUALIZAR CARDS (ESTATÍSTICAS)
+// 1. CARREGAR ESTATÍSTICAS
 // ==========================================
 function atualizarCard(idElemento, valor) {
     const el = document.getElementById(idElemento);
@@ -32,11 +46,11 @@ function atualizarCard(idElemento, valor) {
 }
 
 function carregarEstatisticas() {
-    // Placeholder para lógica futura de stats
+    // Espaço reservado para lógica futura
 }
 
 // ==========================================
-// 2. LISTAR PROPOSTAS (CLIENTES)
+// 2. LISTAR PROPOSTAS (CLIENTES) - ATUALIZADO
 // ==========================================
 async function carregarPropostas() {
     const tbody = document.getElementById('lista-propostas');
@@ -50,7 +64,6 @@ async function carregarPropostas() {
         if (!res.ok) throw new Error('Erro ao buscar propostas');
         
         const lista = await res.json();
-        
         atualizarCard('total-clientes', lista.length);
         atualizarCard('total-veiculos', lista.length); 
 
@@ -68,9 +81,15 @@ async function carregarPropostas() {
                 <td>${p.nome}</td>
                 <td>${p.modelo}</td>
                 <td><strong>${p.placa}</strong></td>
-                <td>
-                    <a href="cadastro.html?id=${p.id}" class="btn-editar">Editar</a>
-                    <button onclick="excluirItem('propostas', ${p.id})" class="btn-excluir">Excluir</button>
+                <td style="text-align: center; white-space: nowrap;">
+                    <a href="cadastro.html?id=${p.id}" 
+                       style="${btnStyle} background-color: #ffa000; margin-right: 5px;">
+                       Editar
+                    </a>
+                    <button onclick="excluirItem('propostas', ${p.id})" 
+                            style="${btnStyle} background-color: #d32f2f;">
+                        Excluir
+                    </button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -82,7 +101,7 @@ async function carregarPropostas() {
 }
 
 // ==========================================
-// 3. LISTAR USUÁRIOS (BOTÕES IDÊNTICOS)
+// 3. LISTAR USUÁRIOS - ATUALIZADO
 // ==========================================
 async function carregarUsuarios() {
     const tbody = document.getElementById('lista-usuarios');
@@ -106,9 +125,6 @@ async function carregarUsuarios() {
 
         tbody.innerHTML = '';
 
-        // Estilo CSS em linha única para evitar erros de quebra de linha no HTML
-        const btnStyle = "display: inline-block; width: 80px; padding: 8px 0; font-size: 13px; font-weight: bold; font-family: sans-serif; text-align: center; border-radius: 4px; border: none; cursor: pointer; text-decoration: none; line-height: normal; color: white;";
-
         lista.forEach(u => {
             const tr = document.createElement('tr');
             
@@ -125,7 +141,6 @@ async function carregarUsuarios() {
                        style="${btnStyle} background-color: #ffa000; margin-right: 5px;">
                        Editar
                     </a>
-
                     <button onclick="excluirItem('usuarios', ${u.id})" 
                             style="${btnStyle} background-color: #d32f2f;">
                         Excluir
@@ -137,12 +152,11 @@ async function carregarUsuarios() {
 
     } catch (error) {
         console.error('Erro Usuários:', error);
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Erro ao carregar usuários.</td></tr>';
     }
 }
 
 // ==========================================
-// 4. LISTAR APÓLICES
+// 4. LISTAR APÓLICES - ATUALIZADO
 // ==========================================
 async function carregarApolices() {
     const tbody = document.getElementById('lista-apolices');
@@ -167,7 +181,6 @@ async function carregarApolices() {
 
         lista.forEach(a => {
             const tr = document.createElement('tr');
-            // Tratamento de segurança para valores nulos
             const premio = a.premio_total ? parseFloat(a.premio_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00';
             const vigencia = a.vigencia_fim ? new Date(a.vigencia_fim).toLocaleDateString('pt-BR') : '-';
 
@@ -177,9 +190,15 @@ async function carregarApolices() {
                 <td>${a.placa || '-'}</td>
                 <td>${vigencia}</td>
                 <td>${premio}</td>
-                <td>
-                    <a href="apolice.html?id=${a.id}" class="btn-editar">Editar</a>
-                    <button onclick="excluirItem('apolices', ${a.id})" class="btn-excluir">Excluir</button>
+                <td style="text-align: center; white-space: nowrap;">
+                    <a href="apolice.html?id=${a.id}" 
+                       style="${btnStyle} background-color: #ffa000; margin-right: 5px;">
+                       Editar
+                    </a>
+                    <button onclick="excluirItem('apolices', ${a.id})" 
+                            style="${btnStyle} background-color: #d32f2f;">
+                        Excluir
+                    </button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -200,13 +219,11 @@ function excluirItem(tipo, id) {
     idParaExcluir = id;
     tipoParaExcluir = tipo;
     
-    // Tenta usar o modal se existir, senão usa confirm nativo
     const modal = document.getElementById('modal-confirmacao');
     
     if(modal) {
         modal.style.display = 'flex';
         const btnConfirm = document.getElementById('btn-confirmar-modal');
-        // Clona para remover eventos anteriores
         const novoBtn = btnConfirm.cloneNode(true);
         btnConfirm.parentNode.replaceChild(novoBtn, btnConfirm);
         novoBtn.addEventListener('click', confirmarExclusao);
@@ -227,11 +244,9 @@ async function confirmarExclusao() {
         });
 
         if (res.ok) {
-            // Fecha modal se existir
             const modal = document.getElementById('modal-confirmacao');
             if(modal) modal.style.display = 'none';
             
-            // Recarrega a lista correta
             if (tipoParaExcluir === 'propostas') carregarPropostas();
             if (tipoParaExcluir === 'usuarios') carregarUsuarios();
             if (tipoParaExcluir === 'apolices') carregarApolices();
@@ -246,7 +261,6 @@ async function confirmarExclusao() {
     }
 }
 
-// Fecha modal ao clicar fora (se existir)
 window.onclick = function(event) {
     const modal = document.getElementById('modal-confirmacao');
     if (event.target == modal) {
