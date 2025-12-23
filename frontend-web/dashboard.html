@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor Clientes e Apólices - Painel</title>
     
     <meta http-equiv="Content-Security-Policy" 
     content="default-src * 'self' blob: data: gap:; 
@@ -10,208 +11,35 @@
     script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; 
     object-src * 'self' blob: data: gap:; 
     img-src * 'self' 'unsafe-inline' blob: data: gap:; 
-    connect-src 'self' * 'unsafe-inline' blob: data: gap:; 
+    connect-src 'self' https://seguradoraproject.onrender.com * 'unsafe-inline' blob: data: gap:; 
     font-src 'self' data: https://cdnjs.cloudflare.com; 
     frame-src * 'self' blob: data: gap:;">
     
     <link rel="icon" href="assets/logo.png" type="image/png">
-    <title>Gestor Clientes e Apólices - Painel</title>
     
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         /* Container flexível com espaçamento garantido */
         .stats-container {
             display: flex;
             justify-content: space-between;
-            gap: 25px; /* Aumentei o espaço entre eles */
-            flex-wrap: wrap; /* Permite quebrar linha em telas menores */
-            padding-right: 5px; /* Margem de segurança na direita */
+            gap: 25px;
+            flex-wrap: wrap;
+            padding-right: 5px;
         }
-
-        /* Cards elásticos e bonitos */
+        /* Cards elásticos */
         .stat-card {
-            flex: 1; /* Faz todos crescerem igualmente */
-            min-width: 220px; /* Tamanho mínimo para não ficar esmagado */
-            margin-bottom: 0; /* O gap do container cuida do espaço */
+            flex: 1;
+            min-width: 220px;
+            margin-bottom: 0;
         }
     </style>
 </head>
 <body class="dashboard-body">
-    
-    <header class="app-header">
-        <div class="header-brand">
-            <a href="dashboard.html">
-                <img src="assets/logo.png" alt="Logo" class="header-logo">
-            </a>
-        </div>
-
-        <nav class="header-nav">
-            <a href="dashboard.html" class="header-link active">PROPOSTAS</a>
-            <a href="apolice.html" class="header-link">APÓLICES</a>
-            <a href="registro.html?origin=dashboard" class="header-link">USUÁRIOS</a>
-            <a href="relatorios.html" class="header-link">RELATÓRIOS</a>
-        </nav>
-
-        <div class="header-user-area">
-            <div class="user-info">
-                <span class="user-name">Olá, <strong id="user-name-display">...</strong></span>
-                <span class="user-role" id="user-role-display">...</span>
-            </div>
-            <button id="btn-logout" class="btn-logout-panel">SAIR</button>
-        </div>
-    </header>
-
-    <div class="main-container">
-        
-        <div class="stats-container">
-            <div class="stat-card card-clientes">
-                <span class="stat-number" id="total-clientes">0</span>
-                <span class="stat-label">Clientes Ativos</span>
-            </div>
-            
-            <div class="stat-card card-veiculos">
-                <span class="stat-number" id="total-veiculos">0</span>
-                <span class="stat-label">Veículos Cadastrados</span>
-            </div>
-
-            <div class="stat-card card-apolices">
-                <span class="stat-number" id="total-apolices">0</span>
-                <span class="stat-label">Apólices Emitidas</span>
-            </div>
-
-            <div class="stat-card card-usuarios" id="card-stats-usuarios">
-                <span class="stat-number" id="total-usuarios">0</span>
-                <span class="stat-label">Usuários do Sistema</span>
-            </div>
-        </div>
-
-        <div class="card">
-            <div style="margin-bottom: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="color: #444; border-left: 5px solid #4caf50; padding-left: 10px; margin: 0;">Gestão de Clientes</h3>
-                    <a href="cadastro.html" class="btn-novo" style="background-color: #4caf50;">+ Nova Proposta</a>
-                </div>
-
-                <div class="search-container">
-                    <input type="text" id="busca-proposta" class="search-input" placeholder="Buscar cliente, placa ou modelo...">
-                </div>
-
-                <div style="overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 8px;">
-                    <table class="tabela-crud">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Cliente</th>
-                                <th>Veículo</th>
-                                <th>Placa</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="lista-propostas"> </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="card" id="secao-usuarios">
-            <div style="margin-bottom: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="color: #444; border-left: 5px solid #2e7d32; padding-left: 10px; margin: 0;">Gestão de Usuários </h3>
-                    <a href="registro.html?origin=dashboard" class="btn-novo" style="background-color: #2e7d32;">+ Novo Usuário</a>
-                </div>
-
-                <div class="search-container">
-                    <input type="text" id="busca-usuario" class="search-input" placeholder="Buscar por nome ou e-mail...">
-                </div>
-
-                <div style="overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 8px;">
-                    <table class="tabela-crud">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nome</th>
-                                <th>E-mail</th>
-                                <th>Perfil</th>
-                                <th style="text-align: center;">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="lista-usuarios">
-                            <tr><td colspan="5" style="text-align:center;">Carregando...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="color: #444; border-left: 5px solid #ff9800; padding-left: 10px; margin: 0;">Gestão de Apólices</h3>
-                    <a href="apolice.html" class="btn-novo" style="background-color: #ff9800;">+ Nova Apólice</a>
-                </div>
-
-                <div class="search-container">
-                    <input type="text" id="busca-apolice" class="search-input" placeholder="Buscar por Nº Apólice...">
-                </div>
-
-                <div style="overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 8px;">
-                    <table class="tabela-crud">
-                        <thead>
-                            <tr>
-                                <th>Nº Apólice</th>
-                                <th>Cliente</th>
-                                <th>Placa</th>
-                                <th>Vigência Fim</th>
-                                <th>Prêmio</th>
-                                <th>Ações</th> 
-                            </tr>
-                        </thead>
-                        <tbody id="lista-apolices"> </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        
-        <div class="system-credits" style="text-align: center;">
-            By Áidano Lima - ASL TECH
-        </div>
-
-    </div> 
-    
-    <script src="js/modal.js"></script>
     <script src="js/dashboard.js"></script>
-    
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Nome do Usuário
-            const nome = localStorage.getItem('usuario_logado');
-            const tipo = localStorage.getItem('tipo_usuario');
-            if (nome) document.getElementById('user-name-display').innerText = nome.split(' ')[0];
-            if (tipo) document.getElementById('user-role-display').innerText = tipo.toUpperCase();
-
-            // Botão Sair
-            const btnSair = document.getElementById('btn-logout');
-            if (btnSair) {
-                btnSair.addEventListener('click', function() {
-                    localStorage.clear();
-                    window.location.href = 'index.html';
-                });
-            }
-        });
-    </script>
-    
-    <div id="modal-confirmacao" class="custom-modal-overlay">
-        <div class="custom-modal-box">
-            <h3 class="custom-modal-title">Confirmação</h3>
-            <p id="texto-modal" class="custom-modal-text">Tem certeza que deseja excluir?</p>
-            <div style="display: flex; justify-content: center; gap: 15px;">
-                <button onclick="fecharModal()" style="background: #e0e0e0; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; color: #333;">Cancelar</button>
-                <button id="btn-confirmar-modal" style="background: #e53935; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;">Sim, Excluir</button>
-            </div>
-        </div>
-    </div>
-
 </body>
 </html>
