@@ -529,5 +529,38 @@ app.get('/', (req, res) => {
     res.status(200).send('✅ API Seguradora funcionando 100%!');
 });
 
+// ROTA PARA BAIXAR PDF
+// Adicione isso no server.js
+const path = require('path');
+const fs = require('fs');
+
+app.get('/apolices/:id/pdf', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        // 1. Descobre o nome do arquivo no banco
+        const result = await pool.query('SELECT arquivo_pdf FROM apolices WHERE id = $1', [id]);
+        
+        if (result.rows.length === 0 || !result.rows[0].arquivo_pdf) {
+            return res.status(404).json({ message: 'Apólice não possui PDF vinculado.' });
+        }
+
+        const filename = result.rows[0].arquivo_pdf;
+        // 2. Monta o caminho completo (ajuste 'uploads' se sua pasta tiver outro nome)
+        const filePath = path.join(__dirname, 'uploads', filename);
+
+        // 3. Verifica se o arquivo existe fisicamente
+        if (fs.existsSync(filePath)) {
+            // Envia o arquivo para o navegador
+            res.sendFile(filePath);
+        } else {
+            console.error("Arquivo físico não encontrado:", filePath);
+            res.status(404).json({ message: 'Arquivo não encontrado no servidor (Pode ter sido apagado pelo Render Free Tier).' });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erro ao buscar PDF.' });
+    }
+});
+
 
 app.listen(port, () => console.log(`🚀 Servidor rodando na porta ${port}`));
