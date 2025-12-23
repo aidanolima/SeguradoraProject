@@ -1,9 +1,9 @@
-// js/dashboard.js - VERSÃO COM MODAL AUTOMÁTICO (CORREÇÃO VISUAL)
+// js/dashboard.js - VERSÃO "FORÇA BRUTA" (CORREÇÃO DE MODAL)
 
 const API_URL = 'https://seguradoraproject.onrender.com';
 const token = localStorage.getItem('token');
 
-// Estilos dos Botões (Layout Vertical)
+// Estilos dos Botões
 const btnBaseStyle = `
     display: block; width: 100px; padding: 6px 0; margin: 0 auto 5px auto;    
     font-size: 11px; font-weight: bold; font-family: sans-serif; text-align: center; 
@@ -18,6 +18,10 @@ const styleExcluir= `${btnBaseStyle} background-color: #d9534f;`;
 document.addEventListener('DOMContentLoaded', () => {
     if (!token) { window.location.href = 'index.html'; return; }
     console.log("🚀 Dashboard carregado.");
+
+    // Remove qualquer modal antigo que possa estar no HTML atrapalhando
+    const modalVelho = document.getElementById('modal-confirmacao');
+    if (modalVelho) modalVelho.remove();
 
     if(typeof carregarEstatisticas === 'function') carregarEstatisticas();
     carregarPropostas();
@@ -136,110 +140,97 @@ async function visualizarPDF(id) {
     } catch (e) { if(win) win.close(); alert("Erro ao baixar PDF."); }
 }
 
-
 // ==========================================
-// 5. SISTEMA DE EXCLUSÃO (CORRIGIDO E GARANTIDO)
+// 5. SISTEMA DE EXCLUSÃO (LIMPEZA TOTAL)
 // ==========================================
 let idParaExcluir = null;
 let tipoParaExcluir = null;
 
-// Função para INJETAR O HTML DO MODAL SE NÃO EXISTIR
-function criarModalDinamicamente() {
-    // Se já existe, não faz nada
-    if (document.getElementById('modal-confirmacao')) return;
+// Função para CRIAR o Modal DO ZERO
+function garantirModalExiste() {
+    // 1. Remove qualquer modal existente para evitar conflitos de ID ou clones quebrados
+    const antigo = document.getElementById('modal-confirmacao');
+    if (antigo) antigo.remove();
 
+    // 2. Cria o HTML novo
     const modalHTML = `
-        <div id="modal-confirmacao" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999; justify-content:center; align-items:center;">
-            <div style="background:white; padding:25px; border-radius:8px; width:320px; text-align:center; box-shadow:0 5px 15px rgba(0,0,0,0.3);">
+        <div id="modal-confirmacao" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:999999; justify-content:center; align-items:center;">
+            <div style="background:white; padding:30px; border-radius:8px; width:300px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
                 <h3 style="margin-top:0; color:#333; font-family:sans-serif;">Confirmação</h3>
-                <p id="texto-modal" style="color:#666; font-family:sans-serif; margin:15px 0;">Tem certeza que deseja excluir?</p>
-                <div style="display:flex; justify-content:center; gap:10px; margin-top:20px;">
-                    <button onclick="fecharModal()" style="padding:10px 20px; border:none; background:#e0e0e0; cursor:pointer; border-radius:4px; font-weight:bold; color:#333;">Cancelar</button>
-                    <button id="btn-confirmar-modal" style="padding:10px 20px; border:none; background:#d32f2f; color:white; font-weight:bold; cursor:pointer; border-radius:4px;">Sim, Excluir</button>
+                <p id="texto-modal" style="color:#555; font-family:sans-serif; margin:20px 0; font-size:14px;">Tem certeza que deseja excluir?</p>
+                <div style="display:flex; justify-content:center; gap:15px;">
+                    <button onclick="fecharModal()" style="padding:10px 20px; border:none; background:#ccc; cursor:pointer; border-radius:4px; font-weight:bold; color:#333;">Cancelar</button>
+                    <button id="btn-confirmar-modal" style="padding:10px 20px; border:none; background:#d32f2f; color:white; font-weight:bold; cursor:pointer; border-radius:4px;">EXCLUIR AGORA</button>
                 </div>
             </div>
         </div>
     `;
+    
+    // 3. Insere no final do corpo da página
     document.body.insertAdjacentHTML('beforeend', modalHTML);
-    console.log("[DEBUG] Modal criado dinamicamente no HTML.");
 }
 
-// Torna global para o HTML acessar
+// Função chamada pelo botão da tabela
 window.prepararExclusao = function(tipo, id) {
-    console.log(`[DEBUG] Preparando exclusão: Tipo=${tipo}, ID=${id}`);
+    console.log(`[DEBUG] Botão clicado: ${tipo} #${id}`);
     
-    // 1. Garante que o modal existe
-    criarModalDinamicamente();
-
     idParaExcluir = id;
     tipoParaExcluir = tipo;
     
+    // Recria o modal limpo
+    garantirModalExiste();
+
     const modal = document.getElementById('modal-confirmacao');
-    const btnConfirm = document.getElementById('btn-confirmar-modal');
+    const btnSim = document.getElementById('btn-confirmar-modal');
+    const texto = document.getElementById('texto-modal');
+
+    // Atualiza texto e evento
+    texto.innerText = `Você vai apagar o item #${id} (${tipo.toUpperCase()}). Confirmar?`;
     
-    if(modal && btnConfirm) {
-        // Texto dinâmico
-        const textoModal = document.getElementById('texto-modal');
-        if(textoModal) textoModal.innerText = `Deseja excluir o item #${id}? Ação irreversível.`;
+    btnSim.onclick = function() {
+        console.log("[DEBUG] Usuário confirmou exclusão.");
+        executarExclusaoAPI();
+    };
 
-        // Atribui o clique
-        btnConfirm.onclick = function() {
-            console.log("[DEBUG] Botão SIM clicado.");
-            executarExclusaoAPI();
-        };
-
-        // Mostra o modal (forçando Flex para garantir visibilidade)
-        modal.style.display = 'flex';
-    } else {
-        // Fallback extremo
-        if(confirm(`Confirmar exclusão do ${tipo} ID ${id}?`)) {
-            executarExclusaoAPI();
-        }
-    }
+    // Força a exibição
+    modal.style.display = 'flex';
 }
 
 async function executarExclusaoAPI() {
-    console.log(`[DEBUG] Disparando DELETE para API...`);
-    
-    // Fecha visualmente
-    const modal = document.getElementById('modal-confirmacao');
-    if(modal) modal.style.display = 'none';
+    // Fecha modal
+    fecharModal();
+
+    console.log(`[DEBUG] Enviando DELETE...`);
 
     try {
-        if(typeof Swal !== 'undefined') Swal.fire({title: 'Excluindo...', didOpen: () => Swal.showLoading()});
+        // Feedback visual simples
+        if(typeof Swal !== 'undefined') Swal.fire({title: 'Processando...', didOpen: () => Swal.showLoading()});
 
         const res = await fetch(`${API_URL}/${tipoParaExcluir}/${idParaExcluir}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        console.log(`[DEBUG] Resposta API Status: ${res.status}`);
-
         if (res.ok) {
+            console.log("[DEBUG] Sucesso na exclusão.");
             if(typeof Swal !== 'undefined') Swal.fire('Sucesso', 'Item excluído!', 'success');
-            else alert('Excluído com sucesso.');
+            else alert('Item excluído com sucesso!');
             
-            // Recarrega a lista
+            // Atualiza tabelas
             if(tipoParaExcluir === 'propostas') carregarPropostas();
             if(tipoParaExcluir === 'usuarios') carregarUsuarios();
             if(tipoParaExcluir === 'apolices') carregarApolices();
         } else {
-            const err = await res.json();
-            if(typeof Swal !== 'undefined') Swal.fire('Erro', err.message || 'Falha ao excluir.', 'error');
-            else alert('Erro: ' + err.message);
+            console.error("[DEBUG] Erro API:", res.status);
+            alert('Erro ao excluir. Verifique se existem vínculos (ex: apólices).');
         }
     } catch (error) {
-        console.error("[DEBUG] Erro de Rede:", error);
+        console.error("[DEBUG] Erro Rede:", error);
         alert('Erro de conexão.');
     }
 }
 
 window.fecharModal = function() {
     const modal = document.getElementById('modal-confirmacao');
-    if(modal) modal.style.display = 'none';
-}
-
-window.onclick = function(event) {
-    const modal = document.getElementById('modal-confirmacao');
-    if (event.target == modal) modal.style.display = "none";
+    if (modal) modal.remove(); // Remove o modal do DOM para limpar tudo
 }
