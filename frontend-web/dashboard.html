@@ -7,10 +7,10 @@
     <meta http-equiv="Content-Security-Policy" 
     content="default-src * 'self' blob: data: gap:; 
     style-src * 'self' 'unsafe-inline' blob: data: gap:; 
-    script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; 
+    script-src * 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net blob: data: gap:; 
     object-src * 'self' blob: data: gap:; 
     img-src * 'self' 'unsafe-inline' blob: data: gap:; 
-    connect-src 'self' * 'unsafe-inline' blob: data: gap:; 
+    connect-src 'self' https://seguradoraproject.onrender.com * 'unsafe-inline' blob: data: gap:; 
     font-src 'self' data: https://cdnjs.cloudflare.com; 
     frame-src * 'self' blob: data: gap:;">
     
@@ -19,6 +19,8 @@
     
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         /* Container flexível com espaçamento garantido */
@@ -180,7 +182,6 @@
 
     </div> 
     
-    <script src="js/modal.js"></script>
     <script src="js/dashboard.js"></script>
     
     <script>
@@ -202,16 +203,5 @@
         });
     </script>
     
-    <div id="modal-confirmacao" class="custom-modal-overlay">
-        <div class="custom-modal-box">
-            <h3 class="custom-modal-title">Confirmação</h3>
-            <p id="texto-modal" class="custom-modal-text">Tem certeza que deseja excluir?</p>
-            <div style="display: flex; justify-content: center; gap: 15px;">
-                <button onclick="fecharModal()" style="background: #e0e0e0; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; color: #333;">Cancelar</button>
-                <button id="btn-confirmar-modal" style="background: #e53935; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;">Sim, Excluir</button>
-            </div>
-        </div>
-    </div>
-
-</body>
+    </body>
 </html>
