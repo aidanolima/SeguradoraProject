@@ -1,22 +1,49 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <meta http-equiv="Content-Security-Policy" 
     content="default-src * 'self' blob: data: gap:; 
     style-src * 'self' 'unsafe-inline' blob: data: gap:; 
-    script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; 
+    script-src * 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net blob: data: gap:; 
     object-src * 'self' blob: data: gap:; 
     img-src * 'self' 'unsafe-inline' blob: data: gap:; 
-    connect-src 'self' * 'unsafe-inline' blob: data: gap:; 
+    connect-src 'self' https://seguradoraproject.onrender.com * 'unsafe-inline' blob: data: gap:; 
     font-src 'self' data: https://cdnjs.cloudflare.com; 
     frame-src * 'self' blob: data: gap:;">
 
     <link rel="icon" href="assets/logo.png" type="image/png" sizes="32x32">
     <link rel="icon" href="assets/logo.png" type="image/png" sizes="192x192">
     <link rel="apple-touch-icon" href="assets/logo.png">
+    
     <title>Gestor Clientes e Apólices - Login</title>
     
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        /* Estilo específico para o ícone de olho na senha */
+        .password-container {
+            position: relative;
+        }
+        .btn-eye {
+            position: absolute;
+            right: 15px;
+            top: 42px; /* Ajuste conforme a altura do seu label */
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            font-size: 16px;
+        }
+        .btn-eye:hover {
+            color: #2e7d32;
+        }
+    </style>
 </head>
 
 <body class="login-body">
@@ -24,45 +51,45 @@
     <div class="login-container">
         
         <div class="login-header">
-            <img src="assets/logo.png" alt="Logotipo Tokio Marine" class="logo-sistema">
+            <img src="assets/logo.png" alt="Logotipo" class="logo-sistema">
             <h1>Gestor Clientes e Apólices</h1>
             <p>Acesse sua conta para continuar</p>
         </div>
 
-        <form id="loginForm" onsubmit="fazerLogin(event)">
-    <div class="input-group">
-        <label for="email">E-mail</label>
-        <input type="email" id="email" placeholder="seu@email.com" required>
-    </div>
-    
-    <div class="input-group">
-        <label for="senha">Senha</label>
-        <input type="password" id="senha" placeholder="••••••••" required>
-    </div>
+        <form id="form-login">
+            <div class="input-group">
+                <label for="email_login">E-mail</label>
+                <input type="email" id="email_login" placeholder="seu@email.com" required>
+            </div>
+            
+            <div class="input-group password-container">
+                <label for="senha_login">Senha</label>
+                <input type="password" id="senha_login" placeholder="••••••••" required style="padding-right: 40px;">
+                
+                <button type="button" id="btn-toggle-senha" class="btn-eye">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
 
-    <div style="text-align: right; margin-bottom: 20px;">
-        <a href="recuperar.html" style="color: #2e7d32; font-size: 12px; text-decoration: none;">
-            Esqueceu a senha?
-        </a>
-    </div>
+            <div style="text-align: right; margin-bottom: 20px;">
+                <a href="recuperar.html" style="color: #2e7d32; font-size: 12px; text-decoration: none;">
+                    Esqueceu a senha?
+                </a>
+            </div>
 
-    <button type="submit" class="btn-login">ACESSAR SISTEMA</button>
-</form>
+            <button type="submit" class="btn-login">ACESSAR SISTEMA</button>
+        </form>
 
-<div class="login-footer" style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px; font-size: 13px; color: #666;">
-    <p>Não tem acesso?</p>
-    <p>Solicite a criação da sua conta ao <strong>Administrador</strong>.</p>
-</div>
-
-        <div style="margin-top: 20px; font-size: 14px;">
-            Não tem acesso? <a href="registro.html" style="color: #4caf50; font-weight: bold;">Crie sua conta</a>
+        <div class="login-footer" style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px; font-size: 13px; color: #666;">
+            <p>Não tem acesso?</p>
+            <p>Solicite a criação da sua conta ao <strong>Administrador</strong>.</p>
         </div>
 
         <div class="system-credits">
             By Áidano Lima - ASL TECH
         </div>
-        </div> 
-        
-        <script src="js/modal.js"></script>
-        <script src="js/auth.js"></script>
+    </div> 
+    
+    <script src="js/auth.js"></script>
 </body>
+</html>
