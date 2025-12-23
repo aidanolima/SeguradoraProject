@@ -1,15 +1,35 @@
-// js/dashboard.js - VERSÃO COM PDF FUNCIONAL
+// js/dashboard.js - VERSÃO FINAL (LAYOUT VERTICAL - PADRÃO LOCAL)
 
 const API_URL = 'https://seguradoraproject.onrender.com';
 const token = localStorage.getItem('token');
 
-// Estilo dos botões
-const btnStyle = `
-    display: inline-block; width: 80px; padding: 8px 0; font-size: 13px; font-weight: bold; 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    text-align: center; border-radius: 4px; border: none; cursor: pointer; 
-    text-decoration: none; line-height: normal; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+// ------------------------------------------------------------------
+// ESTILOS DOS BOTÕES (BASE + CORES)
+// Configurados para ficarem um abaixo do outro (display: block)
+// ------------------------------------------------------------------
+const btnBaseStyle = `
+    display: block;             /* Força um por linha */
+    width: 100px;               /* Largura fixa padrão */
+    padding: 6px 0; 
+    margin: 0 auto 5px auto;    /* Centraliza e dá espaço inferior */
+    font-size: 11px; 
+    font-weight: bold; 
+    font-family: sans-serif;
+    text-align: center; 
+    border-radius: 4px; 
+    border: none; 
+    cursor: pointer; 
+    text-decoration: none; 
+    line-height: normal; 
+    color: white;
+    text-transform: uppercase;  /* Texto em MAIÚSCULO */
+    box-shadow: 0 2px 3px rgba(0,0,0,0.2);
 `;
+
+// Cores Específicas conforme sua imagem
+const stylePDF    = `${btnBaseStyle} background-color: #007bff;`; // Azul
+const styleEditar = `${btnBaseStyle} background-color: #f0ad4e;`; // Laranja
+const styleExcluir= `${btnBaseStyle} background-color: #d9534f;`; // Vermelho
 
 document.addEventListener('DOMContentLoaded', () => {
     if (!token) { window.location.href = 'index.html'; return; }
@@ -28,138 +48,200 @@ function atualizarCard(idElemento, valor) {
 }
 function carregarEstatisticas() {}
 
-// 2. PROPOSTAS
+// 2. PROPOSTAS (EDITAR + EXCLUIR)
 async function carregarPropostas() {
     const tbody = document.getElementById('lista-propostas');
     if(!tbody) return;
+
     try {
         const res = await fetch(`${API_URL}/propostas`, { headers: { 'Authorization': `Bearer ${token}` } });
         const lista = await res.json();
+        
         atualizarCard('total-clientes', lista.length);
         atualizarCard('total-veiculos', lista.length); 
+
         tbody.innerHTML = '';
         if (lista.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Nenhum registro.</td></tr>'; return;
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Nenhum cliente cadastrado.</td></tr>'; return;
         }
+
         lista.forEach(p => {
             const tr = document.createElement('tr');
+            // Alinhamento vertical no meio (vertical-align: middle) para ficar bonito
             tr.innerHTML = `
-                <td>${p.id}</td><td>${p.nome}</td><td>${p.modelo}</td><td><strong>${p.placa}</strong></td>
-                <td style="text-align: center; white-space: nowrap;">
-                    <a href="cadastro.html?id=${p.id}" style="${btnStyle} background-color: #2e7d32; margin-right: 5px;">Editar</a>
-                    <button onclick="excluirItem('propostas', ${p.id})" style="${btnStyle} background-color: #d32f2f;">Excluir</button>
-                </td>`;
+                <td style="vertical-align: middle;">${p.id}</td>
+                <td style="vertical-align: middle;">${p.nome}</td>
+                <td style="vertical-align: middle;">${p.modelo}</td>
+                <td style="vertical-align: middle;"><strong>${p.placa}</strong></td>
+                <td style="vertical-align: middle; padding: 10px;">
+                    <a href="cadastro.html?id=${p.id}" style="${styleEditar}">EDITAR</a>
+                    <button onclick="excluirItem('propostas', ${p.id})" style="${styleExcluir}">EXCLUIR</button>
+                </td>
+            `;
             tbody.appendChild(tr);
         });
-    } catch (e) { console.error(e); }
+    } catch (error) { console.error(error); }
 }
 
-// 3. USUÁRIOS
+// 3. USUÁRIOS (EDITAR + EXCLUIR)
 async function carregarUsuarios() {
     const tbody = document.getElementById('lista-usuarios');
     if(!tbody) return; 
+
     try {
         const res = await fetch(`${API_URL}/usuarios`, { headers: { 'Authorization': `Bearer ${token}` } });
-        if (!res.ok) { if (res.status === 403) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:red">Acesso restrito.</td></tr>'; return; }
+        if (!res.ok) { 
+            if (res.status === 403) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red">Acesso restrito.</td></tr>'; 
+            return; 
+        }
         const lista = await res.json();
         atualizarCard('total-usuarios', lista.length);
+
         tbody.innerHTML = '';
         lista.forEach(u => {
             const tr = document.createElement('tr');
-            const badge = u.tipo === 'admin' ? 'badge-admin' : 'badge-user';
+            const badgeClass = u.tipo === 'admin' ? 'badge-admin' : 'badge-user';
+            
             tr.innerHTML = `
-                <td>${u.id}</td><td>${u.nome}</td><td>${u.email}</td>
-                <td><span class="badge ${badge}">${u.tipo.toUpperCase()}</span></td>
-                <td style="text-align: center; white-space: nowrap;">
-                    <a href="registro.html?id=${u.id}&origin=dashboard" style="${btnStyle} background-color: #2e7d32; margin-right: 5px;">Editar</a>
-                    <button onclick="excluirItem('usuarios', ${u.id})" style="${btnStyle} background-color: #d32f2f;">Excluir</button>
-                </td>`;
+                <td style="vertical-align: middle;">${u.id}</td>
+                <td style="vertical-align: middle;">${u.nome}</td>
+                <td style="vertical-align: middle;">${u.email}</td>
+                <td style="vertical-align: middle;"><span class="badge ${badgeClass}">${u.tipo.toUpperCase()}</span></td>
+                <td style="vertical-align: middle; padding: 10px;">
+                    <a href="registro.html?id=${u.id}&origin=dashboard" style="${styleEditar}">EDITAR</a>
+                    <button onclick="excluirItem('usuarios', ${u.id})" style="${styleExcluir}">EXCLUIR</button>
+                </td>
+            `;
             tbody.appendChild(tr);
         });
-    } catch (e) { console.error(e); }
+    } catch (error) { console.error(error); }
 }
 
-// 4. APÓLICES (COM LÓGICA DE PDF CORRIGIDA)
+// 4. APÓLICES (PDF + EDITAR + EXCLUIR)
 async function carregarApolices() {
     const tbody = document.getElementById('lista-apolices');
     if(!tbody) return;
+
     try {
         const res = await fetch(`${API_URL}/apolices`, { headers: { 'Authorization': `Bearer ${token}` } });
         const lista = await res.json();
         atualizarCard('total-apolices', lista.length);
+
         tbody.innerHTML = '';
         if (lista.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Nenhuma apólice.</td></tr>'; return;
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">Nenhuma apólice emitida.</td></tr>'; return;
         }
+
         lista.forEach(a => {
             const tr = document.createElement('tr');
             const premio = a.premio_total ? parseFloat(a.premio_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00';
             const vigencia = a.vigencia_fim ? new Date(a.vigencia_fim).toLocaleDateString('pt-BR') : '-';
-
-            // Verifica se existe arquivo vinculado para habilitar/desabilitar botão
-            const temPdf = a.arquivo_pdf ? '' : 'opacity: 0.5; cursor: not-allowed;';
+            
+            // Controle do botão PDF
+            const temPdf = a.arquivo_pdf ? '' : 'opacity: 0.6; cursor: not-allowed; background-color: #6c757d;';
             const clickAction = a.arquivo_pdf ? `onclick="visualizarPDF(${a.id})"` : '';
 
             tr.innerHTML = `
-                <td>${a.numero_apolice || 'S/N'}</td>
-                <td>${a.cliente || 'Desconhecido'}</td>
-                <td>${a.placa || '-'}</td>
-                <td>${vigencia}</td>
-                <td>${premio}</td>
-                <td style="text-align: center; white-space: nowrap;">
-                    <button ${clickAction} style="${btnStyle} background-color: #1976d2; margin-right: 5px; ${temPdf}">PDF</button>
-                    <a href="apolice.html?id=${a.id}" style="${btnStyle} background-color: #2e7d32; margin-right: 5px;">Editar</a>
-                    <button onclick="excluirItem('apolices', ${a.id})" style="${btnStyle} background-color: #d32f2f;">Excluir</button>
-                </td>`;
+                <td style="vertical-align: middle;">${a.numero_apolice || 'S/N'}</td>
+                <td style="vertical-align: middle;">${a.cliente || 'Desconhecido'}</td>
+                <td style="vertical-align: middle;">${a.placa || '-'}</td>
+                <td style="vertical-align: middle;">${vigencia}</td>
+                <td style="vertical-align: middle;">${premio}</td>
+                <td style="vertical-align: middle; padding: 10px;">
+                    <button ${clickAction} style="${stylePDF} ${temPdf}">PDF</button>
+                    <a href="apolice.html?id=${a.id}" style="${styleEditar}">EDITAR</a>
+                    <button onclick="excluirItem('apolices', ${a.id})" style="${styleExcluir}">EXCLUIR</button>
+                </td>
+            `;
             tbody.appendChild(tr);
         });
-    } catch (e) { console.error(e); }
+    } catch (error) { console.error(error); }
 }
 
 // ==========================================
-// 5. FUNÇÃO PARA ABRIR PDF (NOVA JANELA)
+// 5. FUNÇÕES DO PDF E EXCLUSÃO
 // ==========================================
+
 async function visualizarPDF(id) {
-    // Abre uma janela em branco imediatamente para evitar bloqueio de popup
-    // e mostra uma mensagem de "Carregando..."
     const novaJanela = window.open('', '_blank');
     if(novaJanela) {
-        novaJanela.document.write('<html><head><title>Carregando PDF</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;background:#f0f0f0;font-family:sans-serif;"><h3>🔍 Buscando arquivo no servidor... aguarde.</h3></body></html>');
+        novaJanela.document.write('<html><head><title>Carregando PDF...</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;background:#f8f9fa;font-family:sans-serif;color:#333;"><h3>⏳ Buscando arquivo...</h3></body></html>');
     }
 
     try {
-        // Busca o arquivo no servidor enviando o TOKEN
         const res = await fetch(`${API_URL}/apolices/${id}/pdf`, {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
         if (res.ok) {
-            // Transforma a resposta em um arquivo (Blob)
             const blob = await res.blob();
-            // Cria um link temporário para esse arquivo
             const urlArquivo = window.URL.createObjectURL(blob);
-            
-            // Redireciona a janela que abrimos para o PDF
-            if(novaJanela) {
-                novaJanela.location.href = urlArquivo;
-            } else {
-                window.open(urlArquivo, '_blank');
-            }
+            if(novaJanela) novaJanela.location.href = urlArquivo;
+            else window.open(urlArquivo, '_blank');
         } else {
             if(novaJanela) novaJanela.close();
-            Swal.fire('Erro', 'Arquivo PDF não encontrado para esta apólice.', 'error');
+            Swal.fire('Aviso', 'Nenhum PDF encontrado para esta apólice.', 'warning');
         }
     } catch (error) {
         if(novaJanela) novaJanela.close();
-        console.error(error);
-        Swal.fire('Erro', 'Falha ao baixar o PDF. Verifique sua conexão.', 'error');
+        Swal.fire('Erro', 'Falha ao conectar com o servidor.', 'error');
     }
 }
 
-// 6. EXCLUSÃO
-let idEx = null; let tipoEx = null;
-function excluirItem(t, i) { idEx = i; tipoEx = t; const m = document.getElementById('modal-confirmacao'); if(m){ m.style.display='flex'; const b = document.getElementById('btn-confirmar-modal'); const n = b.cloneNode(true); b.parentNode.replaceChild(n, b); n.addEventListener('click', confirmarExclusao); } else { if(confirm("Excluir item?")) confirmarExclusao(); } }
-async function confirmarExclusao() { if(!idEx)return; try { const r = await fetch(`${API_URL}/${tipoEx}/${idEx}`, {method:'DELETE', headers:{'Authorization':`Bearer ${token}`}}); if(r.ok){ document.getElementById('modal-confirmacao').style.display='none'; if(tipoEx==='propostas')carregarPropostas(); if(tipoEx==='usuarios')carregarUsuarios(); if(tipoEx==='apolices')carregarApolices(); Swal.fire('Sucesso','Item excluído.','success'); } else { Swal.fire('Erro','Erro ao excluir.','error'); } } catch(e){ Swal.fire('Erro','Conexão.','error'); } }
-function fecharModal(){ document.getElementById('modal-confirmacao').style.display='none'; }
-window.onclick = function(e) { const m = document.getElementById('modal-confirmacao'); if(e.target==m) m.style.display="none"; }
+let idParaExcluir = null;
+let tipoParaExcluir = null;
+
+function excluirItem(tipo, id) {
+    idParaExcluir = id;
+    tipoParaExcluir = tipo;
+    
+    const modal = document.getElementById('modal-confirmacao');
+    if(modal) {
+        modal.style.display = 'flex';
+        const btnConfirm = document.getElementById('btn-confirmar-modal');
+        const novoBtn = btnConfirm.cloneNode(true);
+        btnConfirm.parentNode.replaceChild(novoBtn, btnConfirm);
+        novoBtn.addEventListener('click', confirmarExclusao);
+    } else {
+        if(confirm("Confirma exclusão?")) confirmarExclusao();
+    }
+}
+
+async function confirmarExclusao() {
+    if(!idParaExcluir || !tipoParaExcluir) return;
+
+    try {
+        const res = await fetch(`${API_URL}/${tipoParaExcluir}/${idParaExcluir}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+            fecharModal();
+            if (tipoParaExcluir === 'propostas') carregarPropostas();
+            if (tipoParaExcluir === 'usuarios') carregarUsuarios();
+            if (tipoParaExcluir === 'apolices') carregarApolices();
+            
+            if(typeof Swal !== 'undefined') Swal.fire('Sucesso', 'Item excluído.', 'success');
+            else alert('Excluído com sucesso.');
+        } else {
+            Swal.fire('Erro', 'Erro ao excluir.', 'error');
+        }
+    } catch (error) {
+        console.error(error);
+        Swal.fire('Erro', 'Erro de conexão.', 'error');
+    }
+}
+
+function fecharModal() {
+    const modal = document.getElementById('modal-confirmacao');
+    if(modal) modal.style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('modal-confirmacao');
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
