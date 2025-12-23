@@ -1,17 +1,16 @@
-// js/dashboard.js - VERSÃO FINAL (LAYOUT VERTICAL - PADRÃO LOCAL)
+// js/dashboard.js - VERSÃO FINAL (BOTÕES VERTICAIS + EXCLUSÃO FUNCIONANDO)
 
 const API_URL = 'https://seguradoraproject.onrender.com';
 const token = localStorage.getItem('token');
 
 // ------------------------------------------------------------------
-// ESTILOS DOS BOTÕES (BASE + CORES)
-// Configurados para ficarem um abaixo do outro (display: block)
+// ESTILOS DOS BOTÕES (PADRÃO VERTICAL)
 // ------------------------------------------------------------------
 const btnBaseStyle = `
-    display: block;             /* Força um por linha */
-    width: 100px;               /* Largura fixa padrão */
+    display: block;             
+    width: 100px;               
     padding: 6px 0; 
-    margin: 0 auto 5px auto;    /* Centraliza e dá espaço inferior */
+    margin: 0 auto 5px auto;    
     font-size: 11px; 
     font-weight: bold; 
     font-family: sans-serif;
@@ -22,18 +21,18 @@ const btnBaseStyle = `
     text-decoration: none; 
     line-height: normal; 
     color: white;
-    text-transform: uppercase;  /* Texto em MAIÚSCULO */
+    text-transform: uppercase;
     box-shadow: 0 2px 3px rgba(0,0,0,0.2);
 `;
 
-// Cores Específicas conforme sua imagem
 const stylePDF    = `${btnBaseStyle} background-color: #007bff;`; // Azul
 const styleEditar = `${btnBaseStyle} background-color: #f0ad4e;`; // Laranja
 const styleExcluir= `${btnBaseStyle} background-color: #d9534f;`; // Vermelho
 
+// Inicialização
 document.addEventListener('DOMContentLoaded', () => {
     if (!token) { window.location.href = 'index.html'; return; }
-    console.log("🚀 Dashboard iniciado. Conectando em:", API_URL);
+    console.log("🚀 Dashboard iniciado.");
 
     if(typeof carregarEstatisticas === 'function') carregarEstatisticas();
     carregarPropostas();
@@ -41,14 +40,18 @@ document.addEventListener('DOMContentLoaded', () => {
     carregarApolices();
 });
 
-// 1. CARDS
+// ==========================================
+// 1. CARDS E ESTATÍSTICAS
+// ==========================================
 function atualizarCard(idElemento, valor) {
     const el = document.getElementById(idElemento);
     if (el) el.innerText = valor;
 }
 function carregarEstatisticas() {}
 
-// 2. PROPOSTAS (EDITAR + EXCLUIR)
+// ==========================================
+// 2. LISTAGEM DE PROPOSTAS
+// ==========================================
 async function carregarPropostas() {
     const tbody = document.getElementById('lista-propostas');
     if(!tbody) return;
@@ -67,7 +70,6 @@ async function carregarPropostas() {
 
         lista.forEach(p => {
             const tr = document.createElement('tr');
-            // Alinhamento vertical no meio (vertical-align: middle) para ficar bonito
             tr.innerHTML = `
                 <td style="vertical-align: middle;">${p.id}</td>
                 <td style="vertical-align: middle;">${p.nome}</td>
@@ -75,7 +77,7 @@ async function carregarPropostas() {
                 <td style="vertical-align: middle;"><strong>${p.placa}</strong></td>
                 <td style="vertical-align: middle; padding: 10px;">
                     <a href="cadastro.html?id=${p.id}" style="${styleEditar}">EDITAR</a>
-                    <button onclick="excluirItem('propostas', ${p.id})" style="${styleExcluir}">EXCLUIR</button>
+                    <button type="button" onclick="prepararExclusao('propostas', ${p.id})" style="${styleExcluir}">EXCLUIR</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -83,7 +85,9 @@ async function carregarPropostas() {
     } catch (error) { console.error(error); }
 }
 
-// 3. USUÁRIOS (EDITAR + EXCLUIR)
+// ==========================================
+// 3. LISTAGEM DE USUÁRIOS
+// ==========================================
 async function carregarUsuarios() {
     const tbody = document.getElementById('lista-usuarios');
     if(!tbody) return; 
@@ -109,7 +113,7 @@ async function carregarUsuarios() {
                 <td style="vertical-align: middle;"><span class="badge ${badgeClass}">${u.tipo.toUpperCase()}</span></td>
                 <td style="vertical-align: middle; padding: 10px;">
                     <a href="registro.html?id=${u.id}&origin=dashboard" style="${styleEditar}">EDITAR</a>
-                    <button onclick="excluirItem('usuarios', ${u.id})" style="${styleExcluir}">EXCLUIR</button>
+                    <button type="button" onclick="prepararExclusao('usuarios', ${u.id})" style="${styleExcluir}">EXCLUIR</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -117,7 +121,9 @@ async function carregarUsuarios() {
     } catch (error) { console.error(error); }
 }
 
-// 4. APÓLICES (PDF + EDITAR + EXCLUIR)
+// ==========================================
+// 4. LISTAGEM DE APÓLICES
+// ==========================================
 async function carregarApolices() {
     const tbody = document.getElementById('lista-apolices');
     if(!tbody) return;
@@ -137,7 +143,6 @@ async function carregarApolices() {
             const premio = a.premio_total ? parseFloat(a.premio_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00';
             const vigencia = a.vigencia_fim ? new Date(a.vigencia_fim).toLocaleDateString('pt-BR') : '-';
             
-            // Controle do botão PDF
             const temPdf = a.arquivo_pdf ? '' : 'opacity: 0.6; cursor: not-allowed; background-color: #6c757d;';
             const clickAction = a.arquivo_pdf ? `onclick="visualizarPDF(${a.id})"` : '';
 
@@ -148,9 +153,9 @@ async function carregarApolices() {
                 <td style="vertical-align: middle;">${vigencia}</td>
                 <td style="vertical-align: middle;">${premio}</td>
                 <td style="vertical-align: middle; padding: 10px;">
-                    <button ${clickAction} style="${stylePDF} ${temPdf}">PDF</button>
+                    <button type="button" ${clickAction} style="${stylePDF} ${temPdf}">PDF</button>
                     <a href="apolice.html?id=${a.id}" style="${styleEditar}">EDITAR</a>
-                    <button onclick="excluirItem('apolices', ${a.id})" style="${styleExcluir}">EXCLUIR</button>
+                    <button type="button" onclick="prepararExclusao('apolices', ${a.id})" style="${styleExcluir}">EXCLUIR</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -159,14 +164,13 @@ async function carregarApolices() {
 }
 
 // ==========================================
-// 5. FUNÇÕES DO PDF E EXCLUSÃO
+// 5. PDF E SISTEMA DE EXCLUSÃO (CORRIGIDO)
 // ==========================================
 
+// Função do PDF
 async function visualizarPDF(id) {
     const novaJanela = window.open('', '_blank');
-    if(novaJanela) {
-        novaJanela.document.write('<html><head><title>Carregando PDF...</title></head><body style="display:flex;justify-content:center;align-items:center;height:100vh;background:#f8f9fa;font-family:sans-serif;color:#333;"><h3>⏳ Buscando arquivo...</h3></body></html>');
-    }
+    if(novaJanela) novaJanela.document.write('<h3>⏳ Buscando arquivo...</h3>');
 
     try {
         const res = await fetch(`${API_URL}/apolices/${id}/pdf`, {
@@ -181,64 +185,93 @@ async function visualizarPDF(id) {
             else window.open(urlArquivo, '_blank');
         } else {
             if(novaJanela) novaJanela.close();
-            Swal.fire('Aviso', 'Nenhum PDF encontrado para esta apólice.', 'warning');
+            Swal.fire('Aviso', 'Nenhum PDF encontrado.', 'warning');
         }
     } catch (error) {
         if(novaJanela) novaJanela.close();
-        Swal.fire('Erro', 'Falha ao conectar com o servidor.', 'error');
+        Swal.fire('Erro', 'Erro ao baixar PDF.', 'error');
     }
 }
 
+// Variáveis Globais para Exclusão
 let idParaExcluir = null;
 let tipoParaExcluir = null;
 
-function excluirItem(tipo, id) {
+// Função chamada pelo botão HTML
+window.prepararExclusao = function(tipo, id) {
+    console.log(`Tentando excluir: Tipo=${tipo}, ID=${id}`); // Debug no Console
+    
     idParaExcluir = id;
     tipoParaExcluir = tipo;
     
     const modal = document.getElementById('modal-confirmacao');
+    
     if(modal) {
+        // Abre o Modal Customizado
         modal.style.display = 'flex';
+        
+        // Configura o botão "Sim, Excluir" do modal
         const btnConfirm = document.getElementById('btn-confirmar-modal');
+        
+        // Clona o botão para limpar eventos antigos (evita duplicação de clicks)
         const novoBtn = btnConfirm.cloneNode(true);
         btnConfirm.parentNode.replaceChild(novoBtn, btnConfirm);
-        novoBtn.addEventListener('click', confirmarExclusao);
+        
+        // Adiciona o evento de confirmar
+        novoBtn.addEventListener('click', executarExclusaoAPI);
+        
+        // Configura o texto (opcional)
+        const textoModal = document.getElementById('texto-modal');
+        if(textoModal) textoModal.innerText = `Tem certeza que deseja excluir o item #${id}?`;
+
     } else {
-        if(confirm("Confirma exclusão?")) confirmarExclusao();
+        // Fallback: Se o modal HTML não existir, usa o nativo do navegador
+        if(confirm(`Tem certeza que deseja excluir o item #${id}?`)) {
+            executarExclusaoAPI();
+        }
     }
 }
 
-async function confirmarExclusao() {
+// Função que chama a API
+async function executarExclusaoAPI() {
     if(!idParaExcluir || !tipoParaExcluir) return;
 
     try {
+        // Fecha o modal visualmente antes de terminar
+        fecharModal();
+        
+        // Loading...
+        Swal.fire({title: 'Excluindo...', didOpen: () => Swal.showLoading()});
+
         const res = await fetch(`${API_URL}/${tipoParaExcluir}/${idParaExcluir}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
         if (res.ok) {
-            fecharModal();
+            Swal.fire('Sucesso', 'Item excluído com sucesso.', 'success');
+            
+            // Recarrega a lista correta
             if (tipoParaExcluir === 'propostas') carregarPropostas();
             if (tipoParaExcluir === 'usuarios') carregarUsuarios();
             if (tipoParaExcluir === 'apolices') carregarApolices();
-            
-            if(typeof Swal !== 'undefined') Swal.fire('Sucesso', 'Item excluído.', 'success');
-            else alert('Excluído com sucesso.');
         } else {
-            Swal.fire('Erro', 'Erro ao excluir.', 'error');
+            const err = await res.json();
+            Swal.fire('Erro', err.message || 'Erro ao excluir.', 'error');
         }
     } catch (error) {
-        console.error(error);
-        Swal.fire('Erro', 'Erro de conexão.', 'error');
+        console.error("Erro exclusão:", error);
+        Swal.fire('Erro', 'Falha de conexão com o servidor.', 'error');
     }
 }
 
-function fecharModal() {
+// Função para fechar modal (usada pelo botão Cancelar e pelo Overlay)
+window.fecharModal = function() {
     const modal = document.getElementById('modal-confirmacao');
     if(modal) modal.style.display = 'none';
 }
 
+// Fecha ao clicar fora do modal
 window.onclick = function(event) {
     const modal = document.getElementById('modal-confirmacao');
     if (event.target == modal) {
