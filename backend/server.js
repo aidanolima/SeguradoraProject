@@ -1,4 +1,4 @@
-// backend/server.js - VERSÃO DE RESTORE (ESTÁVEL)
+// backend/server.js - VERSÃO AIVEN (CORRIGIDA COM SSL)
 
 const path = require('path');
 const fs = require('fs');
@@ -34,21 +34,33 @@ const storageDisk = multer.diskStorage({
 const uploadSave = multer({ storage: storageDisk });
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// --- 2. BANCO DE DADOS ---
+// --- 2. BANCO DE DADOS (CONFIGURAÇÃO AIVEN) ---
+// Atenção: O SSL é obrigatório para Aiven.
+// backend/server.js
+
 const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '054622', 
-    database: process.env.DB_NAME || 'seguradoraauto',
-    port: process.env.DB_PORT || 3306,
+    host: process.env.DB_HOST,       
+    user: process.env.DB_USER,       
+    password: process.env.DB_PASSWORD, // <--- DEIXE ASSIM (SEM A SENHA ESCRITA)
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT,
+    ssl: {
+        rejectUnauthorized: false
+    },
     waitForConnections: true,
-    connectionLimit: 10,
+    connectionLimit: 5,
     queueLimit: 0
 });
 
 pool.getConnection()
-    .then(() => console.log("✅ MySQL Conectado com Sucesso!"))
-    .catch(e => console.error("❌ Erro Conexão MySQL:", e.message));
+    .then(conn => {
+        console.log("✅ MySQL Aiven Conectado com Sucesso!");
+        conn.release();
+    })
+    .catch(e => {
+        console.error("❌ Erro Conexão MySQL:", e.message);
+        console.error("   Verifique se o banco de dados 'defaultdb' contém as tabelas necessárias.");
+    });
 
 // --- 3. AUTENTICAÇÃO ---
 function authenticateToken(req, res, next) {
@@ -66,19 +78,19 @@ function authenticateToken(req, res, next) {
 
 // --- 4. ROTAS ---
 
-// ROTA RAIZ (CRUCIAL PARA EVITAR O ERRO 404)
+// ROTA RAIZ
 app.get('/', (req, res) => {
-    res.status(200).send('API Online e Funcionando! 🚀');
+    res.status(200).send('API Aiven Online! 🚀');
 });
 
 // LOGIN
 app.post('/auth/login', async (req, res) => {
     console.log(`[LOGIN] Tentativa: ${req.body.email}`);
     try {
+        // Verifica se a tabela usuarios existe primeiro
         const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ? AND senha = ?', [req.body.email, req.body.senha]);
         if (rows.length > 0) {
             const user = rows[0];
-            // Garante que o tipo exista no token, mesmo se for null no banco
             const tipoUser = user.tipo || 'operacional';
             const token = jwt.sign({ id: user.id, email: user.email, tipo: tipoUser }, JWT_SECRET, { expiresIn: '8h' });
             
@@ -86,18 +98,14 @@ app.post('/auth/login', async (req, res) => {
         } else {
             res.status(401).json({ message: "Login inválido" });
         }
-    } catch (error) { res.status(500).json({ error: error.message }); }
+    } catch (error) { 
+        console.error("Erro no Login:", error.message);
+        res.status(500).json({ error: "Erro interno no servidor (Banco de Dados)." }); 
+    }
 });
 
-// RECUPERAR SENHA
-app.post('/auth/forgot-password', (req, res) => {
-    res.json({ message: "Solicitação recebida." });
-});
-
-// CRIAR USUÁRIO (SIMPLIFICADO PARA O RESTORE)
+// CRIAR USUÁRIO (RESTORE - ABERTO PARA RECUPERAÇÃO INICIAL, DEPOIS PODE FECHAR)
 app.post('/auth/register', authenticateToken, async (req, res) => {
-    // Mantive a trava básica de admin para evitar bagunça, mas sem lógica complexa
-    // Se quiser liberar geral para teste, remova o IF abaixo
     if (req.user.tipo !== 'admin') {
          return res.status(403).json({ message: "Apenas admin cria usuários." });
     }
@@ -109,7 +117,7 @@ app.post('/auth/register', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// LISTAGEM (VOLTANDO AO PADRÃO SEM FILTRO DE ID POR ENQUANTO)
+// LISTAGEM USUÁRIOS
 app.get('/usuarios', authenticateToken, async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT id, nome, email, tipo FROM usuarios');
@@ -132,7 +140,7 @@ app.get('/apolices', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// EXCLUSÕES (PADRÃO)
+// EXCLUSÕES
 app.delete('/usuarios/:id', authenticateToken, async (req, res) => {
     try {
         await pool.query('DELETE FROM usuarios WHERE id = ?', [req.params.id]);
@@ -155,14 +163,11 @@ app.delete('/apolices/:id', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// CADASTROS E EDIÇÕES GERAIS
+// CADASTROS
 app.post('/cadastrar-proposta', async (req, res) => {
     try {
         const d = req.body;
-        // Query genérica que estava funcionando
         const q = `INSERT INTO propostas (nome, documento, email, telefone, placa, modelo) VALUES (?,?,?,?,?,?)`;
-        // Ajuste os campos conforme sua necessidade real se faltar algo, 
-        // mas para RESTORE, o foco é o servidor subir.
         const [r] = await pool.query(q, [d.nome, d.documento, d.email, d.telefone, d.placa, d.modelo]);
         res.status(201).json({ message: "Criado", id: r.insertId });
     } catch(e) { res.status(500).json({message: e.message}); }
@@ -191,4 +196,4 @@ app.get('/apolices/:id/pdf', authenticateToken, async (req, res) => {
 });
 
 // INICIALIZAÇÃO
-app.listen(port, () => console.log(`🚀 Restore Completo. Servidor na porta ${port}`));
+app.listen(port, () => console.log(`🚀 Servidor Aiven rodando na porta ${port}`));
