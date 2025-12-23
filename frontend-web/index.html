@@ -22,66 +22,37 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        /* Global Reset */
         body {
-            margin: 0 !important;
-            padding: 0 !important;
-            height: 100vh !important;
-            width: 100vw !important;
-            overflow: hidden !important; /* Forces no scrollbar */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #f4f6f9;
-            font-family: 'Segoe UI', sans-serif;
+            margin: 0; padding: 0; height: 100vh; width: 100vw;
+            overflow: hidden; display: flex; justify-content: center; align-items: center;
+            background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif;
         }
-
         .login-container {
-            width: 100%;
-            max-width: 400px;
-            background: #ffffff;
-            padding: 30px; /* Reduced padding */
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
+            width: 100%; max-width: 400px; background: #ffffff;
+            padding: 40px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; box-sizing: border-box;
         }
-
         .login-header img.logo-sistema {
-            max-height: 70px; /* Slightly smaller logo */
-            width: auto;
-            display: block;
-            margin: 0 auto 10px auto;
+            max-height: 70px; width: auto; display: block; margin: 0 auto 15px auto;
         }
-
+        .input-group { margin-bottom: 15px; }
         .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #2e7d32;
-            font-weight: 600;
-            font-size: 14px;
+            display: block; margin-bottom: 5px; color: #2e7d32; font-weight: 600; font-size: 14px;
         }
-        
+        input {
+            width: 100%; padding: 10px; border: 1px solid #ddd;
+            border-radius: 4px; box-sizing: border-box; height: 40px;
+        }
         .btn-login {
-            width: 100%;
-            padding: 12px;
-            background-color: #2e7d32;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
+            width: 100%; padding: 12px; background-color: #2e7d32; color: white;
+            border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px;
         }
         .btn-login:hover { background-color: #1b5e20; }
     </style>
 </head>
 
 <body>
-
     <div class="login-container">
-        
         <div class="login-header" style="text-align: center;">
             <img src="assets/logo.png" alt="Logotipo" class="logo-sistema">
             <h1 style="color: #2e7d32; font-size: 20px; margin: 0; font-weight: 700;">Gestor Clientes</h1>
@@ -89,25 +60,14 @@
         </div>
 
         <form id="form-login">
-            <div class="input-group" style="margin-bottom: 15px;">
+            <div class="input-group">
                 <label for="email_login">E-mail</label>
-                <input type="email" id="email_login" placeholder="seu@email.com" required 
-                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; height: 40px;">
+                <input type="email" id="email_login" placeholder="seu@email.com" required>
             </div>
             
-            <div class="input-group" style="margin-bottom: 15px;">
+            <div class="input-group">
                 <label for="senha_login">Senha</label>
-                
-                <div style="position: relative; width: 100%;">
-                    <input type="password" id="senha_login" placeholder="••••••••" required 
-                           style="width: 100%; padding: 10px 40px 10px 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; height: 40px;">
-                    
-                    <button type="button" id="btn-toggle-senha" tabindex="-1"
-                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); 
-                                   background: none; border: none; cursor: pointer; color: #666; padding: 0; z-index: 10; display: flex; align-items: center;">
-                        <i class="fas fa-eye" style="font-size: 16px;"></i>
-                    </button>
-                </div>
+                <input type="password" id="senha_login" placeholder="••••••••" required>
             </div>
 
             <div style="text-align: right; margin-bottom: 20px;">
@@ -123,12 +83,11 @@
             <p style="margin: 3px 0;">Não tem acesso?</p>
             <p style="margin: 0;">Solicite a criação da sua conta ao <strong>Administrador</strong>.</p>
         </div>
-
+        
         <div style="text-align: center; margin-top: 15px; font-size: 10px; color: #aaa;">
             By Áidano Lima - ASL TECH
         </div>
     </div> 
-    
     <script src="js/auth.js"></script>
 </body>
 </html>

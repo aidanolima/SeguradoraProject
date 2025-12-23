@@ -66,21 +66,37 @@ async function carregarPropostas() {
 }
 
 // ==========================================
-// 2. LISTAGEM DE USUÁRIOS
+// 2. LISTAGEM DE USUÁRIOS (COM LÓGICA DE PERFIL)
 // ==========================================
 async function carregarUsuarios() {
     const tbody = document.getElementById('lista-usuarios');
     if(!tbody) return;
     try {
         const res = await fetch(`${API_URL}/usuarios`, { headers: { 'Authorization': `Bearer ${token}` } });
-        if(!res.ok) return;
+        
+        // Se der erro 403 (Proibido), limpa a lista
+        if(!res.ok) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Acesso restrito.</td></tr>';
+            return;
+        }
+
         const lista = await res.json();
         atualizarCard('total-usuarios', lista.length);
         tbody.innerHTML = '';
         
+        // Descobre quem é o usuário logado no navegador
+        const tipoUsuarioLogado = localStorage.getItem('tipo_usuario'); // 'admin' ou 'operacional'
+
         lista.forEach(u => {
             const tr = document.createElement('tr');
             const badge = u.tipo === 'admin' ? 'badge-admin' : 'badge-user';
+            
+            // Lógica do botão Excluir:
+            // Só aparece se eu for ADMIN. Se for operacional, string vazia.
+            const btnExcluirHTML = (tipoUsuarioLogado === 'admin') 
+                ? `<button type="button" onclick="prepararExclusao('usuarios', '${u.id}')" style="${styleExcluir}">EXCLUIR</button>`
+                : ''; 
+
             tr.innerHTML = `
                 <td style="vertical-align: middle;">${u.id}</td>
                 <td style="vertical-align: middle;">${u.nome}</td>
@@ -88,7 +104,7 @@ async function carregarUsuarios() {
                 <td style="vertical-align: middle;"><span class="badge ${badge}">${u.tipo.toUpperCase()}</span></td>
                 <td style="vertical-align: middle; padding: 10px;">
                     <a href="registro.html?id=${u.id}&origin=dashboard" style="${styleEditar}">EDITAR</a>
-                    <button type="button" onclick="prepararExclusao('usuarios', '${u.id}')" style="${styleExcluir}">EXCLUIR</button>
+                    ${btnExcluirHTML}
                 </td>`;
             tbody.appendChild(tr);
         });
