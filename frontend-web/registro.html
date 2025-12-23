@@ -16,48 +16,210 @@
     frame-src * 'self' blob: data: gap:;">
     
     <link rel="icon" href="assets/logo.png" type="image/png">
-    <link rel="stylesheet" href="css/style.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* =========================================
+           ESTILOS PADRONIZADOS (Igual Dashboard)
+           ========================================= */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #444;
+        }
+
+        .container-registro {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .card-registro {
+            background: white;
+            padding: 40px;
+            border-radius: 8px; /* Padronizado */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra suave igual dashboard */
+            width: 100%;
+            max-width: 500px;
+            border-top: 5px solid #2e7d32; /* Identidade Visual Verde */
+        }
+
+        .registro-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .registro-header h2 {
+            color: #2e7d32; /* Verde padrão */
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .registro-header p {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        /* FORMULÁRIO */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .form-group input, 
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, 
+        .form-group select:focus {
+            border-color: #2e7d32;
+            outline: none;
+        }
+
+        /* CAMPO DE SENHA COM OLHO MÁGICO */
+        .password-wrapper {
+            position: relative;
+        }
+        .password-wrapper input {
+            padding-right: 40px; /* Espaço para o ícone */
+        }
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #777;
+            font-size: 16px;
+        }
+        .toggle-password:hover {
+            color: #2e7d32;
+        }
+
+        /* BOTÕES */
+        .btn-group-registro {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn-salvar {
+            flex: 1;
+            background-color: #2e7d32; /* Verde Dashboard */
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn-salvar:hover {
+            background-color: #1b5e20;
+        }
+
+        .btn-voltar {
+            flex: 1;
+            background-color: #e0e0e0;
+            color: #333;
+            border: none;
+            padding: 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        .btn-voltar:hover {
+            background-color: #ccc;
+        }
+
+        /* Aviso de edição */
+        .badge-edit {
+            background-color: #ffa000;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+    </style>
 </head>
-<body class="bg-light">
+<body>
 
     <div class="container-registro">
         <div class="card-registro">
             <div class="registro-header">
-                <h2 id="titulo-pagina">Novo Usuário</h2>
-                <p>Preencha os dados para acesso ao sistema</p>
+                <h2 id="titulo-pagina"><i class="fas fa-user-plus"></i> Novo Usuário</h2>
+                <p>Preencha os dados completos para acesso ao sistema</p>
             </div>
 
             <form id="form-registro" onsubmit="salvarUsuario(event)">
+                
                 <div class="form-group">
-                    <label for="nome"><i class="fas fa-user"></i> Nome Completo</label>
+                    <label for="nome">Nome Completo</label>
                     <input type="text" id="nome" required placeholder="Ex: João da Silva">
                 </div>
 
                 <div class="form-group">
-                    <label for="email"><i class="fas fa-envelope"></i> E-mail</label>
+                    <label for="email">E-mail de Acesso</label>
                     <input type="email" id="email" required placeholder="usuario@email.com">
                 </div>
 
                 <div class="form-group">
-                    <label for="senha"><i class="fas fa-lock"></i> Senha</label>
-                    <input type="password" id="senha" placeholder="Digite a senha (mínimo 6 dígitos)">
-                    <small id="aviso-senha" style="color:#666; display:none;">(Deixe em branco para manter a atual)</small>
+                    <label for="senha">Senha <small id="aviso-senha" style="font-weight:normal; color:#666; display:none;">(Opcional na edição)</small></label>
+                    <div class="password-wrapper">
+                        <input type="password" id="senha" placeholder="Mínimo 6 caracteres">
+                        <i class="fas fa-eye toggle-password" onclick="toggleSenha('senha', this)"></i>
+                    </div>
+                </div>
+
+                <div class="form-group" id="grupo-confirma-senha">
+                    <label for="confirma-senha">Confirmar Senha</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="confirma-senha" placeholder="Repita a senha">
+                        <i class="fas fa-eye toggle-password" onclick="toggleSenha('confirma-senha', this)"></i>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="tipo"><i class="fas fa-user-tag"></i> Perfil de Acesso</label>
+                    <label for="tipo">Perfil de Acesso</label>
                     <select id="tipo">
                         <option value="operacional">Operacional (Padrão)</option>
-                        <option value="admin">Administrador (Total)</option>
+                        <option value="admin">Administrador (Acesso Total)</option>
                     </select>
                 </div>
 
                 <div class="btn-group-registro">
                     <button type="button" class="btn-voltar" onclick="voltar()">Cancelar</button>
-                    <button type="submit" class="btn-salvar">Salvar Usuário</button>
+                    <button type="submit" class="btn-salvar" id="btn-submit">Salvar Usuário</button>
                 </div>
             </form>
         </div>
@@ -71,30 +233,57 @@
         const idEdicao = urlParams.get('id');
         const token = localStorage.getItem('token');
 
-        // Inicialização
+        // --- INICIALIZAÇÃO ---
         document.addEventListener('DOMContentLoaded', () => {
             if (!token) {
-                // Se não estiver logado, manda pro login
                 window.location.href = 'index.html';
                 return;
             }
 
             if (idEdicao) {
-                document.getElementById('titulo-pagina').innerText = `Editar Usuário #${idEdicao}`;
-                document.getElementById('senha').removeAttribute('required'); // Senha opcional na edição
-                document.getElementById('aviso-senha').style.display = 'block';
+                // Modo Edição
+                const titulo = document.getElementById('titulo-pagina');
+                titulo.innerHTML = '<i class="fas fa-user-edit"></i> Editar Usuário <span class="badge-edit">ID ' + idEdicao + '</span>';
+                document.getElementById('btn-submit').innerText = "ATUALIZAR DADOS";
+                document.getElementById('btn-submit').style.backgroundColor = "#ffa000"; // Laranja para edição
+                
+                // Senha opcional
+                document.getElementById('senha').removeAttribute('required');
+                document.getElementById('aviso-senha').style.display = 'inline';
+                
                 carregarDadosUsuario(idEdicao);
             } else {
+                // Modo Criação
                 document.getElementById('senha').setAttribute('required', 'true');
+                document.getElementById('confirma-senha').setAttribute('required', 'true');
             }
         });
 
-        // Carregar dados para edição
+        // --- FUNÇÃO OLHO MÁGICO ---
+        function toggleSenha(inputId, icon) {
+            const input = document.getElementById(inputId);
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = "password";
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // --- CARREGAR DADOS ---
         async function carregarDadosUsuario(id) {
             try {
+                Swal.fire({title: 'Carregando...', didOpen: () => Swal.showLoading()});
+                
                 const res = await fetch(`${API_URL}/usuarios/${id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                
+                Swal.close();
+
                 if(res.ok) {
                     const u = await res.json();
                     document.getElementById('nome').value = u.nome;
@@ -102,39 +291,42 @@
                     document.getElementById('tipo').value = u.tipo;
                 } else {
                     Swal.fire('Erro', 'Usuário não encontrado.', 'error');
+                    setTimeout(() => voltar(), 2000);
                 }
             } catch (error) {
                 console.error(error);
+                Swal.close();
             }
         }
 
-        // Função de Salvar (Create/Update)
+        // --- SALVAR / ATUALIZAR ---
         async function salvarUsuario(event) {
-            event.preventDefault(); // Evita recarregar a página
+            event.preventDefault();
 
             const nome = document.getElementById('nome').value;
             const email = document.getElementById('email').value;
             const senha = document.getElementById('senha').value;
+            const confirmaSenha = document.getElementById('confirma-senha').value;
             const tipo = document.getElementById('tipo').value;
 
-            // Payload básico
-            const dados = { nome, email, tipo };
-            
-            // Só envia senha se foi digitada
+            // Validação de Senha
             if (senha) {
                 if (senha.length < 6) {
                     Swal.fire('Atenção', 'A senha deve ter no mínimo 6 caracteres.', 'warning');
                     return;
                 }
-                dados.senha = senha;
+                if (senha !== confirmaSenha) {
+                    Swal.fire('Erro', 'A senha e a confirmação não conferem.', 'error');
+                    return;
+                }
             }
+
+            const dados = { nome, email, tipo };
+            if (senha) dados.senha = senha;
 
             const endpoint = idEdicao ? `${API_URL}/usuarios/${idEdicao}` : `${API_URL}/auth/register`;
             const method = idEdicao ? 'PUT' : 'POST';
 
-            // Ajuste na URL se for criação pelo painel (usa rota de usuários ou auth dependendo da sua estrutura)
-            // Se for CRIAÇÃO interna, vamos usar /auth/register mesmo, pois o backend aceita.
-            
             try {
                 Swal.fire({ title: 'Salvando...', didOpen: () => Swal.showLoading() });
 
@@ -150,8 +342,13 @@
                 const resposta = await res.json();
 
                 if (res.ok) {
-                    await Swal.fire('Sucesso', 'Dados salvos com sucesso!', 'success');
-                    window.location.href = 'dashboard.html'; // Volta pro painel
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Sucesso',
+                        text: idEdicao ? 'Dados atualizados!' : 'Usuário criado com sucesso!',
+                        confirmButtonColor: '#2e7d32'
+                    });
+                    window.location.href = 'dashboard.html';
                 } else {
                     Swal.fire('Erro', resposta.message || 'Erro ao salvar.', 'error');
                 }
@@ -165,37 +362,5 @@
             window.location.href = 'dashboard.html';
         }
     </script>
-
-    <style>
-        /* Estilos rápidos específicos para esta página */
-        .container-registro {
-            display: flex; justify-content: center; align-items: center; 
-            min-height: 100vh; background-color: #f4f6f9;
-        }
-        .card-registro {
-            background: white; padding: 40px; border-radius: 8px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px;
-        }
-        .registro-header { text-align: center; margin-bottom: 30px; }
-        .registro-header h2 { color: #333; margin: 0; }
-        .registro-header p { color: #666; font-size: 14px; margin-top: 5px; }
-        
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; color: #444; font-weight: bold; }
-        .form-group input, .form-group select {
-            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;
-        }
-        .btn-group-registro { display: flex; gap: 15px; margin-top: 30px; }
-        .btn-salvar {
-            flex: 1; background-color: #2e7d32; color: white; border: none; 
-            padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer;
-        }
-        .btn-voltar {
-            flex: 1; background-color: #ddd; color: #333; border: none; 
-            padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer;
-        }
-        .btn-salvar:hover { background-color: #1b5e20; }
-        .btn-voltar:hover { background-color: #ccc; }
-    </style>
 </body>
 </html>
