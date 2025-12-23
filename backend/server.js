@@ -195,5 +195,76 @@ app.get('/apolices/:id/pdf', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ message: 'Erro PDF' }); }
 });
 
+// --- ROTA TEMPORÁRIA PARA CRIAR O BANCO ---
+app.get('/instalar-banco', async (req, res) => {
+    try {
+        // 1. Criar Tabela Usuários
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(100),
+                email VARCHAR(100) UNIQUE,
+                senha VARCHAR(255),
+                tipo VARCHAR(20) DEFAULT 'operacional'
+            )
+        `);
+
+        // 2. Criar Admin Padrão (Se não existir)
+        const [users] = await pool.query("SELECT * FROM usuarios WHERE email = 'admin@sistema.com'");
+        if (users.length === 0) {
+            await pool.query(`INSERT INTO usuarios (nome, email, senha, tipo) VALUES ('Administrador', 'admin@sistema.com', '123456', 'admin')`);
+        }
+
+        // 3. Criar Tabela Propostas
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS propostas (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(100),
+                documento VARCHAR(20),
+                email VARCHAR(100),
+                telefone VARCHAR(20),
+                cep VARCHAR(20),
+                endereco VARCHAR(255),
+                bairro VARCHAR(100),
+                cidade VARCHAR(100),
+                uf VARCHAR(2),
+                numero VARCHAR(20),
+                complemento VARCHAR(100),
+                fabricante VARCHAR(50),
+                modelo VARCHAR(50),
+                placa VARCHAR(10),
+                chassi VARCHAR(50),
+                ano_modelo VARCHAR(10),
+                fipe VARCHAR(20),
+                utilizacao VARCHAR(50),
+                blindado BOOLEAN,
+                kit_gas BOOLEAN,
+                zero_km BOOLEAN,
+                cep_pernoite VARCHAR(20),
+                cobertura_casco VARCHAR(50),
+                carro_reserva VARCHAR(50),
+                forma_pagamento VARCHAR(50)
+            )
+        `);
+
+        // 4. Criar Tabela Apólices
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS apolices (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                numero_apolice VARCHAR(50),
+                veiculo_id INT,
+                arquivo_pdf VARCHAR(255),
+                premio_total DECIMAL(10,2),
+                vigencia_inicio DATE,
+                vigencia_fim DATE
+            )
+        `);
+
+        res.send('✅ Sucesso! Tabelas criadas e Admin (admin@sistema.com / 123456) pronto.');
+    } catch (error) {
+        res.status(500).send('Erro ao criar tabelas: ' + error.message);
+    }
+});
+
 // INICIALIZAÇÃO
 app.listen(port, () => console.log(`🚀 Servidor Aiven rodando na porta ${port}`));
