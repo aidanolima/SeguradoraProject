@@ -1,4 +1,4 @@
-// js/dashboard.js - VERSÃO FINAL (EDITAR VERDE / EXCLUIR VERMELHO)
+// js/dashboard.js - VERSÃO COM BOTÃO PDF AZUL
 
 // URL do Backend (Produção)
 const API_URL = 'https://seguradoraproject.onrender.com';
@@ -23,7 +23,7 @@ const btnStyle = `
     text-decoration: none; 
     line-height: normal; 
     color: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Sombra leve para dar destaque */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 `;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -51,7 +51,7 @@ function atualizarCard(idElemento, valor) {
 }
 
 function carregarEstatisticas() {
-    // Espaço reservado para lógica futura de stats
+    // Lógica futura de stats
 }
 
 // ==========================================
@@ -163,7 +163,7 @@ async function carregarUsuarios() {
 }
 
 // ==========================================
-// 4. LISTAR APÓLICES
+// 4. LISTAR APÓLICES (COM BOTÃO PDF AZUL)
 // ==========================================
 async function carregarApolices() {
     const tbody = document.getElementById('lista-apolices');
@@ -199,10 +199,17 @@ async function carregarApolices() {
                 <td>${vigencia}</td>
                 <td>${premio}</td>
                 <td style="text-align: center; white-space: nowrap;">
+                    
+                    <button onclick="visualizarPDF(${a.id})" 
+                            style="${btnStyle} background-color: #1976d2; margin-right: 5px;">
+                        PDF
+                    </button>
+
                     <a href="apolice.html?id=${a.id}" 
                        style="${btnStyle} background-color: #2e7d32; margin-right: 5px;">
                        Editar
                     </a>
+
                     <button onclick="excluirItem('apolices', ${a.id})" 
                             style="${btnStyle} background-color: #d32f2f;">
                         Excluir
@@ -218,8 +225,30 @@ async function carregarApolices() {
 }
 
 // ==========================================
-// 5. FUNÇÃO DE EXCLUSÃO GENÉRICA
+// 5. FUNÇÕES AUXILIARES E MODAL
 // ==========================================
+
+// Função para abrir o PDF (Ajuste a URL conforme seu backend)
+function visualizarPDF(id) {
+    // Exemplo: Abre em nova aba. Se seu backend gerar o PDF em outra rota, ajuste aqui.
+    // window.open(`${API_URL}/apolices/${id}/pdf`, '_blank');
+    
+    // Por enquanto, vou colocar um alerta ou placeholder se não tiver a rota exata:
+    Swal.fire({
+        title: 'Gerar PDF',
+        text: `Deseja visualizar o PDF da apólice #${id}?`,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Sim, visualizar',
+        confirmButtonColor: '#1976d2'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Tenta abrir a rota padrão de PDF (verifique se seu server.js tem essa rota)
+            window.open(`${API_URL}/apolices/${id}/pdf`, '_blank');
+        }
+    });
+}
+
 let idParaExcluir = null;
 let tipoParaExcluir = null;
 
@@ -227,18 +256,15 @@ function excluirItem(tipo, id) {
     idParaExcluir = id;
     tipoParaExcluir = tipo;
     
-    // Tenta usar o modal se existir
     const modal = document.getElementById('modal-confirmacao');
     
     if(modal) {
         modal.style.display = 'flex';
         const btnConfirm = document.getElementById('btn-confirmar-modal');
-        // Clona botão para limpar eventos anteriores
         const novoBtn = btnConfirm.cloneNode(true);
         btnConfirm.parentNode.replaceChild(novoBtn, btnConfirm);
         novoBtn.addEventListener('click', confirmarExclusao);
     } else {
-        // Fallback simples
         if(confirm("Tem certeza que deseja excluir este item?")) {
             confirmarExclusao();
         }
@@ -257,7 +283,6 @@ async function confirmarExclusao() {
         if (res.ok) {
             fecharModal();
             
-            // Recarrega a lista correta
             if (tipoParaExcluir === 'propostas') carregarPropostas();
             if (tipoParaExcluir === 'usuarios') carregarUsuarios();
             if (tipoParaExcluir === 'apolices') carregarApolices();
@@ -269,7 +294,7 @@ async function confirmarExclusao() {
             }
         } else {
             if(typeof Swal !== 'undefined') {
-                Swal.fire('Erro', 'Não foi possível excluir. Verifique permissões.', 'error');
+                Swal.fire('Erro', 'Não foi possível excluir.', 'error');
             } else {
                 alert('Erro ao excluir item.');
             }
@@ -285,7 +310,6 @@ function fecharModal() {
     if(modal) modal.style.display = 'none';
 }
 
-// Fecha modal ao clicar fora
 window.onclick = function(event) {
     const modal = document.getElementById('modal-confirmacao');
     if (event.target == modal) {
