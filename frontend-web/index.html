@@ -1,72 +1,97 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <meta http-equiv="Content-Security-Policy" 
     content="default-src * 'self' blob: data: gap:; 
     style-src * 'self' 'unsafe-inline' blob: data: gap:; 
-    script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; 
+    script-src * 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net blob: data: gap:; 
     object-src * 'self' blob: data: gap:; 
     img-src * 'self' 'unsafe-inline' blob: data: gap:; 
-    connect-src 'self' * 'unsafe-inline' blob: data: gap:; 
+    connect-src 'self' https://seguradoraproject.onrender.com * 'unsafe-inline' blob: data: gap:; 
     font-src 'self' data: https://cdnjs.cloudflare.com; 
     frame-src * 'self' blob: data: gap:;">
 
     <link rel="icon" href="assets/logo.png" type="image/png" sizes="32x32">
-    <link rel="icon" href="assets/logo.png" type="image/png" sizes="192x192">
-    <link rel="apple-touch-icon" href="assets/logo.png">
     <title>Gestor Clientes e Apólices - Login</title>
     
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        /* CSS Reset para garantir layout perfeito sem rolagem */
+        body {
+            margin: 0; padding: 0; height: 100vh; width: 100vw;
+            overflow: hidden; display: flex; justify-content: center; align-items: center;
+            background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif;
+        }
+        .login-container {
+            width: 100%; max-width: 400px; background: #ffffff;
+            padding: 40px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; box-sizing: border-box;
+        }
+        .login-header img.logo-sistema {
+            max-height: 70px; width: auto; display: block; margin: 0 auto 15px auto;
+        }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label {
+            display: block; margin-bottom: 5px; color: #2e7d32; font-weight: 600; font-size: 14px;
+        }
+        input {
+            width: 100%; padding: 10px; border: 1px solid #ddd;
+            border-radius: 4px; box-sizing: border-box; height: 40px; background-color: #eff3f6;
+        }
+        button[type="submit"] {
+            width: 100%; padding: 12px; background-color: #2e7d32; color: white;
+            border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px;
+            font-size: 16px; transition: background 0.3s;
+        }
+        button[type="submit"]:hover { background-color: #1b5e20; }
+    </style>
 </head>
 
-<body class="login-body">
-
+<body>
     <div class="login-container">
-        
-        <div class="login-header">
-            <img src="assets/logo.png" alt="Logotipo Tokio Marine" class="logo-sistema">
-            <h1>Gestor Clientes e Apólices</h1>
-            <p>Acesse sua conta para continuar</p>
+        <div class="login-header" style="text-align: center;">
+            <img src="assets/logo.png" alt="Logotipo" class="logo-sistema">
+            <h1 style="color: #2e7d32; font-size: 20px; margin: 0; font-weight: 700;">Gestor Clientes</h1>
+            <p style="color: #666; font-size: 13px; margin-top: 5px;">Acesse sua conta para continuar</p>
         </div>
 
         <form id="form-login">
-            
             <div class="form-group">
                 <label for="email_login">E-mail</label>
-                <input type="email" id="email_login" required placeholder="exemplo@email.com">
-            </div>
-
-            <div class="form-group">
-                <label for="senha_login">Senha</label>
-                
-                <div class="password-wrapper">
-                    <input type="password" id="senha_login" required placeholder="******">
-                    
-                    <button type="button" id="btn-toggle-senha" class="password-toggle-icon" tabindex="-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="icon-eye">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                            <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                    </button>
-                </div>
+                <input type="email" id="email_login" required placeholder="seu@email.com">
             </div>
             
-            <div style="text-align: right; margin-bottom: 15px;">
-                <a href="recuperar.html" style="color: #2e7d32; font-size: 14px; text-decoration: none;">Esqueci minha senha</a>
+            <div class="form-group">
+                <label for="senha_login">Senha</label>
+                <input type="password" id="senha_login" required placeholder="••••••••">
             </div>
 
-            <button type="submit">Entrar</button>
+            <div style="text-align: right; margin-bottom: 20px;">
+                <a href="recuperar.html" style="color: #2e7d32; font-size: 12px; text-decoration: none;">
+                    Esqueceu a senha?
+                </a>
+            </div>
+
+            <button type="submit">ACESSAR SISTEMA</button>
         </form>
 
-        <div style="margin-top: 20px; font-size: 14px;">
-            Não tem acesso? <a href="registro.html" style="color: #4caf50; font-weight: bold;">Crie sua conta</a>
+        <div style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px; font-size: 13px; color: #666; text-align: center;">
+            <p style="margin: 5px 0;">Não tem acesso?</p>
+            <p style="margin: 0;">Solicite a criação da sua conta ao <strong>Administrador</strong>.</p>
         </div>
-
-        <div class="system-credits">
+        
+        <div class="system-credits" style="text-align: center; margin-top: 20px; font-size: 11px; color: #999;">
             By Áidano Lima - ASL TECH
         </div>
-        </div> 
-        
-        <script src="js/modal.js"></script>
-        <script src="js/auth.js"></script>
+    </div> 
+    
+    <script src="js/auth.js"></script>
 </body>
+</html>
