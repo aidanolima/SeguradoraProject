@@ -1,9 +1,9 @@
-// js/dashboard.js - VERSÃO COM EXCLUSÃO CORRIGIDA
+// js/dashboard.js - VERSÃO ROBUSTA (CORREÇÃO DO MODAL)
 
 const API_URL = 'https://seguradoraproject.onrender.com';
 const token = localStorage.getItem('token');
 
-// Estilos dos Botões (Padrão Vertical)
+// Estilos dos Botões (Layout Vertical)
 const btnBaseStyle = `
     display: block; width: 100px; padding: 6px 0; margin: 0 auto 5px auto;    
     font-size: 11px; font-weight: bold; font-family: sans-serif; text-align: center; 
@@ -17,7 +17,7 @@ const styleExcluir= `${btnBaseStyle} background-color: #d9534f;`;
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
     if (!token) { window.location.href = 'index.html'; return; }
-    console.log("🚀 Dashboard carregado. Token OK.");
+    console.log("🚀 Dashboard carregado.");
 
     if(typeof carregarEstatisticas === 'function') carregarEstatisticas();
     carregarPropostas();
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     carregarApolices();
 });
 
-// Funções de Apoio
+// Funções Auxiliares
 function atualizarCard(id, valor) { const el = document.getElementById(id); if(el) el.innerText = valor; }
 function carregarEstatisticas() {}
 
@@ -43,7 +43,7 @@ async function carregarPropostas() {
         
         lista.forEach(p => {
             const tr = document.createElement('tr');
-            // ATENÇÃO: Adicionei aspas simples em '${p.id}' para evitar erros de sintaxe no clique
+            // IMPORTANTE: IDs passados como string segura
             tr.innerHTML = `
                 <td style="vertical-align: middle;">${p.id}</td>
                 <td style="vertical-align: middle;">${p.nome}</td>
@@ -64,7 +64,7 @@ async function carregarUsuarios() {
     if(!tbody) return;
     try {
         const res = await fetch(`${API_URL}/usuarios`, { headers: { 'Authorization': `Bearer ${token}` } });
-        if(!res.ok && res.status===403) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:red">Restrito.</td></tr>'; return; }
+        if(!res.ok) return;
         const lista = await res.json();
         atualizarCard('total-usuarios', lista.length);
         tbody.innerHTML = '';
@@ -137,69 +137,91 @@ async function visualizarPDF(id) {
     } catch (e) { if(win) win.close(); alert("Erro ao baixar PDF."); }
 }
 
-// 5. SISTEMA DE EXCLUSÃO (GLOBAL E ROBUSTO)
+
+// ==========================================
+// 5. SISTEMA DE EXCLUSÃO (CORRIGIDO)
+// ==========================================
 let idParaExcluir = null;
 let tipoParaExcluir = null;
 
-// Anexa ao window para garantir visibilidade global no onclick do HTML
+// Torna global para o HTML acessar
 window.prepararExclusao = function(tipo, id) {
-    console.log(`Botão Excluir clicado! Tipo: ${tipo}, ID: ${id}`); // Debug
+    console.log(`[DEBUG] Preparando exclusão: Tipo=${tipo}, ID=${id}`);
     
     idParaExcluir = id;
     tipoParaExcluir = tipo;
     
     const modal = document.getElementById('modal-confirmacao');
+    const btnConfirm = document.getElementById('btn-confirmar-modal');
     
-    // Se o modal existir no HTML, usa ele
-    if(modal) {
+    // Se o modal e o botão existem, usamos eles
+    if(modal && btnConfirm) {
         modal.style.display = 'flex';
-        const btnConfirm = document.getElementById('btn-confirmar-modal');
-        const novoBtn = btnConfirm.cloneNode(true); // Remove listeners antigos
-        btnConfirm.parentNode.replaceChild(novoBtn, btnConfirm);
-        novoBtn.addEventListener('click', executarExclusaoAPI);
+        
+        // CORREÇÃO: Atribuição direta do onclick (mais confiável que addEventListener em clones)
+        btnConfirm.onclick = function() {
+            console.log("[DEBUG] Botão Sim clicado no Modal");
+            executarExclusaoAPI();
+        };
+
+        // Texto opcional
+        const textoModal = document.getElementById('texto-modal');
+        if(textoModal) textoModal.innerText = `Deseja excluir o item #${id} permanentemente?`;
     } 
-    // Se não existir modal, usa o confirm nativo (Fallback de segurança)
+    // Fallback de segurança: Se o modal falhar no HTML, usa o confirm nativo
     else {
-        if(confirm(`Tem certeza que deseja excluir o item ${id}? Essa ação não pode ser desfeita.`)) {
+        console.warn("[DEBUG] Modal não encontrado no HTML. Usando confirm nativo.");
+        if(confirm(`Tem certeza que deseja excluir o ${tipo} #${id}?`)) {
             executarExclusaoAPI();
         }
     }
 }
 
 async function executarExclusaoAPI() {
-    if(!idParaExcluir || !tipoParaExcluir) return;
+    console.log(`[DEBUG] Enviando DELETE para API: ${API_URL}/${tipoParaExcluir}/${idParaExcluir}`);
     
     // Fecha modal
     const modal = document.getElementById('modal-confirmacao');
     if(modal) modal.style.display = 'none';
 
     try {
-        // Envia comando para o servidor apagar no banco
+        if(typeof Swal !== 'undefined') Swal.fire({title: 'Excluindo...', didOpen: () => Swal.showLoading()});
+
         const res = await fetch(`${API_URL}/${tipoParaExcluir}/${idParaExcluir}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
+        console.log(`[DEBUG] Resposta API Status: ${res.status}`);
+
         if (res.ok) {
-            // Se o servidor confirmou que apagou
-            if(typeof Swal !== 'undefined') Swal.fire('Sucesso', 'Item excluído do banco de dados.', 'success');
+            if(typeof Swal !== 'undefined') Swal.fire('Sucesso', 'Item excluído!', 'success');
             else alert('Excluído com sucesso.');
             
-            // Atualiza a tela
+            // Recarrega a lista
             if(tipoParaExcluir === 'propostas') carregarPropostas();
             if(tipoParaExcluir === 'usuarios') carregarUsuarios();
             if(tipoParaExcluir === 'apolices') carregarApolices();
         } else {
             const err = await res.json();
-            alert('Erro: ' + (err.message || 'Falha ao excluir.'));
+            const msg = err.message || 'Erro desconhecido.';
+            console.error(`[DEBUG] Erro API: ${msg}`);
+            if(typeof Swal !== 'undefined') Swal.fire('Erro', msg, 'error');
+            else alert('Erro: ' + msg);
         }
     } catch (error) {
-        console.error("Erro API:", error);
-        alert('Erro de conexão com o banco de dados.');
+        console.error("[DEBUG] Erro de Rede:", error);
+        alert('Erro de conexão ao tentar excluir.');
     }
 }
 
+// Fechar Modal (Cancelar)
 window.fecharModal = function() {
     const modal = document.getElementById('modal-confirmacao');
     if(modal) modal.style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('modal-confirmacao');
+    if (event.target == modal) modal.style.display = "none";
 }
