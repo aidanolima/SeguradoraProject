@@ -1,27 +1,25 @@
-// js/dashboard.js - VERSÃO FINAL COM SWEETALERT2
+// js/dashboard.js - VERSÃO "FORÇA BRUTA" (CORREÇÃO DE MODAL)
 
 const API_URL = 'https://seguradoraproject.onrender.com';
 const token = localStorage.getItem('token');
 
-// ------------------------------------------------------------------
-// ESTILOS DOS BOTÕES (Layout Vertical - Padrão Mantido)
-// ------------------------------------------------------------------
+// Estilos dos Botões
 const btnBaseStyle = `
     display: block; width: 100px; padding: 6px 0; margin: 0 auto 5px auto;    
     font-size: 11px; font-weight: bold; font-family: sans-serif; text-align: center; 
     border-radius: 4px; border: none; cursor: pointer; text-decoration: none; 
     line-height: normal; color: white; text-transform: uppercase; box-shadow: 0 2px 3px rgba(0,0,0,0.2);
 `;
-const stylePDF    = `${btnBaseStyle} background-color: #007bff;`; // Azul
-const styleEditar = `${btnBaseStyle} background-color: #f0ad4e;`; // Laranja
-const styleExcluir= `${btnBaseStyle} background-color: #d9534f;`; // Vermelho
+const stylePDF    = `${btnBaseStyle} background-color: #007bff;`; 
+const styleEditar = `${btnBaseStyle} background-color: #f0ad4e;`; 
+const styleExcluir= `${btnBaseStyle} background-color: #d9534f;`; 
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
     if (!token) { window.location.href = 'index.html'; return; }
     console.log("🚀 Dashboard carregado.");
 
-    // Remove qualquer resquício de modal antigo do HTML (limpeza)
+    // Remove qualquer modal antigo que possa estar no HTML atrapalhando
     const modalVelho = document.getElementById('modal-confirmacao');
     if (modalVelho) modalVelho.remove();
 
@@ -35,9 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function atualizarCard(id, valor) { const el = document.getElementById(id); if(el) el.innerText = valor; }
 function carregarEstatisticas() {}
 
-// ==========================================
-// 1. LISTAGEM DE PROPOSTAS
-// ==========================================
+// 1. PROPOSTAS
 async function carregarPropostas() {
     const tbody = document.getElementById('lista-propostas');
     if(!tbody) return;
@@ -47,7 +43,7 @@ async function carregarPropostas() {
         atualizarCard('total-clientes', lista.length);
         atualizarCard('total-veiculos', lista.length);
         tbody.innerHTML = '';
-        if (lista.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;">Nenhum cliente cadastrado.</td></tr>'; return; }
+        if (lista.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;">Vazio.</td></tr>'; return; }
         
         lista.forEach(p => {
             const tr = document.createElement('tr');
@@ -65,9 +61,7 @@ async function carregarPropostas() {
     } catch (e) { console.error(e); }
 }
 
-// ==========================================
-// 2. LISTAGEM DE USUÁRIOS
-// ==========================================
+// 2. USUÁRIOS
 async function carregarUsuarios() {
     const tbody = document.getElementById('lista-usuarios');
     if(!tbody) return;
@@ -95,9 +89,7 @@ async function carregarUsuarios() {
     } catch (e) { console.error(e); }
 }
 
-// ==========================================
-// 3. LISTAGEM DE APÓLICES
-// ==========================================
+// 3. APÓLICES
 async function carregarApolices() {
     const tbody = document.getElementById('lista-apolices');
     if(!tbody) return;
@@ -106,7 +98,7 @@ async function carregarApolices() {
         const lista = await res.json();
         atualizarCard('total-apolices', lista.length);
         tbody.innerHTML = '';
-        if (lista.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;">Nenhuma apólice emitida.</td></tr>'; return; }
+        if (lista.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;">Vazio.</td></tr>'; return; }
 
         lista.forEach(a => {
             const tr = document.createElement('tr');
@@ -131,7 +123,7 @@ async function carregarApolices() {
     } catch (e) { console.error(e); }
 }
 
-// 4. FUNÇÃO PDF
+// 4. PDF
 async function visualizarPDF(id) {
     const win = window.open('', '_blank');
     if(win) win.document.write('<h3>Buscando PDF...</h3>');
@@ -143,83 +135,102 @@ async function visualizarPDF(id) {
             if(win) win.location.href = url; else window.open(url, '_blank');
         } else {
             if(win) win.close();
-            Swal.fire('Aviso', 'PDF não encontrado.', 'warning');
+            alert("PDF não encontrado.");
         }
-    } catch (e) { if(win) win.close(); Swal.fire('Erro', 'Erro ao baixar PDF.', 'error'); }
+    } catch (e) { if(win) win.close(); alert("Erro ao baixar PDF."); }
 }
 
 // ==========================================
-// 5. SISTEMA DE EXCLUSÃO (SWEETALERT2)
+// 5. SISTEMA DE EXCLUSÃO (LIMPEZA TOTAL)
 // ==========================================
+let idParaExcluir = null;
+let tipoParaExcluir = null;
 
-// Variáveis não são mais estritamente necessárias globais aqui, 
-// mas mantemos a estrutura funcional.
+// Função para CRIAR o Modal DO ZERO
+function garantirModalExiste() {
+    // 1. Remove qualquer modal existente para evitar conflitos de ID ou clones quebrados
+    const antigo = document.getElementById('modal-confirmacao');
+    if (antigo) antigo.remove();
 
-window.prepararExclusao = function(tipo, id) {
-    console.log(`[DEBUG] Preparando exclusão SweetAlert: Tipo=${tipo}, ID=${id}`);
-
-    Swal.fire({
-        title: 'Confirmação',
-        text: `Você vai apagar o item #${id} (${tipo.toUpperCase()}). Essa ação não pode ser desfeita!`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d32f2f', // Vermelho Excluir
-        cancelButtonColor: '#6c757d',  // Cinza Cancelar
-        confirmButtonText: 'SIM, EXCLUIR',
-        cancelButtonText: 'Cancelar',
-        reverseButtons: true
-    }).then((result) => {
-        if (result.isConfirmed) {
-            executarExclusaoAPI(tipo, id);
-        }
-    });
-}
-
-async function executarExclusaoAPI(tipo, id) {
-    console.log(`[DEBUG] Disparando DELETE para API...`);
+    // 2. Cria o HTML novo
+    const modalHTML = `
+        <div id="modal-confirmacao" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:999999; justify-content:center; align-items:center;">
+            <div style="background:white; padding:30px; border-radius:8px; width:300px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+                <h3 style="margin-top:0; color:#333; font-family:sans-serif;">Confirmação</h3>
+                <p id="texto-modal" style="color:#555; font-family:sans-serif; margin:20px 0; font-size:14px;">Tem certeza que deseja excluir?</p>
+                <div style="display:flex; justify-content:center; gap:15px;">
+                    <button onclick="fecharModal()" style="padding:10px 20px; border:none; background:#ccc; cursor:pointer; border-radius:4px; font-weight:bold; color:#333;">Cancelar</button>
+                    <button id="btn-confirmar-modal" style="padding:10px 20px; border:none; background:#d32f2f; color:white; font-weight:bold; cursor:pointer; border-radius:4px;">EXCLUIR AGORA</button>
+                </div>
+            </div>
+        </div>
+    `;
     
-    // Mostra loading
-    Swal.fire({
-        title: 'Excluindo...',
-        text: 'Aguarde um momento',
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-    });
+    // 3. Insere no final do corpo da página
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// Função chamada pelo botão da tabela
+window.prepararExclusao = function(tipo, id) {
+    console.log(`[DEBUG] Botão clicado: ${tipo} #${id}`);
+    
+    idParaExcluir = id;
+    tipoParaExcluir = tipo;
+    
+    // Recria o modal limpo
+    garantirModalExiste();
+
+    const modal = document.getElementById('modal-confirmacao');
+    const btnSim = document.getElementById('btn-confirmar-modal');
+    const texto = document.getElementById('texto-modal');
+
+    // Atualiza texto e evento
+    texto.innerText = `Você vai apagar o item #${id} (${tipo.toUpperCase()}). Confirmar?`;
+    
+    btnSim.onclick = function() {
+        console.log("[DEBUG] Usuário confirmou exclusão.");
+        executarExclusaoAPI();
+    };
+
+    // Força a exibição
+    modal.style.display = 'flex';
+}
+
+async function executarExclusaoAPI() {
+    // Fecha modal
+    fecharModal();
+
+    console.log(`[DEBUG] Enviando DELETE...`);
 
     try {
-        const res = await fetch(`${API_URL}/${tipo}/${id}`, {
+        // Feedback visual simples
+        if(typeof Swal !== 'undefined') Swal.fire({title: 'Processando...', didOpen: () => Swal.showLoading()});
+
+        const res = await fetch(`${API_URL}/${tipoParaExcluir}/${idParaExcluir}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        console.log(`[DEBUG] Resposta API Status: ${res.status}`);
-
         if (res.ok) {
-            await Swal.fire({
-                icon: 'success',
-                title: 'Excluído!',
-                text: 'O registro foi removido com sucesso.',
-                confirmButtonColor: '#2e7d32'
-            });
+            console.log("[DEBUG] Sucesso na exclusão.");
+            if(typeof Swal !== 'undefined') Swal.fire('Sucesso', 'Item excluído!', 'success');
+            else alert('Item excluído com sucesso!');
             
-            // Recarrega a tabela correta
-            if(tipo === 'propostas') carregarPropostas();
-            if(tipo === 'usuarios') carregarUsuarios();
-            if(tipo === 'apolices') carregarApolices();
+            // Atualiza tabelas
+            if(tipoParaExcluir === 'propostas') carregarPropostas();
+            if(tipoParaExcluir === 'usuarios') carregarUsuarios();
+            if(tipoParaExcluir === 'apolices') carregarApolices();
         } else {
-            const err = await res.json();
-            Swal.fire({
-                icon: 'error',
-                title: 'Erro',
-                text: err.message || 'Não foi possível excluir o item.'
-            });
+            console.error("[DEBUG] Erro API:", res.status);
+            alert('Erro ao excluir. Verifique se existem vínculos (ex: apólices).');
         }
     } catch (error) {
-        console.error("[DEBUG] Erro de Rede:", error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Erro de Conexão',
-            text: 'Verifique sua internet e tente novamente.'
-        });
+        console.error("[DEBUG] Erro Rede:", error);
+        alert('Erro de conexão.');
     }
+}
+
+window.fecharModal = function() {
+    const modal = document.getElementById('modal-confirmacao');
+    if (modal) modal.remove(); // Remove o modal do DOM para limpar tudo
 }
