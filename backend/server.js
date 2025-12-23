@@ -562,5 +562,53 @@ app.get('/apolices/:id/pdf', authenticateToken, async (req, res) => {
     }
 });
 
+// --- ADICIONE ISTO NO SEU SERVER.JS (BACKEND) ---
+
+// 1. Rota para excluir PROPOSTA (Cliente)
+app.delete('/propostas/:id', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        // O comando SQL que apaga de verdade
+        const result = await pool.query('DELETE FROM propostas WHERE id = $1', [id]);
+        
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Cliente não encontrado para exclusão' });
+        }
+        
+        res.status(200).json({ message: 'Cliente excluído com sucesso' });
+    } catch (error) {
+        console.error("Erro ao excluir proposta:", error);
+        // Se der erro de chave estrangeira (FK), avisa o usuário
+        if (error.code === '23503') {
+            return res.status(400).json({ message: 'Não é possível excluir: Este cliente possui apólices vinculadas.' });
+        }
+        res.status(500).json({ message: 'Erro interno ao excluir cliente' });
+    }
+});
+
+// 2. Rota para excluir USUÁRIO
+app.delete('/usuarios/:id', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query('DELETE FROM usuarios WHERE id = $1', [id]);
+        res.status(200).json({ message: 'Usuário excluído com sucesso' });
+    } catch (error) {
+        console.error("Erro ao excluir usuário:", error);
+        res.status(500).json({ message: 'Erro ao excluir usuário' });
+    }
+});
+
+// 3. Rota para excluir APÓLICE
+app.delete('/apolices/:id', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query('DELETE FROM apolices WHERE id = $1', [id]);
+        res.status(200).json({ message: 'Apólice excluída com sucesso' });
+    } catch (error) {
+        console.error("Erro ao excluir apólice:", error);
+        res.status(500).json({ message: 'Erro ao excluir apólice' });
+    }
+});
+
 
 app.listen(port, () => console.log(`🚀 Servidor rodando na porta ${port}`));
