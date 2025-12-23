@@ -1,4 +1,4 @@
-// js/dashboard.js - VERSÃO ROBUSTA (CORREÇÃO DO MODAL)
+// js/dashboard.js - VERSÃO COM MODAL AUTOMÁTICO (CORREÇÃO VISUAL)
 
 const API_URL = 'https://seguradoraproject.onrender.com';
 const token = localStorage.getItem('token');
@@ -43,7 +43,6 @@ async function carregarPropostas() {
         
         lista.forEach(p => {
             const tr = document.createElement('tr');
-            // IMPORTANTE: IDs passados como string segura
             tr.innerHTML = `
                 <td style="vertical-align: middle;">${p.id}</td>
                 <td style="vertical-align: middle;">${p.nome}</td>
@@ -139,48 +138,70 @@ async function visualizarPDF(id) {
 
 
 // ==========================================
-// 5. SISTEMA DE EXCLUSÃO (CORRIGIDO)
+// 5. SISTEMA DE EXCLUSÃO (CORRIGIDO E GARANTIDO)
 // ==========================================
 let idParaExcluir = null;
 let tipoParaExcluir = null;
+
+// Função para INJETAR O HTML DO MODAL SE NÃO EXISTIR
+function criarModalDinamicamente() {
+    // Se já existe, não faz nada
+    if (document.getElementById('modal-confirmacao')) return;
+
+    const modalHTML = `
+        <div id="modal-confirmacao" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999; justify-content:center; align-items:center;">
+            <div style="background:white; padding:25px; border-radius:8px; width:320px; text-align:center; box-shadow:0 5px 15px rgba(0,0,0,0.3);">
+                <h3 style="margin-top:0; color:#333; font-family:sans-serif;">Confirmação</h3>
+                <p id="texto-modal" style="color:#666; font-family:sans-serif; margin:15px 0;">Tem certeza que deseja excluir?</p>
+                <div style="display:flex; justify-content:center; gap:10px; margin-top:20px;">
+                    <button onclick="fecharModal()" style="padding:10px 20px; border:none; background:#e0e0e0; cursor:pointer; border-radius:4px; font-weight:bold; color:#333;">Cancelar</button>
+                    <button id="btn-confirmar-modal" style="padding:10px 20px; border:none; background:#d32f2f; color:white; font-weight:bold; cursor:pointer; border-radius:4px;">Sim, Excluir</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    console.log("[DEBUG] Modal criado dinamicamente no HTML.");
+}
 
 // Torna global para o HTML acessar
 window.prepararExclusao = function(tipo, id) {
     console.log(`[DEBUG] Preparando exclusão: Tipo=${tipo}, ID=${id}`);
     
+    // 1. Garante que o modal existe
+    criarModalDinamicamente();
+
     idParaExcluir = id;
     tipoParaExcluir = tipo;
     
     const modal = document.getElementById('modal-confirmacao');
     const btnConfirm = document.getElementById('btn-confirmar-modal');
     
-    // Se o modal e o botão existem, usamos eles
     if(modal && btnConfirm) {
-        modal.style.display = 'flex';
-        
-        // CORREÇÃO: Atribuição direta do onclick (mais confiável que addEventListener em clones)
+        // Texto dinâmico
+        const textoModal = document.getElementById('texto-modal');
+        if(textoModal) textoModal.innerText = `Deseja excluir o item #${id}? Ação irreversível.`;
+
+        // Atribui o clique
         btnConfirm.onclick = function() {
-            console.log("[DEBUG] Botão Sim clicado no Modal");
+            console.log("[DEBUG] Botão SIM clicado.");
             executarExclusaoAPI();
         };
 
-        // Texto opcional
-        const textoModal = document.getElementById('texto-modal');
-        if(textoModal) textoModal.innerText = `Deseja excluir o item #${id} permanentemente?`;
-    } 
-    // Fallback de segurança: Se o modal falhar no HTML, usa o confirm nativo
-    else {
-        console.warn("[DEBUG] Modal não encontrado no HTML. Usando confirm nativo.");
-        if(confirm(`Tem certeza que deseja excluir o ${tipo} #${id}?`)) {
+        // Mostra o modal (forçando Flex para garantir visibilidade)
+        modal.style.display = 'flex';
+    } else {
+        // Fallback extremo
+        if(confirm(`Confirmar exclusão do ${tipo} ID ${id}?`)) {
             executarExclusaoAPI();
         }
     }
 }
 
 async function executarExclusaoAPI() {
-    console.log(`[DEBUG] Enviando DELETE para API: ${API_URL}/${tipoParaExcluir}/${idParaExcluir}`);
+    console.log(`[DEBUG] Disparando DELETE para API...`);
     
-    // Fecha modal
+    // Fecha visualmente
     const modal = document.getElementById('modal-confirmacao');
     if(modal) modal.style.display = 'none';
 
@@ -204,18 +225,15 @@ async function executarExclusaoAPI() {
             if(tipoParaExcluir === 'apolices') carregarApolices();
         } else {
             const err = await res.json();
-            const msg = err.message || 'Erro desconhecido.';
-            console.error(`[DEBUG] Erro API: ${msg}`);
-            if(typeof Swal !== 'undefined') Swal.fire('Erro', msg, 'error');
-            else alert('Erro: ' + msg);
+            if(typeof Swal !== 'undefined') Swal.fire('Erro', err.message || 'Falha ao excluir.', 'error');
+            else alert('Erro: ' + err.message);
         }
     } catch (error) {
         console.error("[DEBUG] Erro de Rede:", error);
-        alert('Erro de conexão ao tentar excluir.');
+        alert('Erro de conexão.');
     }
 }
 
-// Fechar Modal (Cancelar)
 window.fecharModal = function() {
     const modal = document.getElementById('modal-confirmacao');
     if(modal) modal.style.display = 'none';
