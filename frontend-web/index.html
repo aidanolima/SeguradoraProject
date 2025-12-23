@@ -15,9 +15,6 @@
     frame-src * 'self' blob: data: gap:;">
 
     <link rel="icon" href="assets/logo.png" type="image/png" sizes="32x32">
-    <link rel="icon" href="assets/logo.png" type="image/png" sizes="192x192">
-    <link rel="apple-touch-icon" href="assets/logo.png">
-    
     <title>Gestor Clientes e Apólices - Login</title>
     
     <link rel="stylesheet" href="css/style.css">
@@ -25,88 +22,59 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        /* 1. CORREÇÃO DA BARRA DE ROLAGEM (Centralizar Página) */
+        /* Global Reset */
         body {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden; /* Elimina a barra de rolagem */
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 100vh !important;
+            width: 100vw !important;
+            overflow: hidden !important; /* Forces no scrollbar */
             display: flex;
             justify-content: center;
             align-items: center;
             background-color: #f4f6f9;
+            font-family: 'Segoe UI', sans-serif;
         }
 
-        /* 2. CARD RESPONSIVO */
         .login-container {
             width: 100%;
-            max-width: 400px; /* Mantém compacto */
+            max-width: 400px;
             background: #ffffff;
-            padding: 30px;
+            padding: 30px; /* Reduced padding */
             border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            box-sizing: border-box;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
+            box-sizing: border-box;
         }
 
-        /* 3. CONTROLE DO LOGO */
         .login-header img.logo-sistema {
-            max-height: 80px; /* Impede que o logo fique muito alto */
+            max-height: 70px; /* Slightly smaller logo */
             width: auto;
             display: block;
             margin: 0 auto 10px auto;
         }
 
-        /* 4. CORREÇÃO POSIÇÃO OLHO MÁGICO */
-        .password-wrapper {
-            position: relative; /* Âncora para o botão absoluto */
-            width: 100%;
-        }
-        
-        .password-wrapper input {
-            width: 100%;
-            padding-right: 40px; /* Espaço para o ícone */
-            box-sizing: border-box; /* Garante que o padding não aumente a largura */
-        }
-
-        .btn-eye {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%); /* Centralizado verticalmente perfeitamente */
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #666;
-            padding: 0;
-            z-index: 10;
-        }
-        
-        .btn-eye:hover {
-            color: #2e7d32;
-        }
-        
-        /* Ajuste de espaçamento dos inputs */
-        .input-group {
-            margin-bottom: 15px;
-            text-align: left;
-        }
         .input-group label {
             display: block;
             margin-bottom: 5px;
             color: #2e7d32;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 14px;
         }
-        .input-group input {
+        
+        .btn-login {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
+            padding: 12px;
+            background-color: #2e7d32;
+            color: white;
+            border: none;
             border-radius: 4px;
-            background-color: #f0f4f8;
-            box-sizing: border-box;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
         }
+        .btn-login:hover { background-color: #1b5e20; }
     </style>
 </head>
 
@@ -116,22 +84,28 @@
         
         <div class="login-header" style="text-align: center;">
             <img src="assets/logo.png" alt="Logotipo" class="logo-sistema">
-            <h1 style="color: #2e7d32; font-size: 20px; margin: 0;">Gestor Clientes e Apólices</h1>
-            <p style="color: #666; font-size: 14px; margin-top: 5px;">Acesse sua conta para continuar</p>
+            <h1 style="color: #2e7d32; font-size: 20px; margin: 0; font-weight: 700;">Gestor Clientes</h1>
+            <p style="color: #666; font-size: 13px; margin-top: 5px;">Acesse sua conta para continuar</p>
         </div>
 
         <form id="form-login">
-            <div class="input-group">
+            <div class="input-group" style="margin-bottom: 15px;">
                 <label for="email_login">E-mail</label>
-                <input type="email" id="email_login" placeholder="seu@email.com" required>
+                <input type="email" id="email_login" placeholder="seu@email.com" required 
+                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; height: 40px;">
             </div>
             
-            <div class="input-group">
+            <div class="input-group" style="margin-bottom: 15px;">
                 <label for="senha_login">Senha</label>
-                <div class="password-wrapper">
-                    <input type="password" id="senha_login" placeholder="••••••••" required>
-                    <button type="button" id="btn-toggle-senha" class="btn-eye">
-                        <i class="fas fa-eye"></i>
+                
+                <div style="position: relative; width: 100%;">
+                    <input type="password" id="senha_login" placeholder="••••••••" required 
+                           style="width: 100%; padding: 10px 40px 10px 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; height: 40px;">
+                    
+                    <button type="button" id="btn-toggle-senha" tabindex="-1"
+                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); 
+                                   background: none; border: none; cursor: pointer; color: #666; padding: 0; z-index: 10; display: flex; align-items: center;">
+                        <i class="fas fa-eye" style="font-size: 16px;"></i>
                     </button>
                 </div>
             </div>
@@ -145,12 +119,12 @@
             <button type="submit" class="btn-login">ACESSAR SISTEMA</button>
         </form>
 
-        <div class="login-footer" style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px; font-size: 13px; color: #666; text-align: center;">
-            <p style="margin: 5px 0;">Não tem acesso?</p>
+        <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; font-size: 12px; color: #666; text-align: center;">
+            <p style="margin: 3px 0;">Não tem acesso?</p>
             <p style="margin: 0;">Solicite a criação da sua conta ao <strong>Administrador</strong>.</p>
         </div>
 
-        <div class="system-credits" style="text-align: center; margin-top: 20px; font-size: 11px; color: #999;">
+        <div style="text-align: center; margin-top: 15px; font-size: 10px; color: #aaa;">
             By Áidano Lima - ASL TECH
         </div>
     </div> 
