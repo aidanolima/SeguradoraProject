@@ -207,12 +207,35 @@ app.post('/cadastrar-apolice', uploadSave.single('arquivo_pdf'), async (req, res
         res.status(201).json({message: "Criado"});
     } catch(e) { res.status(500).json({message: e.message}); }
 });
-// Registro Usuário
-app.post('/auth/register', async(req, res) => {
+// server.js - ROTA DE CRIAÇÃO DE USUÁRIO (Blindada para Admins)
+
+app.post('/auth/register', authenticateToken, async (req, res) => {
+    // 1. Verifica se quem está pedindo é ADMIN
+    // O 'req.user' vem do middleware authenticateToken
+    if (req.user.tipo !== 'admin') {
+        return res.status(403).json({ message: "Acesso negado. Apenas administradores podem criar usuários." });
+    }
+
+    const { nome, email, senha, tipo } = req.body;
+    const tipoFinal = tipo || 'operacional'; 
+
     try {
-        await pool.query('INSERT INTO usuarios (nome, email, senha, tipo) VALUES (?,?,?,?)', [req.body.nome, req.body.email, req.body.senha, req.body.tipo||'operacional']);
-        res.status(201).json({message:"Criado"});
-    } catch(e) { res.status(500).json({message:e.message}); }
+        // 2. Verifica se já existe
+        const [userExists] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
+        if (userExists.length > 0) {
+            return res.status(400).json({ message: "E-mail já cadastrado!" });
+        }
+
+        // 3. Cria o usuário
+        const sql = 'INSERT INTO usuarios (nome, email, senha, tipo) VALUES (?, ?, ?, ?)';
+        const [result] = await pool.query(sql, [nome, email, senha, tipoFinal]);
+        
+        res.status(201).json({ message: "Usuário criado com sucesso!", id: result.insertId });
+
+    } catch (error) {
+        console.error("Erro ao registrar:", error);
+        res.status(500).json({ message: "Erro ao criar conta: " + error.message });
+    }
 });
 app.get('/usuarios/:id', authenticateToken, async(req,res)=>{
     const [r] = await pool.query('SELECT * FROM usuarios WHERE id=?',[req.params.id]);

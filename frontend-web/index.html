@@ -29,34 +29,30 @@
             <p>Acesse sua conta para continuar</p>
         </div>
 
-        <form id="form-login">
-            
-            <div class="form-group">
-                <label for="email_login">E-mail</label>
-                <input type="email" id="email_login" required placeholder="exemplo@email.com">
-            </div>
+        <form id="loginForm" onsubmit="fazerLogin(event)">
+    <div class="input-group">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" placeholder="seu@email.com" required>
+    </div>
+    
+    <div class="input-group">
+        <label for="senha">Senha</label>
+        <input type="password" id="senha" placeholder="••••••••" required>
+    </div>
 
-            <div class="form-group">
-                <label for="senha_login">Senha</label>
-                
-                <div class="password-wrapper">
-                    <input type="password" id="senha_login" required placeholder="******">
-                    
-                    <button type="button" id="btn-toggle-senha" class="password-toggle-icon" tabindex="-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="icon-eye">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                            <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            
-            <div style="text-align: right; margin-bottom: 15px;">
-                <a href="recuperar.html" style="color: #2e7d32; font-size: 14px; text-decoration: none;">Esqueci minha senha</a>
-            </div>
+    <div style="text-align: right; margin-bottom: 20px;">
+        <a href="recuperar.html" style="color: #2e7d32; font-size: 12px; text-decoration: none;">
+            Esqueceu a senha?
+        </a>
+    </div>
 
-            <button type="submit">Entrar</button>
-        </form>
+    <button type="submit" class="btn-login">ACESSAR SISTEMA</button>
+</form>
+
+<div class="login-footer" style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px; font-size: 13px; color: #666;">
+    <p>Não tem acesso?</p>
+    <p>Solicite a criação da sua conta ao <strong>Administrador</strong>.</p>
+</div>
 
         <div style="margin-top: 20px; font-size: 14px;">
             Não tem acesso? <a href="registro.html" style="color: #4caf50; font-weight: bold;">Crie sua conta</a>
