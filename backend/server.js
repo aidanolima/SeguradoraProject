@@ -1,4 +1,4 @@
-// backend/server.js - VERSÃO AIVEN (CORRIGIDA COM SSL)
+// backend/server.js - VERSÃO COM REGRAS DE ACESSO (ADMIN vs OPERACIONAL)
 
 const path = require('path');
 const fs = require('fs');
@@ -34,19 +34,14 @@ const storageDisk = multer.diskStorage({
 const uploadSave = multer({ storage: storageDisk });
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// --- 2. BANCO DE DADOS (CONFIGURAÇÃO AIVEN) ---
-// Atenção: O SSL é obrigatório para Aiven.
-// backend/server.js
-
+// --- 2. BANCO DE DADOS (AIVEN) ---
 const pool = mysql.createPool({
     host: process.env.DB_HOST,       
     user: process.env.DB_USER,       
-    password: process.env.DB_PASSWORD, // <--- DEIXE ASSIM (SEM A SENHA ESCRITA)
+    password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     port: process.env.DB_PORT,
-    ssl: {
-        rejectUnauthorized: false
-    },
+    ssl: { rejectUnauthorized: false },
     waitForConnections: true,
     connectionLimit: 5,
     queueLimit: 0
@@ -57,10 +52,7 @@ pool.getConnection()
         console.log("✅ MySQL Aiven Conectado com Sucesso!");
         conn.release();
     })
-    .catch(e => {
-        console.error("❌ Erro Conexão MySQL:", e.message);
-        console.error("   Verifique se o banco de dados 'defaultdb' contém as tabelas necessárias.");
-    });
+    .catch(e => console.error("❌ Erro Conexão MySQL:", e.message));
 
 // --- 3. AUTENTICAÇÃO ---
 function authenticateToken(req, res, next) {
@@ -78,38 +70,26 @@ function authenticateToken(req, res, next) {
 
 // --- 4. ROTAS ---
 
-// ROTA RAIZ
-app.get('/', (req, res) => {
-    res.status(200).send('API Aiven Online! 🚀');
-});
+app.get('/', (req, res) => res.status(200).send('API Online e Segura! 🚀'));
 
 // LOGIN
 app.post('/auth/login', async (req, res) => {
-    console.log(`[LOGIN] Tentativa: ${req.body.email}`);
     try {
-        // Verifica se a tabela usuarios existe primeiro
         const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ? AND senha = ?', [req.body.email, req.body.senha]);
         if (rows.length > 0) {
             const user = rows[0];
             const tipoUser = user.tipo || 'operacional';
             const token = jwt.sign({ id: user.id, email: user.email, tipo: tipoUser }, JWT_SECRET, { expiresIn: '8h' });
-            
             res.json({ message: "OK", token, user: { id: user.id, nome: user.nome, email: user.email, tipo: tipoUser } });
         } else {
             res.status(401).json({ message: "Login inválido" });
         }
-    } catch (error) { 
-        console.error("Erro no Login:", error.message);
-        res.status(500).json({ error: "Erro interno no servidor (Banco de Dados)." }); 
-    }
+    } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-// CRIAR USUÁRIO (RESTORE - ABERTO PARA RECUPERAÇÃO INICIAL, DEPOIS PODE FECHAR)
+// CRIAR USUÁRIO (Apenas Admin)
 app.post('/auth/register', authenticateToken, async (req, res) => {
-    if (req.user.tipo !== 'admin') {
-         return res.status(403).json({ message: "Apenas admin cria usuários." });
-    }
-    
+    if (req.user.tipo !== 'admin') return res.status(403).json({ message: "Sem permissão." });
     try {
         const { nome, email, senha, tipo } = req.body;
         const [result] = await pool.query('INSERT INTO usuarios (nome, email, senha, tipo) VALUES (?, ?, ?, ?)', [nome, email, senha, tipo || 'operacional']);
@@ -117,14 +97,60 @@ app.post('/auth/register', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// LISTAGEM USUÁRIOS
+// === [MUDANÇA PRINCIPAL] LISTAGEM DE USUÁRIOS ===
 app.get('/usuarios', authenticateToken, async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT id, nome, email, tipo FROM usuarios');
+        let sql = 'SELECT id, nome, email, tipo FROM usuarios';
+        let params = [];
+
+        // REGRA DE OURO: Se não for admin, filtra pelo ID do próprio usuário
+        if (req.user.tipo !== 'admin') {
+            sql += ' WHERE id = ?';
+            params.push(req.user.id);
+        }
+
+        const [rows] = await pool.query(sql, params);
         res.json(rows);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// BUSCAR UM USUÁRIO (Para edição)
+app.get('/usuarios/:id', authenticateToken, async (req, res) => {
+    try {
+        // Bloqueio: Operacional não pode ver dados de outro ID
+        if (req.user.tipo !== 'admin' && req.user.id != req.params.id) {
+            return res.status(403).json({ message: "Acesso negado." });
+        }
+        const [rows] = await pool.query('SELECT id, nome, email, tipo, senha FROM usuarios WHERE id = ?', [req.params.id]);
+        if(rows.length > 0) res.json(rows[0]); else res.status(404).json({message: "Não encontrado"});
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// EDITAR USUÁRIO (PUT)
+app.put('/usuarios/:id', authenticateToken, async (req, res) => {
+    try {
+        if (req.user.tipo !== 'admin' && req.user.id != req.params.id) {
+            return res.status(403).json({ message: "Acesso negado." });
+        }
+        const { nome, email, senha, tipo } = req.body;
+        // Se for admin, usa o tipo enviado. Se for operacional, força manter 'operacional' (evita auto-promoção)
+        const tipoFinal = (req.user.tipo === 'admin') ? tipo : 'operacional';
+        
+        await pool.query('UPDATE usuarios SET nome=?, email=?, senha=?, tipo=? WHERE id=?', [nome, email, senha, tipoFinal, req.params.id]);
+        res.json({ message: "Atualizado" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// EXCLUIR USUÁRIO (Apenas Admin)
+app.delete('/usuarios/:id', authenticateToken, async (req, res) => {
+    if (req.user.tipo !== 'admin') return res.status(403).json({ message: "Apenas admin pode excluir." });
+    try {
+        await pool.query('DELETE FROM usuarios WHERE id = ?', [req.params.id]);
+        res.status(200).json({ message: 'Excluído' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- ROTAS GERAIS (PROPOSTAS E APÓLICES) ---
 app.get('/propostas', authenticateToken, async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM propostas ORDER BY id DESC');
@@ -140,15 +166,9 @@ app.get('/apolices', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// EXCLUSÕES
-app.delete('/usuarios/:id', authenticateToken, async (req, res) => {
-    try {
-        await pool.query('DELETE FROM usuarios WHERE id = ?', [req.params.id]);
-        res.status(200).json({ message: 'Excluído' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
+// EXCLUSÕES GERAIS (Protegidas para Admin)
 app.delete('/propostas/:id', authenticateToken, async (req, res) => {
+    if (req.user.tipo !== 'admin') return res.status(403).json({ message: "Apenas admin exclui." });
     try {
         await pool.query('DELETE FROM apolices WHERE veiculo_id = ?', [req.params.id]);
         await pool.query('DELETE FROM propostas WHERE id = ?', [req.params.id]);
@@ -157,13 +177,14 @@ app.delete('/propostas/:id', authenticateToken, async (req, res) => {
 });
 
 app.delete('/apolices/:id', authenticateToken, async (req, res) => {
+    if (req.user.tipo !== 'admin') return res.status(403).json({ message: "Apenas admin exclui." });
     try {
         await pool.query('DELETE FROM apolices WHERE id = ?', [req.params.id]);
         res.status(200).json({ message: 'Excluído' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// CADASTROS
+// CADASTROS (Liberado para Operacional)
 app.post('/cadastrar-proposta', async (req, res) => {
     try {
         const d = req.body;
@@ -195,76 +216,10 @@ app.get('/apolices/:id/pdf', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ message: 'Erro PDF' }); }
 });
 
-// --- ROTA TEMPORÁRIA PARA CRIAR O BANCO ---
+// ROTA TEMPORÁRIA (MANTER POR PRECAUÇÃO OU REMOVER SE JÁ ESTÁ TUDO OK)
 app.get('/instalar-banco', async (req, res) => {
-    try {
-        // 1. Criar Tabela Usuários
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS usuarios (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                nome VARCHAR(100),
-                email VARCHAR(100) UNIQUE,
-                senha VARCHAR(255),
-                tipo VARCHAR(20) DEFAULT 'operacional'
-            )
-        `);
-
-        // 2. Criar Admin Padrão (Se não existir)
-        const [users] = await pool.query("SELECT * FROM usuarios WHERE email = 'admin@sistema.com'");
-        if (users.length === 0) {
-            await pool.query(`INSERT INTO usuarios (nome, email, senha, tipo) VALUES ('Administrador', 'admin@sistema.com', '123456', 'admin')`);
-        }
-
-        // 3. Criar Tabela Propostas
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS propostas (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                nome VARCHAR(100),
-                documento VARCHAR(20),
-                email VARCHAR(100),
-                telefone VARCHAR(20),
-                cep VARCHAR(20),
-                endereco VARCHAR(255),
-                bairro VARCHAR(100),
-                cidade VARCHAR(100),
-                uf VARCHAR(2),
-                numero VARCHAR(20),
-                complemento VARCHAR(100),
-                fabricante VARCHAR(50),
-                modelo VARCHAR(50),
-                placa VARCHAR(10),
-                chassi VARCHAR(50),
-                ano_modelo VARCHAR(10),
-                fipe VARCHAR(20),
-                utilizacao VARCHAR(50),
-                blindado BOOLEAN,
-                kit_gas BOOLEAN,
-                zero_km BOOLEAN,
-                cep_pernoite VARCHAR(20),
-                cobertura_casco VARCHAR(50),
-                carro_reserva VARCHAR(50),
-                forma_pagamento VARCHAR(50)
-            )
-        `);
-
-        // 4. Criar Tabela Apólices
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS apolices (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                numero_apolice VARCHAR(50),
-                veiculo_id INT,
-                arquivo_pdf VARCHAR(255),
-                premio_total DECIMAL(10,2),
-                vigencia_inicio DATE,
-                vigencia_fim DATE
-            )
-        `);
-
-        res.send('✅ Sucesso! Tabelas criadas e Admin (admin@sistema.com / 123456) pronto.');
-    } catch (error) {
-        res.status(500).send('Erro ao criar tabelas: ' + error.message);
-    }
+    res.send('Banco já instalado. Rota desativada por segurança (ou reative no código se precisar).');
 });
 
 // INICIALIZAÇÃO
-app.listen(port, () => console.log(`🚀 Servidor Aiven rodando na porta ${port}`));
+app.listen(port, () => console.log(`🚀 Servidor Seguro rodando na porta ${port}`));
