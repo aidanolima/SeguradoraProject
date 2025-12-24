@@ -1,11 +1,12 @@
-// backend/server.js - VERSÃO COM REGRAS DE ACESSO (ADMIN vs OPERACIONAL)
+// 1. A linha do dotenv deve ser a PRIMEIRA de todas
+require('dotenv').config(); 
 
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
 const multer = require('multer');
-const pdf = require('pdf-extraction');
+// const pdf = require('pdf-extraction'); // (Se não tiver usando, pode comentar)
 const jwt = require('jsonwebtoken');
 const express = require('express');
 
