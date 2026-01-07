@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <script src="js/config.js"></script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Emissão de Apólice - Gestor</title>
@@ -123,7 +125,7 @@
     </div>
 <script>
         (function() {
-            const LOCAL_API_URL = 'http://localhost:3000';
+            const LOCAL_API_URL = API_URL;
             const localToken = localStorage.getItem('token');
             const urlParams = new URLSearchParams(window.location.search);
             const idEdicao = urlParams.get('id');
