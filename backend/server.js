@@ -1,20 +1,10 @@
-<<<<<<< HEAD
 require('dotenv').config(); 
-=======
-// 1. A linha do dotenv deve ser a PRIMEIRA de todas
-require('dotenv').config(); 
-
->>>>>>> d1c4750d0ed02d4e6a9157eb82c6bced24dffb07
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
 const multer = require('multer');
-<<<<<<< HEAD
 const pdf = require('pdf-extraction'); 
-=======
-// const pdf = require('pdf-extraction'); // (Se não tiver usando, pode comentar)
->>>>>>> d1c4750d0ed02d4e6a9157eb82c6bced24dffb07
 const jwt = require('jsonwebtoken');
 const express = require('express');
 
@@ -99,7 +89,6 @@ app.post('/login', async (req, res) => {
         if (rows.length === 0) return res.status(401).json({ message: "Usuário não encontrado." });
         
         const usuario = rows[0];
-        // Nota: Em produção, usar bcrypt para senhas.
         if (senha !== usuario.senha) return res.status(401).json({ message: "Senha incorreta." });
 
         const token = jwt.sign(
@@ -118,21 +107,17 @@ app.post('/login', async (req, res) => {
 });
 
 // ==================================================
-// 👤 GESTÃO DE USUÁRIOS (AGORA PROTEGIDAS)
+// 👤 GESTÃO DE USUÁRIOS
 // ==================================================
-
-// Criar Usuário
 app.post('/registrar', authenticateToken, async (req, res) => {
     try {
         const { nome, email, senha, tipo } = req.body;
         if (!nome || !email || !senha) return res.status(400).json({ message: "Dados incompletos." });
-        
         await pool.query('INSERT INTO usuarios (nome, email, senha, tipo) VALUES (?, ?, ?, ?)', [nome, email, senha, tipo]);
         res.status(201).json({ message: "Usuário criado" });
     } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-// Listar Usuários
 app.get('/usuarios', authenticateToken, async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT id, nome, email, tipo FROM usuarios');
@@ -140,7 +125,6 @@ app.get('/usuarios', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Buscar UM Usuário (Rota que estava faltando no seu server rodando)
 app.get('/usuarios/:id', authenticateToken, async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT id, nome, email, tipo FROM usuarios WHERE id = ?', [req.params.id]);
@@ -149,23 +133,18 @@ app.get('/usuarios/:id', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Editar Usuário
 app.put('/usuarios/:id', authenticateToken, async (req, res) => {
     try {
         const { nome, email, senha, tipo } = req.body;
-        // Se a senha foi enviada, atualiza tudo. Se não, mantém a antiga.
         if (senha && senha.trim() !== "") {
-            await pool.query('UPDATE usuarios SET nome=?, email=?, senha=?, tipo=? WHERE id=?', 
-                [nome, email, senha, tipo, req.params.id]);
+            await pool.query('UPDATE usuarios SET nome=?, email=?, senha=?, tipo=? WHERE id=?', [nome, email, senha, tipo, req.params.id]);
         } else {
-            await pool.query('UPDATE usuarios SET nome=?, email=?, tipo=? WHERE id=?', 
-                [nome, email, tipo, req.params.id]);
+            await pool.query('UPDATE usuarios SET nome=?, email=?, tipo=? WHERE id=?', [nome, email, tipo, req.params.id]);
         }
         res.json({ message: "Usuário atualizado com sucesso!" });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Excluir Usuário
 app.delete('/usuarios/:id', authenticateToken, async (req, res) => {
     try {
         await pool.query('DELETE FROM usuarios WHERE id = ?', [req.params.id]);
@@ -191,10 +170,10 @@ app.get('/dashboard-resumo', authenticateToken, async (req, res) => {
 });
 
 // ==================================================
-// 📝 PROPOSTAS / CLIENTES (BLOCO COMPLETO E CORRIGIDO)
+// 📝 PROPOSTAS / CLIENTES (CORRIGIDO E COMPLETO)
 // ==================================================
 
-// 1. LISTAR TODOS (Para a tabela do Dashboard)
+// Listar Todos
 app.get('/propostas', authenticateToken, async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM propostas ORDER BY id DESC');
@@ -202,7 +181,7 @@ app.get('/propostas', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 2. BUSCAR UM CLIENTE (A ROTA QUE ESTAVA FALTANDO)
+// Buscar UM (Corrigindo o erro 404)
 app.get('/propostas/:id', authenticateToken, async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM propostas WHERE id = ?', [req.params.id]);
@@ -211,7 +190,7 @@ app.get('/propostas/:id', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 3. CADASTRAR NOVO CLIENTE (Com todos os campos)
+// Cadastrar (Campos completos)
 app.post('/cadastrar-proposta', authenticateToken, async (req, res) => {
     try {
         const d = req.body;
@@ -234,7 +213,7 @@ app.post('/cadastrar-proposta', authenticateToken, async (req, res) => {
     } catch(e) { res.status(500).json({message: e.message}); }
 });
 
-// 4. EDITAR CLIENTE (Atualizar todos os campos)
+// Editar (Campos completos)
 app.put('/propostas/:id', authenticateToken, async (req, res) => {
     try {
         const d = req.body;
@@ -258,7 +237,7 @@ app.put('/propostas/:id', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 5. EXCLUIR CLIENTE
+// Excluir
 app.delete('/propostas/:id', authenticateToken, async (req, res) => {
     try {
         await pool.query('DELETE FROM propostas WHERE id = ?', [req.params.id]);
@@ -285,7 +264,6 @@ app.get('/apolices/:id', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Cadastrar Apólice (Protegida)
 app.post('/cadastrar-apolice', authenticateToken, uploadSave.single('arquivo_pdf'), async (req, res) => {
     try {
         const d = req.body;
@@ -313,7 +291,7 @@ app.delete('/apolices/:id', authenticateToken, async (req, res) => {
 });
 
 // ==================================================
-// ⚡ IMPORTAR PDF (PROTEGIDA)
+// ⚡ IMPORTAR PDF
 // ==================================================
 function extrairGenerico(texto) {
     const dados = {};
@@ -347,7 +325,6 @@ function extrairBradesco(texto) {
     return dados;
 }
 
-// Protegida com authenticateToken
 app.post('/importar-pdf', authenticateToken, uploadSave.single('arquivoPdf'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ message: "Sem arquivo." });
