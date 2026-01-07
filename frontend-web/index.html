@@ -3,17 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Clientes e Apólices</title>
+    <title>Login - Seguradora Enterprise</title>
     
     <link rel="icon" href="assets/logo.png" type="image/png">
+    
+    <meta http-equiv="Content-Security-Policy" 
+    content="default-src * 'self' blob: data: gap:; 
+    style-src * 'self' 'unsafe-inline' blob: data: gap:; 
+    script-src * 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net blob: data: gap:; 
+    connect-src 'self' http://localhost:3000 https://seguradoraproject.onrender.com * 'unsafe-inline' blob: data: gap:;">
+
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    <script src="js/config.js"></script>
+
     <style>
         /* Visual Enterprise Centralizado */
         body.login-body {
-            background: linear-gradient(135deg, #003366 0%, #001a33 100%); /* Azul Enterprise */
+            background: linear-gradient(135deg, #003366 0%, #001a33 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -30,50 +39,26 @@
             width: 100%;
             max-width: 380px;
             text-align: center;
-            border-top: 5px solid #00a86b; /* Detalhe Verde */
+            border-top: 5px solid #00a86b;
         }
 
-        .login-logo {
-            max-width: 160px;
-            margin-bottom: 25px;
-        }
+        .login-logo { max-width: 160px; margin-bottom: 25px; }
+        .login-title { color: #333; font-size: 22px; margin-bottom: 30px; font-weight: 600; }
 
-        .login-title {
-            color: #333;
-            font-size: 22px;
-            margin-bottom: 30px;
-            font-weight: 600;
-        }
-
-        .input-group {
-            position: relative;
-            margin-bottom: 20px;
-            text-align: left;
-        }
+        .input-group { position: relative; margin-bottom: 20px; text-align: left; }
+        .input-group i { position: absolute; top: 50%; transform: translateY(-50%); left: 15px; color: #888; font-size: 14px; }
         
-        .input-group i {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            left: 15px;
-            color: #888;
-            font-size: 14px;
-        }
-
         .input-group input {
             width: 100%;
-            padding: 12px 12px 12px 40px; /* Espaço para o ícone */
+            padding: 12px 12px 12px 40px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 15px;
             transition: border-color 0.3s;
-            box-sizing: border-box; /* Garante que padding não quebre o layout */
+            box-sizing: border-box;
         }
 
-        .input-group input:focus {
-            border-color: #003366;
-            outline: none;
-        }
+        .input-group input:focus { border-color: #003366; outline: none; }
 
         .btn-login {
             background-color: #003366;
@@ -88,15 +73,8 @@
             margin-top: 10px;
             transition: background 0.2s;
         }
-        .btn-login:hover {
-            background-color: #002244;
-        }
-
-        .footer-text {
-            margin-top: 25px;
-            font-size: 12px;
-            color: #999;
-        }
+        .btn-login:hover { background-color: #002244; }
+        .footer-text { margin-top: 25px; font-size: 12px; color: #999; }
     </style>
 </head>
 <body class="login-body">
@@ -124,8 +102,6 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000';
-
         document.getElementById('form-login').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -145,13 +121,14 @@
                 btn.disabled = true;
                 btn.style.opacity = '0.7';
 
+                // IMPORTANTE: Aqui usamos API_URL que vem do config.js
+                // Não precisa declarar const API_URL = ... aqui dentro
                 const response = await fetch(`${API_URL}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, senha })
                 });
 
-                // Tenta ler o JSON. Se falhar (erro 404 HTML), cai no catch
                 const data = await response.json(); 
 
                 if (response.ok) {
@@ -162,11 +139,7 @@
                     
                     // Feedback Visual Rápido
                     const Toast = Swal.mixin({
-                        toast: true, position: 'top-end', showConfirmButton: false, timer: 1000,
-                        didOpen: (toast) => {
-                            toast.addEventListener('mouseenter', Swal.stopTimer)
-                            toast.addEventListener('mouseleave', Swal.resumeTimer)
-                        }
+                        toast: true, position: 'top-end', showConfirmButton: false, timer: 1000
                     });
                     
                     await Toast.fire({ icon: 'success', title: 'Login realizado!' });
@@ -174,16 +147,14 @@
                     // Redireciona
                     window.location.href = 'dashboard.html';
                 } else {
-                    // Erro retornado pela API (Ex: Senha incorreta)
                     throw new Error(data.message || 'Dados inválidos');
                 }
             } catch (error) {
                 console.error("Erro Login:", error);
                 
                 let msg = error.message;
-                // Tratamento amigável para erro de HTML/404
                 if (msg.includes('Unexpected token') || msg.includes('JSON')) {
-                    msg = "Erro de conexão com o servidor (404/500). Verifique se o Backend está rodando.";
+                    msg = "Erro de conexão com o servidor. Verifique se o Backend está rodando.";
                 }
 
                 Swal.fire({ 
@@ -193,22 +164,11 @@
                     confirmButtonColor: '#003366'
                 });
             } finally {
-                // Restaura o botão
                 btn.innerText = originalText;
                 btn.disabled = false;
                 btn.style.opacity = '1';
             }
         });
     </script>
-=======
-        <div class="system-credits" style="text-align: center; margin-top: 20px; font-size: 11px; color: #999;">
-            By Áidano Lima - ASL TECH
-        </div>
-    </div> 
-    
-    <script src="js/config.js"></script> 
-    
-    <script src="js/auth.js"></script>
-
 </body>
 </html>

@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+
+    <script src="js/config.js"></script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
@@ -28,6 +31,7 @@
         .badge-admin { background-color: #7b1fa2; color: white; }
         .badge-user { background-color: #1976d2; color: white; }
     </style>
+
 </head>
 <body class="dashboard-body">
     
@@ -99,7 +103,7 @@
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 style="color: #444; border-left: 5px solid #00a86b; padding-left: 10px; margin: 0;">Gestão de Clientes</h3>
-                <a href="cadastro.html" class="btn-novo" style="background-color: #00a86b; width: auto; padding: 10px 20px;">+ Nova Proposta</a>
+                <a href="cadastro.html" class="btn-novo" style="background-color: #00a86b; width: auto; padding: 10px 20px; text-decoration: none;">+ Nova Proposta</a>
             </div>
             <div style="overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 8px;">
                 <table class="tabela-crud">
@@ -147,9 +151,9 @@
     </div> 
     
    <script>
+    // IIFE para isolar o escopo e evitar "Identifier already declared"
     (function() {
-        // Configurações
-        const LOCAL_API_URL = 'http://localhost:3000';
+        const LOCAL_API_URL = API_URL;
         const localToken = localStorage.getItem('token');
 
         console.log("🚀 Dashboard Enterprise Iniciado");
@@ -174,17 +178,16 @@
             carregarTabelaClientes(); 
             carregarTabelaUsuarios();
         });
-<<<<<<< HEAD
 
         // --- CARDS ---
         async function carregarResumo() {
             try {
                 const res = await fetch(`${LOCAL_API_URL}/dashboard-resumo`, { headers: { 'Authorization': `Bearer ${localToken}` } });
                 const d = await res.json();
-                document.getElementById('total-clientes').innerText = d.clientes || '0';
-                document.getElementById('total-veiculos').innerText = d.veiculos || '0';
-                document.getElementById('total-apolices').innerText = d.apolices || '0';
-                document.getElementById('total-usuarios').innerText = d.usuarios || '0';
+                if(document.getElementById('total-clientes')) document.getElementById('total-clientes').innerText = d.clientes || '0';
+                if(document.getElementById('total-veiculos')) document.getElementById('total-veiculos').innerText = d.veiculos || '0';
+                if(document.getElementById('total-apolices')) document.getElementById('total-apolices').innerText = d.apolices || '0';
+                if(document.getElementById('total-usuarios')) document.getElementById('total-usuarios').innerText = d.usuarios || '0';
             } catch (e) { console.error("Erro resumo:", e); }
         }
 
@@ -228,7 +231,7 @@
             } catch (error) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Erro ao carregar dados.</td></tr>'; }
         }
 
-        // --- CLIENTES (AGORA LINKA PARA CADASTRO.HTML) ---
+        // --- CLIENTES (LINK PARA CADASTRO.HTML) ---
         async function carregarTabelaClientes() {
             const tbody = document.getElementById('lista-clientes');
             if(!tbody) return;
@@ -313,15 +316,4 @@
     })();
 </script>
 </body>
-=======
-    </script>
-
-    <script src="js/config.js"></script>  
-    <script src="js/dashboard.js"></script>
-
-</body>
-</html>
-    
-    </body>
->>>>>>> d1c4750d0ed02d4e6a9157eb82c6bced24dffb07
 </html>
