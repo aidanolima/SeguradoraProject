@@ -10,7 +10,7 @@
     script-src * 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net blob: data: gap:; 
     object-src * 'self' blob: data: gap:; 
     img-src * 'self' 'unsafe-inline' blob: data: gap:; 
-    connect-src 'self' https://seguradoraproject.onrender.com * 'unsafe-inline' blob: data: gap:; 
+    connect-src 'self' http://localhost:3000 https://seguradoraproject.onrender.com * 'unsafe-inline' blob: data: gap:; 
     font-src 'self' data: https://cdnjs.cloudflare.com; 
     frame-src * 'self' blob: data: gap:;">
     
@@ -21,41 +21,26 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <style>
-        /* Container flexível com espaçamento garantido */
-        .stats-container {
-            display: flex;
-            justify-content: space-between;
-            gap: 25px; /* Aumentei o espaço entre eles */
-            flex-wrap: wrap; /* Permite quebrar linha em telas menores */
-            padding-right: 5px; /* Margem de segurança na direita */
-        }
-
-        /* Cards elásticos e bonitos */
-        .stat-card {
-            flex: 1; /* Faz todos crescerem igualmente */
-            min-width: 220px; /* Tamanho mínimo para não ficar esmagado */
-            margin-bottom: 0; /* O gap do container cuida do espaço */
-        }
+        .stats-container { display: flex; justify-content: space-between; gap: 25px; flex-wrap: wrap; padding-right: 5px; }
+        .stat-card { flex: 1; min-width: 220px; margin-bottom: 0; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .badge-admin { background-color: #7b1fa2; color: white; }
+        .badge-user { background-color: #1976d2; color: white; }
     </style>
 </head>
 <body class="dashboard-body">
     
     <header class="app-header">
         <div class="header-brand">
-            <a href="dashboard.html">
-                <img src="assets/logo.png" alt="Logo" class="header-logo">
-            </a>
+            <a href="dashboard.html"><img src="assets/logo.png" alt="Logo" class="header-logo"></a>
         </div>
-
         <nav class="header-nav">
-            <a href="dashboard.html" class="header-link active">PROPOSTAS</a>
+            <a href="dashboard.html" class="header-link active">DASHBOARD</a>
             <a href="apolice.html" class="header-link">APÓLICES</a>
             <a href="registro.html?origin=dashboard" class="header-link">USUÁRIOS</a>
             <a href="relatorios.html" class="header-link">RELATÓRIOS</a>
         </nav>
-
         <div class="header-user-area">
             <div class="user-info">
                 <span class="user-name">Olá, <strong id="user-name-display">...</strong></span>
@@ -67,83 +52,22 @@
 
     <div class="main-container">
         
-        <div class="stats-container">
-            <div class="stat-card card-clientes">
-                <span class="stat-number" id="total-clientes">0</span>
-                <span class="stat-label">Clientes Ativos</span>
+        <div class="stats-container" style="margin-bottom: 30px;">
+            <div class="stat-card green">
+                <div class="stat-info"><h3 id="total-clientes">...</h3><p>Clientes Ativos</p></div>
+                <div class="stat-icon"><i class="fas fa-users"></i></div>
             </div>
-            
-            <div class="stat-card card-veiculos">
-                <span class="stat-number" id="total-veiculos">0</span>
-                <span class="stat-label">Veículos Cadastrados</span>
+            <div class="stat-card blue">
+                <div class="stat-info"><h3 id="total-veiculos">...</h3><p>Veículos Cadastrados</p></div>
+                <div class="stat-icon"><i class="fas fa-car"></i></div>
             </div>
-
-            <div class="stat-card card-apolices">
-                <span class="stat-number" id="total-apolices">0</span>
-                <span class="stat-label">Apólices Emitidas</span>
+            <div class="stat-card orange">
+                <div class="stat-info"><h3 id="total-apolices">...</h3><p>Apólices Emitidas</p></div>
+                <div class="stat-icon"><i class="fas fa-file-contract"></i></div>
             </div>
-
-            <div class="stat-card card-usuarios" id="card-stats-usuarios">
-                <span class="stat-number" id="total-usuarios">0</span>
-                <span class="stat-label">Usuários do Sistema</span>
-            </div>
-        </div>
-
-        <div class="card">
-            <div style="margin-bottom: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="color: #444; border-left: 5px solid #4caf50; padding-left: 10px; margin: 0;">Gestão de Clientes</h3>
-                    <a href="cadastro.html" class="btn-novo" style="background-color: #4caf50;">+ Nova Proposta</a>
-                </div>
-
-                <div class="search-container">
-                    <input type="text" id="busca-proposta" class="search-input" placeholder="Buscar cliente, placa ou modelo...">
-                </div>
-
-                <div style="overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 8px;">
-                    <table class="tabela-crud">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Cliente</th>
-                                <th>Veículo</th>
-                                <th>Placa</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="lista-propostas"> </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="card" id="secao-usuarios">
-            <div style="margin-bottom: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="color: #444; border-left: 5px solid #2e7d32; padding-left: 10px; margin: 0;">Gestão de Usuários </h3>
-                    <a href="registro.html?origin=dashboard" class="btn-novo" style="background-color: #2e7d32;">+ Novo Usuário</a>
-                </div>
-
-                <div class="search-container">
-                    <input type="text" id="busca-usuario" class="search-input" placeholder="Buscar por nome ou e-mail...">
-                </div>
-
-                <div style="overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 8px;">
-                    <table class="tabela-crud">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nome</th>
-                                <th>E-mail</th>
-                                <th>Perfil</th>
-                                <th style="text-align: center;">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="lista-usuarios">
-                            <tr><td colspan="5" style="text-align:center;">Carregando...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="stat-card purple">
+                <div class="stat-info"><h3 id="total-usuarios">...</h3><p>Usuários do Sistema</p></div>
+                <div class="stat-icon"><i class="fas fa-user-shield"></i></div>
             </div>
         </div>
 
@@ -151,57 +75,241 @@
             <div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h3 style="color: #444; border-left: 5px solid #ff9800; padding-left: 10px; margin: 0;">Gestão de Apólices</h3>
-                    <a href="apolice.html" class="btn-novo" style="background-color: #ff9800;">+ Nova Apólice</a>
+                    <a href="apolice.html" class="btn-novo" style="background-color: #ff9800; width: auto; padding: 10px 20px;">+ Nova Apólice</a>
                 </div>
-
-                <div class="search-container">
-                    <input type="text" id="busca-apolice" class="search-input" placeholder="Buscar por Nº Apólice...">
-                </div>
-
                 <div style="overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 8px;">
                     <table class="tabela-crud">
                         <thead>
                             <tr>
                                 <th>Nº Apólice</th>
-                                <th>Cliente</th>
-                                <th>Placa</th>
+                                <th>Cliente / Veículo</th>
                                 <th>Vigência Fim</th>
-                                <th>Prêmio</th>
-                                <th>Ações</th> 
+                                <th>Prêmio Total</th>
+                                <th style="text-align:center">Ações</th> 
                             </tr>
                         </thead>
-                        <tbody id="lista-apolices"> </tbody>
+                        <tbody id="lista-apolices">
+                            <tr><td colspan="5" style="text-align:center; padding: 20px;">Carregando dados...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="color: #444; border-left: 5px solid #00a86b; padding-left: 10px; margin: 0;">Gestão de Clientes</h3>
+                <a href="cadastro.html" class="btn-novo" style="background-color: #00a86b; width: auto; padding: 10px 20px;">+ Nova Proposta</a>
+            </div>
+            <div style="overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 8px;">
+                <table class="tabela-crud">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>CPF/CNPJ</th>
+                            <th>Placa</th>
+                            <th>Modelo</th>
+                            <th style="text-align:center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-clientes">
+                        <tr><td colspan="5" style="text-align:center; padding: 20px;">Carregando dados...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card" id="secao-usuarios">
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="color: #444; border-left: 5px solid #7b1fa2; padding-left: 10px; margin: 0;">Gestão de Usuários </h3>
+                    <a href="registro.html?origin=dashboard" class="btn-novo" style="background-color: #7b1fa2; width: auto; padding: 10px 20px;">+ Novo Usuário</a>
+                </div>
+                <div style="overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 8px;">
+                    <table class="tabela-crud">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>E-mail</th>
+                                <th>Perfil</th>
+                                <th style="text-align: center;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-usuarios">
+                            <tr><td colspan="4" style="text-align:center; padding: 20px;">Carregando dados...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
         </div>
         
-        <div class="system-credits" style="text-align: center;">
-            By Áidano Lima - ASL TECH
-        </div>
-
+        <div class="system-credits" style="text-align: center;">By Áidano Lima - ASL TECH</div>
     </div> 
     
-    <script src="js/dashboard.js"></script>
-    
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Nome do Usuário
+   <script>
+    (function() {
+        // Configurações
+        const LOCAL_API_URL = 'http://localhost:3000';
+        const localToken = localStorage.getItem('token');
+
+        console.log("🚀 Dashboard Enterprise Iniciado");
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!localToken) { window.location.href = 'index.html'; return; }
+
             const nome = localStorage.getItem('usuario_logado');
             const tipo = localStorage.getItem('tipo_usuario');
-            if (nome) document.getElementById('user-name-display').innerText = nome.split(' ')[0];
-            if (tipo) document.getElementById('user-role-display').innerText = tipo.toUpperCase();
+            if (document.getElementById('user-name-display') && nome) 
+                document.getElementById('user-name-display').innerText = nome.split(' ')[0];
+            if (document.getElementById('user-role-display') && tipo) 
+                document.getElementById('user-role-display').innerText = tipo.toUpperCase();
 
-            // Botão Sair
-            const btnSair = document.getElementById('btn-logout');
-            if (btnSair) {
-                btnSair.addEventListener('click', function() {
-                    localStorage.clear();
-                    window.location.href = 'index.html';
-                });
-            }
+            document.getElementById('btn-logout')?.addEventListener('click', () => { 
+                localStorage.clear(); window.location.href = 'index.html'; 
+            });
+
+            // CARREGAR TUDO
+            carregarResumo();
+            carregarTabelaApolices();
+            carregarTabelaClientes(); 
+            carregarTabelaUsuarios();
         });
-    </script>
-    
-    </body>
+
+        // --- CARDS ---
+        async function carregarResumo() {
+            try {
+                const res = await fetch(`${LOCAL_API_URL}/dashboard-resumo`, { headers: { 'Authorization': `Bearer ${localToken}` } });
+                const d = await res.json();
+                document.getElementById('total-clientes').innerText = d.clientes || '0';
+                document.getElementById('total-veiculos').innerText = d.veiculos || '0';
+                document.getElementById('total-apolices').innerText = d.apolices || '0';
+                document.getElementById('total-usuarios').innerText = d.usuarios || '0';
+            } catch (e) { console.error("Erro resumo:", e); }
+        }
+
+        // --- APÓLICES ---
+        async function carregarTabelaApolices() {
+            const tbody = document.getElementById('lista-apolices');
+            if(!tbody) return;
+            try {
+                const res = await fetch(`${LOCAL_API_URL}/apolices`, { headers: { 'Authorization': `Bearer ${localToken}` } });
+                const lista = await res.json();
+                tbody.innerHTML = '';
+
+                if (lista.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Nenhuma apólice encontrada.</td></tr>';
+                    return;
+                }
+
+                lista.forEach(item => {
+                    const dataFim = item.vigencia_fim ? new Date(item.vigencia_fim).toLocaleDateString('pt-BR') : '-';
+                    const valor = item.premio_total ? parseFloat(item.premio_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00';
+                    const clienteInfo = item.cliente ? `<strong>${item.cliente}</strong><br><small style="color:#666">${item.placa || ''}</small>` : `<span style="color:#999">Sem vínculo</span>`;
+                    
+                    const urlPdf = item.arquivo_pdf ? `${LOCAL_API_URL}/uploads/${item.arquivo_pdf}` : null;
+                    const botaoPdfHtml = urlPdf
+                        ? `<a href="${urlPdf}" target="_blank" class="action-btn" title="Ver PDF" style="background-color:#757575; padding:5px 8px; border-radius:4px; color:white; margin-right:5px;"><i class="fas fa-file-pdf"></i></a>`
+                        : `<span style="color:#ccc; margin-right:5px;"><i class="fas fa-file-pdf"></i></span>`;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight:bold; color:#003366;">${item.numero_apolice || 'S/N'}</td>
+                        <td>${clienteInfo}</td>
+                        <td>Até ${dataFim}</td>
+                        <td style="color:#00a86b; font-weight:bold;">${valor}</td>
+                        <td style="text-align:center">
+                            ${botaoPdfHtml}
+                            <a href="apolice.html?id=${item.id}" class="action-btn" style="background-color:#1976d2; padding:5px 8px; border-radius:4px; color:white; margin-right:5px;"><i class="fas fa-edit"></i></a>
+                            <button onclick="excluirItem('apolices', ${item.id})" class="action-btn" style="background-color:#d32f2f; padding:5px 8px; border-radius:4px; color:white; border:none; cursor:pointer;"><i class="fas fa-trash"></i></button>
+                        </td>`;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Erro ao carregar dados.</td></tr>'; }
+        }
+
+        // --- CLIENTES (AGORA LINKA PARA CADASTRO.HTML) ---
+        async function carregarTabelaClientes() {
+            const tbody = document.getElementById('lista-clientes');
+            if(!tbody) return;
+            try {
+                const res = await fetch(`${LOCAL_API_URL}/propostas`, { headers: { 'Authorization': `Bearer ${localToken}` } });
+                const lista = await res.json();
+                tbody.innerHTML = '';
+
+                if (lista.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Nenhum cliente encontrado.</td></tr>';
+                    return;
+                }
+
+                lista.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight:bold;">${item.nome ? item.nome.toUpperCase() : 'SEM NOME'}</td>
+                        <td>${item.documento || '-'}</td>
+                        <td><span style="background:#eee; padding:2px 6px; border-radius:4px; font-weight:bold;">${item.placa || 'S/PLACA'}</span></td>
+                        <td>${item.modelo_veiculo || '-'}</td>
+                        <td style="text-align:center">
+                            <a href="cadastro.html?id=${item.id}" class="action-btn" style="background-color:#1976d2; color:white; padding:5px 8px; border-radius:4px; margin-right:5px;"><i class="fas fa-edit"></i></a>
+                            <button onclick="excluirItem('propostas', ${item.id})" class="action-btn" style="background-color:#d32f2f; padding:5px 8px; border-radius:4px; color:white; border:none; cursor:pointer;"><i class="fas fa-trash"></i></button>
+                        </td>`;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Erro ao carregar clientes.</td></tr>'; }
+        }
+
+        // --- USUÁRIOS ---
+        async function carregarTabelaUsuarios() {
+            const tbody = document.getElementById('lista-usuarios');
+            if(!tbody) return;
+            try {
+                const res = await fetch(`${LOCAL_API_URL}/usuarios`, { headers: { 'Authorization': `Bearer ${localToken}` } });
+                const lista = await res.json();
+                tbody.innerHTML = '';
+
+                lista.forEach(item => {
+                    const badgeClass = item.tipo === 'admin' ? 'badge-admin' : 'badge-user';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight:bold;">${item.nome}</td>
+                        <td>${item.email}</td>
+                        <td><span class="badge ${badgeClass}">${item.tipo.toUpperCase()}</span></td>
+                        <td style="text-align:center">
+                            <a href="registro.html?id=${item.id}" class="action-btn" style="background-color:#1976d2; color:white; padding:5px 8px; border-radius:4px; margin-right:5px;"><i class="fas fa-edit"></i></a>
+                            <button onclick="excluirItem('usuarios', ${item.id})" class="action-btn" style="background-color:#d32f2f; padding:5px 8px; border-radius:4px; color:white; border:none; cursor:pointer;"><i class="fas fa-trash"></i></button>
+                        </td>`;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Erro ao carregar usuários.</td></tr>'; }
+        }
+
+        // --- EXCLUSÃO GENÉRICA ---
+        window.excluirItem = async function(rota, id) {
+            const confirm = await Swal.fire({
+                title: 'Tem certeza?',
+                text: "Essa ação é irreversível.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Sim, excluir!'
+            });
+
+            if (confirm.isConfirmed) {
+                try {
+                    const res = await fetch(`${LOCAL_API_URL}/${rota}/${id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${localToken}` }
+                    });
+                    if (res.ok) {
+                        Swal.fire('Excluído!', 'Registro removido.', 'success');
+                        carregarResumo();
+                        carregarTabelaApolices();
+                        carregarTabelaClientes();
+                        carregarTabelaUsuarios();
+                    } else { Swal.fire('Erro', 'Não foi possível excluir.', 'error'); }
+                } catch (e) { Swal.fire('Erro', 'Falha na conexão.', 'error'); }
+            }
+        };
+    })();
+</script>
+</body>
 </html>

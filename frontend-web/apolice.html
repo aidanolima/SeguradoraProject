@@ -5,28 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Emissão de Apólice - Gestor</title>
     
-    <meta http-equiv="Content-Security-Policy" 
-    content="default-src * 'self' blob: data: gap:; 
-    style-src * 'self' 'unsafe-inline' blob: data: gap:; 
-    script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; 
-    object-src * 'self' blob: data: gap:; 
-    img-src * 'self' 'unsafe-inline' blob: data: gap:; 
-    connect-src 'self' * 'unsafe-inline' blob: data: gap:; 
-    font-src 'self' data: https://cdnjs.cloudflare.com; 
-    frame-src * 'self' blob: data: gap:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' blob: data: gap:; style-src * 'self' 'unsafe-inline' blob: data: gap:; script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; object-src * 'self' blob: data: gap:; img-src * 'self' 'unsafe-inline' blob: data: gap:; connect-src 'self' * 'unsafe-inline' blob: data: gap:;">
     
     <link rel="icon" href="assets/logo.png" type="image/png">
     <link rel="stylesheet" href="css/style.css">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         .loading { color: #666; font-style: italic; }
-        .btn-processar {
-            background-color: #2e7d32; color: white; border: none; padding: 8px 15px; 
-            border-radius: 4px; cursor: pointer; font-size: 13px; margin-top: 10px; display: none; 
-        }
+        .btn-processar { background-color: #2e7d32; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; margin-top: 10px; display: none; }
         .btn-processar:hover { background-color: #1b5e20; }
         #status-pdf { font-size:14px; margin-top:10px; min-height: 20px; font-weight: bold; }
     </style>
@@ -34,19 +22,13 @@
 <body class="dashboard-body">
 
     <header class="app-header">
-        <div class="header-brand">
-            <a href="dashboard.html">
-                <img src="assets/logo.png" alt="Logo" class="header-logo">
-            </a>
-        </div>
-
+        <div class="header-brand"><a href="dashboard.html"><img src="assets/logo.png" alt="Logo" class="header-logo"></a></div>
         <nav class="header-nav">
-            <a href="dashboard.html" class="header-link">PROPOSTAS</a>
+            <a href="dashboard.html" class="header-link">DASHBOARD</a>
             <a href="apolice.html" class="header-link active">APÓLICES</a>
             <a href="registro.html?origin=dashboard" class="header-link">USUÁRIOS</a>
             <a href="relatorios.html" class="header-link">RELATÓRIOS</a>
         </nav>
-
         <div class="header-user-area">
             <div class="user-info">
                 <span class="user-name">Olá, <strong id="user-name-display">...</strong></span>
@@ -57,7 +39,6 @@
     </header>
 
     <div class="main-container">
-        
         <div style="margin-bottom: 20px; border-left: 5px solid #2e7d32; padding-left: 15px;">
             <h2 id="titulo-pagina" style="color: #444; margin:0;">Emissão de Apólice</h2>
             <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Preencha os dados manualmente ou importe um PDF.</p>
@@ -68,7 +49,7 @@
                 <h3 style="margin:0 0 10px 0; color:#1976d2;"><i class="fas fa-file-pdf"></i> 1. Importar PDF (Opcional)</h3>
                 <p style="font-size:13px; color:#555;">Selecione o PDF da apólice para preencher os dados automaticamente.</p>
                 
-                <input type="file" id="pdf_upload" name="arquivo_pdf" accept=".pdf" style="margin-top:10px;">
+                <input type="file" id="pdf_upload" name="arquivo_pdf" accept="application/pdf" style="margin-top:10px;">
                 <br>
                 <button type="button" id="btn-ler-pdf" class="btn-processar">⚡ Processar Dados do PDF</button>
                 <p id="status-pdf"></p>
@@ -79,7 +60,7 @@
             <h3 style="margin:0 0 20px 0; color:#2e7d32; border-bottom: 1px solid #eee; padding-bottom: 10px;">
                 <i class="fas fa-pen-nib"></i> 2. Dados da Apólice
             </h3>
-
+            
             <fieldset style="border: 1px solid #ddd; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
                 <legend style="font-weight: bold; color: #555; padding: 0 5px;">Dados do Vínculo</legend>
                 <div class="form-row">
@@ -138,251 +119,249 @@
                 <i class="fas fa-save"></i> SALVAR APÓLICE
             </button>
         </div>
-
-        <div class="system-credits" style="text-align: center;">
-            By Áidano Lima - ASL TECH
-        </div>
+        <div class="system-credits" style="text-align: center;">By Áidano Lima - ASL TECH</div>
     </div>
+<script>
+        (function() {
+            const LOCAL_API_URL = 'http://localhost:3000';
+            const localToken = localStorage.getItem('token');
+            const urlParams = new URLSearchParams(window.location.search);
+            const idEdicao = urlParams.get('id');
 
-    <script>
-        // CORREÇÃO: Removido o 'https://' duplicado que estava aqui
-        const API_URL = 'https://seguradoraproject.onrender.com';
+            // --- INICIALIZAÇÃO ---
+            document.addEventListener('DOMContentLoaded', () => {
+                if (!localToken) { window.location.href = 'index.html'; return; }
+                
+                // Configuração Visual (Header)
+                const nome = localStorage.getItem('usuario_logado');
+                const tipo = localStorage.getItem('tipo_usuario');
+                if (document.getElementById('user-name-display') && nome) 
+                    document.getElementById('user-name-display').innerText = nome.split(' ')[0];
+                if (document.getElementById('user-role-display') && tipo) 
+                    document.getElementById('user-role-display').innerText = tipo.toUpperCase();
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const idEdicao = urlParams.get('id');
-        const token = localStorage.getItem('token');
-        
-        console.log("Sistema v3.0 Iniciado em:", API_URL);
-
-        document.addEventListener('DOMContentLoaded', () => {
-            // 1. Atualizar Nome do Usuário
-            const nome = localStorage.getItem('usuario_logado');
-            const tipo = localStorage.getItem('tipo_usuario');
-            
-            // Verifica se o elemento existe antes de tentar preencher
-            const elNome = document.getElementById('user-name-display');
-            const elRole = document.getElementById('user-role-display');
-            
-            if (elNome && nome) elNome.innerText = nome.split(' ')[0];
-            if (elRole && tipo) elRole.innerText = tipo.toUpperCase();
-            
-            // Botão Sair
-            const btnSair = document.getElementById('btn-logout');
-            if (btnSair) {
-                btnSair.addEventListener('click', function() {
-                    localStorage.clear();
-                    window.location.href = 'index.html';
+                // Botões
+                document.getElementById('btn-logout')?.addEventListener('click', () => { 
+                    localStorage.clear(); window.location.href = 'index.html'; 
                 });
-            }
 
-            // 2. Lógica da Página
-            if (!token) { window.location.href = 'index.html'; return; }
-            
-            carregarVeiculos();
-
-            if (idEdicao) {
-                document.getElementById('titulo-pagina').innerText = `Editando Apólice #${idEdicao}`;
-                document.getElementById('btn-acao-salvar').innerHTML = '<i class="fas fa-sync-alt"></i> ATUALIZAR DADOS';
-                const pdfInput = document.getElementById('pdf_upload');
-                if(pdfInput) pdfInput.disabled = true; 
-                carregarDadosParaEdicao(idEdicao);
-            }
-
-            // Listeners
-            const pdfInput = document.getElementById('pdf_upload');
-            if (pdfInput) {
-                pdfInput.addEventListener('change', function() {
-                    const btn = document.getElementById('btn-ler-pdf');
-                    // Mostra o botão apenas se tiver arquivo selecionado
-                    if (this.files.length > 0) btn.style.display = 'inline-block';
-                    else btn.style.display = 'none';
-                });
-            }
-
-            const btnLerPdf = document.getElementById('btn-ler-pdf');
-            if(btnLerPdf) btnLerPdf.addEventListener('click', processarPDF);
-            
-            const btnSalvar = document.getElementById('btn-acao-salvar');
-            if(btnSalvar) btnSalvar.addEventListener('click', executarSalvamento);
-        });
-
-        // ======================================================
-        // FUNÇÃO DE SALVAR BLINDADA
-        // ======================================================
-        async function executarSalvamento(e) {
-            if(e) e.preventDefault();
-            console.log("Iniciando salvamento...");
-
-            const veiculo = document.getElementById('veiculo_id').value;
-            if (!veiculo || veiculo === "") {
-                Swal.fire('Atenção', 'Selecione um Cliente/Veículo obrigatoriamente.', 'warning');
-                return;
-            }
-
-            const endpoint = idEdicao ? `${API_URL}/apolices/${idEdicao}` : `${API_URL}/cadastrar-apolice`;
-            const method = idEdicao ? 'PUT' : 'POST';
-            let body;
-            let headers = { 'Authorization': `Bearer ${token}` };
-
-            if (idEdicao) {
-                headers['Content-Type'] = 'application/json';
-                body = JSON.stringify(capturarDadosJSON());
-            } else {
-                body = new FormData();
-                const dados = capturarDadosJSON();
-                for (const key in dados) {
-                    body.append(key, dados[key]);
+                const btnLer = document.getElementById('btn-ler-pdf');
+                if (btnLer) {
+                    btnLer.addEventListener('click', (e) => {
+                        e.preventDefault(); 
+                        processarPDF();
+                    });
                 }
-                const fileInput = document.getElementById('pdf_upload');
-                if (fileInput.files.length > 0) body.append('arquivo_pdf', fileInput.files[0]);
+
+                const pdfInput = document.getElementById('pdf_upload');
+                if(pdfInput) {
+                    pdfInput.addEventListener('change', () => {
+                        const btn = document.getElementById('btn-ler-pdf');
+                        btn.style.display = (pdfInput.files.length > 0) ? 'inline-block' : 'none';
+                    });
+                }
+
+                const btnSalvar = document.getElementById('btn-acao-salvar');
+                if(btnSalvar) btnSalvar.addEventListener('click', executarSalvamento);
+
+                // Carregamento Inicial
+                carregarVeiculos().then(() => {
+                    if (idEdicao) prepararModoEdicao();
+                });
+            });
+
+            // --- FUNÇÃO DE PREENCHIMENTO SEGURA ---
+            function setValor(id, valor) {
+                const el = document.getElementById(id);
+                if (!el) {
+                    console.error(`❌ ERRO: Campo '${id}' não encontrado no HTML.`);
+                    return;
+                }
+                if (!valor) return;
+
+                console.log(`⚡ Tentando preencher '${id}' com:`, valor);
+                
+                // Estratégia Tripla para forçar o valor
+                try {
+                    // 1. Atribuição Padrão
+                    el.value = valor;
+                    
+                    // 2. Se falhar (campo numérico vazio), tenta remover caracteres estranhos
+                    if (el.value === '') {
+                        console.warn(`⚠️ Atribuição direta falhou para '${id}'. Tentando limpar...`);
+                        // Mantém apenas numeros e ponto
+                        const valorLimpo = valor.toString().replace(/[^0-9.]/g, '');
+                        el.value = valorLimpo;
+                    }
+                } catch (e) {
+                    console.error(`❌ Falha ao definir valor em '${id}':`, e);
+                }
             }
 
-            try {
-                Swal.fire({
-                    title: 'Salvando...',
-                    text: 'Não feche a página.',
-                    allowOutsideClick: false,
-                    showConfirmButton: false,
-                    didOpen: () => { Swal.showLoading() }
-                });
+            // --- PROCESSAMENTO DO PDF ---
+            async function processarPDF() {
+                const fileInput = document.getElementById('pdf_upload');
+                const statusMsg = document.getElementById('status-pdf');
 
-                const res = await fetch(endpoint, { method, headers, body });
+                if (!fileInput.files.length) {
+                    Swal.fire('Atenção', 'Selecione o arquivo.', 'warning');
+                    return;
+                }
 
-                if (res.ok) {
-                    const msg = idEdicao ? "Atualizado com sucesso!" : "Cadastrado com sucesso!";
+                statusMsg.innerText = "Processando...";
+                statusMsg.style.color = "orange";
+
+                const formData = new FormData();
+                formData.append('arquivoPdf', fileInput.files[0]);
+
+                try {
+                    const res = await fetch(`${LOCAL_API_URL}/importar-pdf`, { method: 'POST', body: formData });
+                    if (!res.ok) throw new Error("Erro de comunicação.");
                     
+                    const json = await res.json();
+                    const d = json.dados;
+                    
+                    console.log(">> RECEBIDO DO BACKEND:", d);
+
+                    // --- PREENCHIMENTO FORÇADO ---
+                    setValor('numero_apolice', d.numero_apolice);
+                    setValor('numero_proposta', d.numero_proposta);
+                    setValor('vigencia_inicio', d.vigencia_inicio);
+                    setValor('vigencia_fim', d.vigencia_fim);
+                    
+                    // Atenção especial aos valores monetários
+                    setValor('premio_total', d.premio_total);
+                    setValor('premio_liquido', d.premio_liquido);
+                    setValor('franquia_casco', d.franquia_casco);
+
+                    // --- PLACA ---
+                    let msgPlaca = '';
+                    if (d.placa) {
+                        const sel = document.getElementById('veiculo_id');
+                        let achou = false;
+                        const busca = d.placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                        
+                        for (let i = 0; i < sel.options.length; i++) {
+                            const txt = sel.options[i].text.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                            if (txt.includes(busca)) {
+                                sel.selectedIndex = i;
+                                achou = true;
+                                break;
+                            }
+                        }
+                        if (!achou) msgPlaca = `<br><span style="color:red; font-size:12px">(Placa ${d.placa} não cadastrada)</span>`;
+                    }
+
+                    statusMsg.innerText = "Preenchido!";
+                    statusMsg.style.color = "green";
+
+                    // Alerta Informativo
                     await Swal.fire({
                         icon: 'success',
-                        title: 'Sucesso!',
-                        text: msg,
-                        confirmButtonColor: '#2e7d32',
-                        confirmButtonText: 'OK (Ir para Painel)',
-                        allowOutsideClick: false
+                        title: 'PDF Processado',
+                        html: `<b>Apólice:</b> ${d.numero_apolice || '...'}<br>
+                               <b>Total:</b> R$ ${d.premio_total || '...'}<br>
+                               <b>Franquia:</b> R$ ${d.franquia_casco || '...'}<br>
+                               ${msgPlaca}`,
+                        confirmButtonText: 'Conferir'
                     });
-                    
-                    window.location.href = 'dashboard.html';
 
-                } else {
-                    const err = await res.json();
-                    Swal.fire('Erro', err.message || 'Erro desconhecido', 'error');
+                } catch (err) {
+                    console.error(err);
+                    statusMsg.innerText = "Erro.";
+                    Swal.fire('Erro', 'Falha ao processar PDF.', 'error');
                 }
-            } catch (error) { 
-                console.error(error);
-                Swal.fire('Erro de Conexão', 'O servidor pode estar offline.', 'error');
             }
-        }
 
-        function capturarDadosJSON() {
-            return {
-                veiculo_id: document.getElementById('veiculo_id').value,
-                numero_apolice: document.getElementById('numero_apolice').value,
-                numero_proposta: document.getElementById('numero_proposta').value,
-                vigencia_inicio: document.getElementById('vigencia_inicio').value,
-                vigencia_fim: document.getElementById('vigencia_fim').value,
-                premio_liquido: document.getElementById('premio_liquido').value,
-                premio_total: document.getElementById('premio_total').value,
-                franquia_casco: document.getElementById('franquia_casco').value
-            };
-        }
+            // --- SALVAR ---
+            async function executarSalvamento(e) {
+                if(e) e.preventDefault();
+                const veiculo = document.getElementById('veiculo_id').value;
+                if (!veiculo) { Swal.fire('Erro', 'Selecione o Veículo.', 'warning'); return; }
 
-        async function processarPDF() {
-            const fileInput = document.getElementById('pdf_upload');
-            const statusMsg = document.getElementById('status-pdf');
-            if (fileInput.files.length === 0) return;
-
-            statusMsg.innerText = "Lendo arquivo... (Aguarde)";
-            const formData = new FormData();
-            formData.append('pdf', fileInput.files[0]);
-
-            try {
-                // Aqui estava falhando por causa da URL errada
-                const response = await fetch(`${API_URL}/importar-pdf`, { method: 'POST', body: formData });
+                const endpoint = idEdicao ? `${LOCAL_API_URL}/apolices/${idEdicao}` : `${LOCAL_API_URL}/cadastrar-apolice`;
+                const method = idEdicao ? 'PUT' : 'POST';
+                let headers = { 'Authorization': `Bearer ${localToken}` };
                 
-                if (response.ok) {
-                    const dados = await response.json();
-                    statusMsg.innerText = "Dados extraídos!";
-                    preencherFormularioComPDF(dados);
-                    Swal.fire({ icon: 'info', title: 'PDF Lido', text: 'Dados preenchidos.', timer: 1500, showConfirmButton: false });
+                const formObj = {
+                    veiculo_id: veiculo,
+                    numero_apolice: document.getElementById('numero_apolice').value,
+                    numero_proposta: document.getElementById('numero_proposta').value,
+                    vigencia_inicio: document.getElementById('vigencia_inicio').value,
+                    vigencia_fim: document.getElementById('vigencia_fim').value,
+                    premio_liquido: document.getElementById('premio_liquido').value,
+                    premio_total: document.getElementById('premio_total').value,
+                    franquia_casco: document.getElementById('franquia_casco').value
+                };
+
+                let body;
+                if (idEdicao) {
+                    headers['Content-Type'] = 'application/json';
+                    body = JSON.stringify(formObj);
                 } else {
-                    statusMsg.innerText = "Erro ao ler PDF.";
-                    Swal.fire('Erro', 'O servidor não conseguiu ler o PDF. Verifique se é um arquivo válido.', 'error');
+                    body = new FormData();
+                    for (const k in formObj) body.append(k, formObj[k]);
+                    const fileInput = document.getElementById('pdf_upload');
+                    if (fileInput.files.length > 0) body.append('arquivo_pdf', fileInput.files[0]);
                 }
-            } catch (error) { 
-                console.error(error);
-                statusMsg.innerText = "Erro conexão PDF."; 
-            }
-        }
 
-        function preencherFormularioComPDF(dados) {
-            if (dados.placa) {
-                const select = document.getElementById('veiculo_id');
-                const placaLimpa = dados.placa.replace('-', '').toUpperCase();
-                let encontrou = false;
-                for (let i = 0; i < select.options.length; i++) {
-                    if (select.options[i].text.toUpperCase().replace('-', '').includes(placaLimpa)) {
-                        select.selectedIndex = i;
-                        encontrou = true;
-                        break;
-                    }
-                }
-                if(!encontrou) Swal.fire('Atenção', `Placa ${dados.placa} do PDF não foi encontrada no seu cadastro de propostas.`, 'warning');
-            }
-            if (dados.datas && dados.datas.length >= 2) {
-                document.getElementById('vigencia_inicio').value = formatData(dados.datas[0]);
-                document.getElementById('vigencia_fim').value = formatData(dados.datas[1]);
-            }
-            if (dados.valores && dados.valores.length > 0) {
-                const val1 = limparMoeda(dados.valores[0]); 
-                document.getElementById('premio_total').value = val1;
-                if(dados.valores.length > 1) {
-                    const val2 = limparMoeda(dados.valores[1]);
-                    if(parseFloat(val2) > parseFloat(val1)) {
-                         document.getElementById('premio_total').value = val2;
-                         document.getElementById('premio_liquido').value = val1;
+                try {
+                    Swal.fire({ title: 'Salvando...', didOpen: () => Swal.showLoading() });
+                    const res = await fetch(endpoint, { method, headers, body });
+                    if (res.ok) {
+                        await Swal.fire('Sucesso!', 'Salvo com sucesso.', 'success');
+                        window.location.href = 'dashboard.html';
                     } else {
-                         document.getElementById('premio_liquido').value = val2;
+                        const err = await res.json();
+                        Swal.fire('Erro', err.message || 'Erro ao salvar.', 'error');
                     }
-                }
+                } catch (err) { Swal.fire('Erro', 'Falha na conexão.', 'error'); }
             }
-        }
 
-        function formatData(d) {
-            if(!d) return ''; const p = d.split('/'); return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : '';
-        }
-        function limparMoeda(v) {
-            if(!v) return ''; return v.replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
-        }
+            // Funções de Carregamento (Veículos e Edição)
+            async function carregarVeiculos() {
+                try {
+                    const res = await fetch(`${LOCAL_API_URL}/propostas`, { headers: { 'Authorization': `Bearer ${localToken}` } });
+                    const lista = await res.json();
+                    const sel = document.getElementById('veiculo_id');
+                    sel.innerHTML = '<option value="">-- Selecione --</option>';
+                    lista.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.id;
+                        opt.text = `${p.nome} | ${p.placa}`;
+                        sel.appendChild(opt);
+                    });
+                } catch (e) { console.error(e); }
+            }
 
-        async function carregarVeiculos() {
-            const select = document.getElementById('veiculo_id');
-            try {
-                const res = await fetch(`${API_URL}/propostas`, { headers: { 'Authorization': `Bearer ${token}` } });
-                const propostas = await res.json();
-                select.innerHTML = '<option value="">-- Selecione o Cliente --</option>';
-                propostas.forEach(p => {
-                    const o = document.createElement('option');
-                    o.value = p.id; o.text = `${p.nome} | ${p.placa}`;
-                    select.appendChild(o);
-                });
-            } catch (error) { console.error(error); }
-        }
+            async function prepararModoEdicao() {
+                try {
+                    const elTitulo = document.getElementById('titulo-pagina');
+                    if(elTitulo) elTitulo.innerText = `Editando Apólice #${idEdicao}`;
+                    const elBtn = document.getElementById('btn-acao-salvar');
+                    if(elBtn) elBtn.innerHTML = 'ATUALIZAR DADOS';
+                    const elPdf = document.getElementById('pdf_upload');
+                    if(elPdf) elPdf.disabled = true;
 
-        async function carregarDadosParaEdicao(id) {
-            try {
-                const res = await fetch(`${API_URL}/apolices/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
-                if (!res.ok) throw new Error("Erro");
-                const dados = await res.json();
-                document.getElementById('veiculo_id').value = dados.veiculo_id;
-                document.getElementById('numero_apolice').value = dados.numero_apolice;
-                document.getElementById('numero_proposta').value = dados.numero_proposta;
-                document.getElementById('premio_liquido').value = dados.premio_liquido;
-                document.getElementById('premio_total').value = dados.premio_total;
-                document.getElementById('franquia_casco').value = dados.franquia_casco;
-                if (dados.vigencia_inicio) document.getElementById('vigencia_inicio').value = dados.vigencia_inicio.split('T')[0];
-                if (dados.vigencia_fim) document.getElementById('vigencia_fim').value = dados.vigencia_fim.split('T')[0];
-            } catch (error) { Swal.fire('Erro', 'Falha ao carregar dados.', 'error'); }
-        }
+                    const res = await fetch(`${LOCAL_API_URL}/apolices/${idEdicao}`, { headers: { 'Authorization': `Bearer ${localToken}` } });
+                    if (!res.ok) throw new Error("Erro buscar dados");
+                    const d = await res.json();
+
+                    setValor('veiculo_id', d.veiculo_id);
+                    setValor('numero_apolice', d.numero_apolice);
+                    setValor('numero_proposta', d.numero_proposta);
+                    setValor('premio_liquido', d.premio_liquido);
+                    setValor('premio_total', d.premio_total);
+                    setValor('franquia_casco', d.franquia_casco);
+                    
+                    if (d.vigencia_inicio) setValor('vigencia_inicio', d.vigencia_inicio.split('T')[0]);
+                    if (d.vigencia_fim) setValor('vigencia_fim', d.vigencia_fim.split('T')[0]);
+
+                } catch (e) { console.error(e); }
+            }
+        })();
     </script>
-    <script src="js/auth.js"></script>
+    
+
 </body>
 </html>
