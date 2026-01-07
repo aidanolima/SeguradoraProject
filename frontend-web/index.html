@@ -3,95 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Clientes e Apólices</title>
     
-    <meta http-equiv="Content-Security-Policy" 
-    content="default-src * 'self' blob: data: gap:; 
-    style-src * 'self' 'unsafe-inline' blob: data: gap:; 
-    script-src * 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net blob: data: gap:; 
-    object-src * 'self' blob: data: gap:; 
-    img-src * 'self' 'unsafe-inline' blob: data: gap:; 
-    connect-src 'self' https://seguradoraproject.onrender.com * 'unsafe-inline' blob: data: gap:; 
-    font-src 'self' data: https://cdnjs.cloudflare.com; 
-    frame-src * 'self' blob: data: gap:;">
-
-    <link rel="icon" href="assets/logo.png" type="image/png" sizes="32x32">
-    <title>Gestor Clientes e Apólices - Login</title>
-    
+    <link rel="icon" href="assets/logo.png" type="image/png">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        /* CSS Reset para garantir layout perfeito sem rolagem */
-        body {
-            margin: 0; padding: 0; height: 100vh; width: 100vw;
-            overflow: hidden; display: flex; justify-content: center; align-items: center;
-            background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif;
+        /* Visual Enterprise Centralizado */
+        body.login-body {
+            background: linear-gradient(135deg, #003366 0%, #001a33 100%); /* Azul Enterprise */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
         }
-        .login-container {
-            width: 100%; max-width: 400px; background: #ffffff;
-            padding: 40px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            display: flex; flex-direction: column; box-sizing: border-box;
+
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            border-top: 5px solid #00a86b; /* Detalhe Verde */
         }
-        .login-header img.logo-sistema {
-            max-height: 70px; width: auto; display: block; margin: 0 auto 15px auto;
+
+        .login-logo {
+            max-width: 160px;
+            margin-bottom: 25px;
         }
-        .form-group { margin-bottom: 15px; text-align: left; }
-        .form-group label {
-            display: block; margin-bottom: 5px; color: #2e7d32; font-weight: 600; font-size: 14px;
+
+        .login-title {
+            color: #333;
+            font-size: 22px;
+            margin-bottom: 30px;
+            font-weight: 600;
         }
-        input {
-            width: 100%; padding: 10px; border: 1px solid #ddd;
-            border-radius: 4px; box-sizing: border-box; height: 40px; background-color: #eff3f6;
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+            text-align: left;
         }
-        button[type="submit"] {
-            width: 100%; padding: 12px; background-color: #2e7d32; color: white;
-            border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px;
-            font-size: 16px; transition: background 0.3s;
+        
+        .input-group i {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            left: 15px;
+            color: #888;
+            font-size: 14px;
         }
-        button[type="submit"]:hover { background-color: #1b5e20; }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 12px 12px 40px; /* Espaço para o ícone */
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+            box-sizing: border-box; /* Garante que padding não quebre o layout */
+        }
+
+        .input-group input:focus {
+            border-color: #003366;
+            outline: none;
+        }
+
+        .btn-login {
+            background-color: #003366;
+            color: white;
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        .btn-login:hover {
+            background-color: #002244;
+        }
+
+        .footer-text {
+            margin-top: 25px;
+            font-size: 12px;
+            color: #999;
+        }
     </style>
 </head>
+<body class="login-body">
 
-<body>
-    <div class="login-container">
-        <div class="login-header" style="text-align: center;">
-            <img src="assets/logo.png" alt="Logotipo" class="logo-sistema">
-            <h1 style="color: #2e7d32; font-size: 20px; margin: 0; font-weight: 700;">Gestor Clientes</h1>
-            <p style="color: #666; font-size: 13px; margin-top: 5px;">Acesse sua conta para continuar</p>
-        </div>
-
+    <div class="login-card">
+        <img src="assets/logo.png" alt="Logo" class="login-logo">
+        <h2 class="login-title">Gestão de Clientes e Apólices</h2>
+        
         <form id="form-login">
-            <div class="form-group">
-                <label for="email_login">E-mail</label>
-                <input type="email" id="email_login" required placeholder="seu@email.com">
+            <div class="input-group">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="email" placeholder="E-mail Corporativo" required>
             </div>
             
-            <div class="form-group">
-                <label for="senha_login">Senha</label>
-                <input type="password" id="senha_login" required placeholder="••••••••">
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="senha" placeholder="Sua Senha" required>
             </div>
 
-            <div style="text-align: right; margin-bottom: 20px;">
-                <a href="recuperar.html" style="color: #2e7d32; font-size: 12px; text-decoration: none;">
-                    Esqueceu a senha?
-                </a>
-            </div>
-
-            <button type="submit">ACESSAR SISTEMA</button>
+            <button type="submit" class="btn-login">ENTRAR</button>
         </form>
-
-        <div style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px; font-size: 13px; color: #666; text-align: center;">
-            <p style="margin: 5px 0;">Não tem acesso?</p>
-            <p style="margin: 0;">Solicite a criação da sua conta ao <strong>Administrador</strong>.</p>
-        </div>
         
-        <div class="system-credits" style="text-align: center; margin-top: 20px; font-size: 11px; color: #999;">
-            By Áidano Lima - ASL TECH
-        </div>
-    </div> 
-    
-    <script src="js/auth.js"></script>
+        <p class="footer-text">
+            &copy; 2025 Seguradora System.<br>Todos os direitos reservados ASL TECH Áidano Lima.
+        </p>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        document.getElementById('form-login').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const senha = document.getElementById('senha').value.trim();
+            const btn = document.querySelector('.btn-login');
+            const originalText = btn.innerText;
+
+            if(!email || !senha) {
+                Swal.fire('Atenção', 'Preencha todos os campos.', 'warning');
+                return;
+            }
+
+            try {
+                // Estado de Carregamento
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validando...';
+                btn.disabled = true;
+                btn.style.opacity = '0.7';
+
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, senha })
+                });
+
+                // Tenta ler o JSON. Se falhar (erro 404 HTML), cai no catch
+                const data = await response.json(); 
+
+                if (response.ok) {
+                    // Login Sucesso: Salva tudo
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('usuario_logado', data.usuario.nome);
+                    localStorage.setItem('tipo_usuario', data.usuario.tipo);
+                    
+                    // Feedback Visual Rápido
+                    const Toast = Swal.mixin({
+                        toast: true, position: 'top-end', showConfirmButton: false, timer: 1000,
+                        didOpen: (toast) => {
+                            toast.addEventListener('mouseenter', Swal.stopTimer)
+                            toast.addEventListener('mouseleave', Swal.resumeTimer)
+                        }
+                    });
+                    
+                    await Toast.fire({ icon: 'success', title: 'Login realizado!' });
+                    
+                    // Redireciona
+                    window.location.href = 'dashboard.html';
+                } else {
+                    // Erro retornado pela API (Ex: Senha incorreta)
+                    throw new Error(data.message || 'Dados inválidos');
+                }
+            } catch (error) {
+                console.error("Erro Login:", error);
+                
+                let msg = error.message;
+                // Tratamento amigável para erro de HTML/404
+                if (msg.includes('Unexpected token') || msg.includes('JSON')) {
+                    msg = "Erro de conexão com o servidor (404/500). Verifique se o Backend está rodando.";
+                }
+
+                Swal.fire({ 
+                    icon: 'error', 
+                    title: 'Acesso Negado', 
+                    text: msg,
+                    confirmButtonColor: '#003366'
+                });
+            } finally {
+                // Restaura o botão
+                btn.innerText = originalText;
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        });
+    </script>
 </body>
 </html>
