@@ -1,10 +1,20 @@
+<<<<<<< HEAD
 require('dotenv').config(); 
+=======
+// 1. A linha do dotenv deve ser a PRIMEIRA de todas
+require('dotenv').config(); 
+
+>>>>>>> d1c4750d0ed02d4e6a9157eb82c6bced24dffb07
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
 const multer = require('multer');
+<<<<<<< HEAD
 const pdf = require('pdf-extraction'); 
+=======
+// const pdf = require('pdf-extraction'); // (Se não tiver usando, pode comentar)
+>>>>>>> d1c4750d0ed02d4e6a9157eb82c6bced24dffb07
 const jwt = require('jsonwebtoken');
 const express = require('express');
 
