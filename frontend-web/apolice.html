@@ -56,6 +56,7 @@
 
         <div class="upload-container">
             <p style="font-size:15px; color:#333; margin-bottom:10px;"><b>Passo 1:</b> Selecione o PDF da apólice</p>
+            
             <input type="file" id="pdf_upload" name="arquivo_pdf" accept="application/pdf" style="margin-bottom: 10px;">
             <br>
             <button type="button" id="btn-ler-pdf" class="btn-processar">
@@ -129,8 +130,13 @@
 
         if (!localToken) { window.location.href = 'index.html'; return; }
 
+        const nome = localStorage.getItem('usuario_logado');
+        if (document.getElementById('user-name-display') && nome) 
+            document.getElementById('user-name-display').innerText = nome.split(' ')[0];
+
         function setValor(id, valor) {
             const el = document.getElementById(id);
+            // Aceita qualquer coisa que não seja null ou undefined (incluindo 0 ou string vazia)
             if(el && valor !== undefined && valor !== null) {
                 el.value = valor;
             }
@@ -211,9 +217,9 @@
             formData.append('vigencia_fim', document.getElementById('vigencia_fim').value || '');
             
             // PEGA O VALOR DO INPUT DIRETAMENTE
-            formData.append('premio_liquido', document.getElementById('premio_liquido').value);
-            formData.append('premio_total', document.getElementById('premio_total').value);
-            formData.append('franquia_casco', document.getElementById('franquia_casco').value);
+            formData.append('premio_liquido', document.getElementById('premio_liquido').value || '0.00');
+            formData.append('premio_total', document.getElementById('premio_total').value || '0.00');
+            formData.append('franquia_casco', document.getElementById('franquia_casco').value || '0.00');
 
             if (fileInput.files.length > 0) {
                 formData.append('arquivo_pdf', fileInput.files[0]);
@@ -252,7 +258,10 @@
                 const list = await res.json();
                 const sel = document.getElementById('veiculo_id');
                 list.forEach(i => {
-                    sel.innerHTML += `<option value="${i.id}">${i.nome} | ${i.placa}</option>`;
+                    const opt = document.createElement('option');
+                    opt.value = i.id;
+                    opt.text = `${i.nome} | ${i.placa}`;
+                    sel.appendChild(opt);
                 });
             } catch(e) {}
 
