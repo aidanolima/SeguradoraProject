@@ -354,6 +354,33 @@ app.post('/importar-pdf', authenticateToken, uploadSave.any(), async (req, res) 
 // ==================================================
 // 🚀 INICIALIZAÇÃO
 // ==================================================
+
+// ==================================================
+// 🚑 ROTA DE EMERGÊNCIA (Cria Admin no Banco Atual)
+// ==================================================
+app.get('/criar-admin-emergencia', async (req, res) => {
+    try {
+        const senha = '12345678';
+        const email = 'admin@sistema.com';
+        
+        // Verifica conexão
+        console.log("🚑 Tentando criar admin...");
+
+        // Verifica se já existe
+        const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
+        if (rows.length > 0) {
+            return res.send(`O usuário Admin JÁ EXISTE neste banco de dados (ID: ${rows[0].id}). Se não consegue logar, a senha pode estar diferente.`);
+        }
+
+        // Cria o usuário
+        await pool.query("INSERT INTO usuarios (nome, email, senha, tipo) VALUES (?, ?, ?, 'admin')", ['Admin Remoto', email, senha]);
+        res.send(`✅ SUCESSO! Admin criado no banco correto.<br>Login: ${email}<br>Senha: ${senha}<br><br>Volte e faça login.`);
+    } catch (e) {
+        console.error("Erro na rota de emergência:", e);
+        res.status(500).send("❌ Erro ao criar admin: " + e.message);
+    }
+});
+
 app.listen(port, () => {
     console.log(`\n==================================================`);
     console.log(`🚀 SERVIDOR RODANDO NA PORTA ${port}`);
