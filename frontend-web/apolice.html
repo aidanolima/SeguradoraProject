@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <script src="js/config.js"></script>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Emissão de Apólice - Gestor</title>
     
-    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' blob: data: gap:; style-src * 'self' 'unsafe-inline' blob: data: gap:; script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; object-src * 'self' blob: data: gap:; img-src * 'self' 'unsafe-inline' blob: data: gap:; connect-src 'self' * 'unsafe-inline' blob: data: gap:;">
+    <script src="js/config.js"></script>
+
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' blob: data: gap:; style-src * 'self' 'unsafe-inline' blob: data: gap:; script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; connect-src * 'unsafe-inline' blob: data: gap:;">
     
     <link rel="icon" href="assets/logo.png" type="image/png">
     <link rel="stylesheet" href="css/style.css">
@@ -19,6 +19,28 @@
         .btn-processar { background-color: #2e7d32; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; margin-top: 10px; display: none; }
         .btn-processar:hover { background-color: #1b5e20; }
         #status-pdf { font-size:14px; margin-top:10px; min-height: 20px; font-weight: bold; }
+
+        /* Estilo do Container de Upload */
+        .upload-container {
+            background-color: #f8f9fa;
+            border: 2px dashed #1976d2;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #pdf_upload {
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            margin: 10px auto !important;
+            max-width: 100%;
+        }
     </style>
 </head>
 <body class="dashboard-body">
@@ -46,16 +68,16 @@
             <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Preencha os dados manualmente ou importe um PDF.</p>
         </div>
 
-        <div class="card" style="border-top: 4px solid #1976d2;">
-            <div style="text-align: center;">
-                <h3 style="margin:0 0 10px 0; color:#1976d2;"><i class="fas fa-file-pdf"></i> 1. Importar PDF (Opcional)</h3>
-                <p style="font-size:13px; color:#555;">Selecione o PDF da apólice para preencher os dados automaticamente.</p>
-                
-                <input type="file" id="pdf_upload" name="arquivo_pdf" accept="application/pdf" style="margin-top:10px;">
-                <br>
-                <button type="button" id="btn-ler-pdf" class="btn-processar">⚡ Processar Dados do PDF</button>
-                <p id="status-pdf"></p>
-            </div>
+        <div class="upload-container">
+            <p style="font-size:14px; color:#555; margin-bottom:10px;">
+                Selecione o PDF da apólice para preencher os dados automaticamente.
+            </p>
+            <input type="file" id="pdf_upload" name="arquivo_pdf" accept="application/pdf">
+            
+            <button type="button" id="btn-ler-pdf" class="btn-processar">
+                <i class="fas fa-bolt"></i> Processar Dados do PDF
+            </button>
+            <p id="status-pdf"></p>
         </div>
 
         <div class="card" id="painel-apolice">
@@ -104,15 +126,15 @@
                 <div class="form-row" style="display: flex; gap: 15px;">
                     <div class="form-group" style="flex: 1;">
                         <label for="premio_liquido">Prêmio Líquido (R$)</label>
-                        <input type="number" id="premio_liquido" class="campo-dado" step="0.01" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        <input type="text" id="premio_liquido" class="campo-dado" placeholder="0,00" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label for="premio_total">Prêmio Total (R$)</label>
-                        <input type="number" id="premio_total" class="campo-dado" step="0.01" style="width: 100%; padding: 10px; background:#e8f5e9; border:1px solid #2e7d32; border-radius: 4px; font-weight: bold;">
+                        <input type="text" id="premio_total" class="campo-dado" placeholder="0,00" style="width: 100%; padding: 10px; background:#e8f5e9; border:1px solid #2e7d32; border-radius: 4px; font-weight: bold;">
                     </div>
                     <div class="form-group" style="flex: 1;">
                         <label for="franquia_casco">Franquia (R$)</label>
-                        <input type="number" id="franquia_casco" class="campo-dado" step="0.01" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        <input type="text" id="franquia_casco" class="campo-dado" placeholder="0,00" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
                     </div>
                 </div>
             </fieldset>
@@ -123,247 +145,295 @@
         </div>
         <div class="system-credits" style="text-align: center;">By Áidano Lima - ASL TECH</div>
     </div>
-<script>
-        (function() {
-            const LOCAL_API_URL = API_URL;
-            const localToken = localStorage.getItem('token');
-            const urlParams = new URLSearchParams(window.location.search);
-            const idEdicao = urlParams.get('id');
 
-            // --- INICIALIZAÇÃO ---
-            document.addEventListener('DOMContentLoaded', () => {
-                if (!localToken) { window.location.href = 'index.html'; return; }
-                
-                // Configuração Visual (Header)
-                const nome = localStorage.getItem('usuario_logado');
-                const tipo = localStorage.getItem('tipo_usuario');
-                if (document.getElementById('user-name-display') && nome) 
-                    document.getElementById('user-name-display').innerText = nome.split(' ')[0];
-                if (document.getElementById('user-role-display') && tipo) 
-                    document.getElementById('user-role-display').innerText = tipo.toUpperCase();
+    <script>
+    (function() {
+        const BASE_URL = (typeof API_URL !== 'undefined') ? API_URL : 'http://localhost:3000';
+        const localToken = localStorage.getItem('token');
+        const urlParams = new URLSearchParams(window.location.search);
+        const idEdicao = urlParams.get('id');
 
-                // Botões
-                document.getElementById('btn-logout')?.addEventListener('click', () => { 
-                    localStorage.clear(); window.location.href = 'index.html'; 
-                });
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("🚀 Sistema Iniciado.");
+            if (!localToken) { window.location.href = 'index.html'; return; }
+            
+            const nome = localStorage.getItem('usuario_logado');
+            if (document.getElementById('user-name-display') && nome) 
+                document.getElementById('user-name-display').innerText = nome.split(' ')[0];
 
-                const btnLer = document.getElementById('btn-ler-pdf');
-                if (btnLer) {
-                    btnLer.addEventListener('click', (e) => {
-                        e.preventDefault(); 
-                        processarPDF();
-                    });
-                }
-
-                const pdfInput = document.getElementById('pdf_upload');
-                if(pdfInput) {
-                    pdfInput.addEventListener('change', () => {
-                        const btn = document.getElementById('btn-ler-pdf');
-                        btn.style.display = (pdfInput.files.length > 0) ? 'inline-block' : 'none';
-                    });
-                }
-
-                const btnSalvar = document.getElementById('btn-acao-salvar');
-                if(btnSalvar) btnSalvar.addEventListener('click', executarSalvamento);
-
-                // Carregamento Inicial
-                carregarVeiculos().then(() => {
-                    if (idEdicao) prepararModoEdicao();
-                });
+            document.getElementById('btn-logout')?.addEventListener('click', () => { 
+                localStorage.clear(); window.location.href = 'index.html'; 
             });
 
-            // --- FUNÇÃO DE PREENCHIMENTO SEGURA ---
-            function setValor(id, valor) {
-                const el = document.getElementById(id);
-                if (!el) {
-                    console.error(`❌ ERRO: Campo '${id}' não encontrado no HTML.`);
-                    return;
-                }
-                if (!valor) return;
+            // Upload PDF
+            const pdfInput = document.getElementById('pdf_upload');
+            const btnLer = document.getElementById('btn-ler-pdf');
+            
+            if(pdfInput && btnLer) {
+                pdfInput.addEventListener('change', () => {
+                    if(pdfInput.files.length > 0) {
+                        btnLer.style.display = 'inline-block';
+                        document.getElementById('status-pdf').innerText = ""; 
+                    }
+                });
+                btnLer.addEventListener('click', (e) => { e.preventDefault(); processarPDF(); });
+            }
 
-                console.log(`⚡ Tentando preencher '${id}' com:`, valor);
+            const btnSalvar = document.getElementById('btn-acao-salvar');
+            if(btnSalvar) btnSalvar.addEventListener('click', executarSalvamento);
+
+            carregarVeiculos().then(() => { if (idEdicao) prepararModoEdicao(); });
+        });
+
+        // ============================================================
+        // 🔧 1. SETTERS ESPECÍFICOS (SEM AMBIGUIDADE)
+        // ============================================================
+
+        // Apenas para TEXTO (Placa, Apólice, Datas)
+        function setValorTexto(id, valor) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.value = (valor || '').toString();
+        }
+
+        // Apenas para MOEDA (Converte 1000.00 -> 1.000,00)
+        function setValorMoeda(id, valor) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            
+            if (!valor && valor !== 0) {
+                el.value = '';
+                return;
+            }
+
+            // Limpa qualquer lixo, garante float
+            let str = valor.toString().replace('R$', '').trim();
+            let num = parseFloat(str);
+
+            if (isNaN(num)) {
+                el.value = ''; // Falhou, limpa
+            } else {
+                // Formatação Brasileira
+                el.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+            console.log(`💰 Setando [${id}] orig(${valor}) -> tela(${el.value})`);
+        }
+
+        // ============================================================
+        // 🔧 2. GETTER PARA SALVAR (Converte 1.000,00 -> 1000.00)
+        // ============================================================
+        function getValorMoeda(id) {
+            const el = document.getElementById(id);
+            if (!el || !el.value) return '0.00';
+            
+            let val = el.value;
+            // Se tiver vírgula, é BR. Remove ponto milhar, troca vírgula por ponto.
+            if(val.includes(',')) {
+                val = val.replace(/\./g, ''); // Remove milhar
+                val = val.replace(',', '.');  // Decimal
+            }
+            return val;
+        }
+
+        // ============================================================
+        // 📄 PROCESSAR PDF
+        // ============================================================
+        async function processarPDF() {
+            const fileInput = document.getElementById('pdf_upload');
+            const statusMsg = document.getElementById('status-pdf');
+
+            if (!fileInput.files.length) {
+                Swal.fire('Atenção', 'Selecione um arquivo.', 'warning');
+                return;
+            }
+
+            statusMsg.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+            statusMsg.style.color = "orange";
+
+            const formData = new FormData();
+            formData.append('arquivoPdf', fileInput.files[0]);
+
+            try {
+                const res = await fetch(`${BASE_URL}/importar-pdf`, { 
+                    method: 'POST', 
+                    headers: { 'Authorization': `Bearer ${localToken}` },
+                    body: formData 
+                });
                 
-                // Estratégia Tripla para forçar o valor
-                try {
-                    // 1. Atribuição Padrão
-                    el.value = valor;
-                    
-                    // 2. Se falhar (campo numérico vazio), tenta remover caracteres estranhos
-                    if (el.value === '') {
-                        console.warn(`⚠️ Atribuição direta falhou para '${id}'. Tentando limpar...`);
-                        // Mantém apenas numeros e ponto
-                        const valorLimpo = valor.toString().replace(/[^0-9.]/g, '');
-                        el.value = valorLimpo;
-                    }
-                } catch (e) {
-                    console.error(`❌ Falha ao definir valor em '${id}':`, e);
-                }
-            }
-
-            // --- PROCESSAMENTO DO PDF ---
-            async function processarPDF() {
-                const fileInput = document.getElementById('pdf_upload');
-                const statusMsg = document.getElementById('status-pdf');
-
-                if (!fileInput.files.length) {
-                    Swal.fire('Atenção', 'Selecione o arquivo.', 'warning');
-                    return;
-                }
-
-                statusMsg.innerText = "Processando...";
-                statusMsg.style.color = "orange";
-
-                const formData = new FormData();
-                formData.append('arquivoPdf', fileInput.files[0]);
-
-                try {
-                    const res = await fetch(`${LOCAL_API_URL}/importar-pdf`, { method: 'POST', body: formData });
-                    if (!res.ok) throw new Error("Erro de comunicação.");
-                    
-                    const json = await res.json();
-                    const d = json.dados;
-                    
-                    console.log(">> RECEBIDO DO BACKEND:", d);
-
-                    // --- PREENCHIMENTO FORÇADO ---
-                    setValor('numero_apolice', d.numero_apolice);
-                    setValor('numero_proposta', d.numero_proposta);
-                    setValor('vigencia_inicio', d.vigencia_inicio);
-                    setValor('vigencia_fim', d.vigencia_fim);
-                    
-                    // Atenção especial aos valores monetários
-                    setValor('premio_total', d.premio_total);
-                    setValor('premio_liquido', d.premio_liquido);
-                    setValor('franquia_casco', d.franquia_casco);
-
-                    // --- PLACA ---
-                    let msgPlaca = '';
-                    if (d.placa) {
-                        const sel = document.getElementById('veiculo_id');
-                        let achou = false;
-                        const busca = d.placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                        
-                        for (let i = 0; i < sel.options.length; i++) {
-                            const txt = sel.options[i].text.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                            if (txt.includes(busca)) {
-                                sel.selectedIndex = i;
-                                achou = true;
-                                break;
-                            }
-                        }
-                        if (!achou) msgPlaca = `<br><span style="color:red; font-size:12px">(Placa ${d.placa} não cadastrada)</span>`;
-                    }
-
-                    statusMsg.innerText = "Preenchido!";
-                    statusMsg.style.color = "green";
-
-                    // Alerta Informativo
-                    await Swal.fire({
-                        icon: 'success',
-                        title: 'PDF Processado',
-                        html: `<b>Apólice:</b> ${d.numero_apolice || '...'}<br>
-                               <b>Total:</b> R$ ${d.premio_total || '...'}<br>
-                               <b>Franquia:</b> R$ ${d.franquia_casco || '...'}<br>
-                               ${msgPlaca}`,
-                        confirmButtonText: 'Conferir'
-                    });
-
-                } catch (err) {
-                    console.error(err);
-                    statusMsg.innerText = "Erro.";
-                    Swal.fire('Erro', 'Falha ao processar PDF.', 'error');
-                }
-            }
-
-            // --- SALVAR ---
-            async function executarSalvamento(e) {
-                if(e) e.preventDefault();
-                const veiculo = document.getElementById('veiculo_id').value;
-                if (!veiculo) { Swal.fire('Erro', 'Selecione o Veículo.', 'warning'); return; }
-
-                const endpoint = idEdicao ? `${LOCAL_API_URL}/apolices/${idEdicao}` : `${LOCAL_API_URL}/cadastrar-apolice`;
-                const method = idEdicao ? 'PUT' : 'POST';
-                let headers = { 'Authorization': `Bearer ${localToken}` };
+                if (!res.ok) throw new Error("Erro de comunicação.");
                 
-                const formObj = {
-                    veiculo_id: veiculo,
-                    numero_apolice: document.getElementById('numero_apolice').value,
-                    numero_proposta: document.getElementById('numero_proposta').value,
-                    vigencia_inicio: document.getElementById('vigencia_inicio').value,
-                    vigencia_fim: document.getElementById('vigencia_fim').value,
-                    premio_liquido: document.getElementById('premio_liquido').value,
-                    premio_total: document.getElementById('premio_total').value,
-                    franquia_casco: document.getElementById('franquia_casco').value
-                };
+                const json = await res.json();
+                const d = json.dados;
+                
+                console.log("📦 DADOS DO PDF:", d);
 
-                let body;
-                if (idEdicao) {
-                    headers['Content-Type'] = 'application/json';
-                    body = JSON.stringify(formObj);
-                } else {
-                    body = new FormData();
-                    for (const k in formObj) body.append(k, formObj[k]);
-                    const fileInput = document.getElementById('pdf_upload');
-                    if (fileInput.files.length > 0) body.append('arquivo_pdf', fileInput.files[0]);
-                }
+                // --- PREENCHIMENTO EXPLÍCITO ---
+                setValorTexto('numero_apolice', d.numero_apolice);
+                setValorTexto('numero_proposta', d.numero_proposta);
+                setValorTexto('vigencia_inicio', d.vigencia_inicio);
+                setValorTexto('vigencia_fim', d.vigencia_fim);
+                
+                // Use a função de MOEDA
+                setValorMoeda('premio_total', d.premio_total);
+                setValorMoeda('premio_liquido', d.premio_liquido);
+                setValorMoeda('franquia_casco', d.franquia_casco);
 
-                try {
-                    Swal.fire({ title: 'Salvando...', didOpen: () => Swal.showLoading() });
-                    const res = await fetch(endpoint, { method, headers, body });
-                    if (res.ok) {
-                        await Swal.fire('Sucesso!', 'Salvo com sucesso.', 'success');
-                        window.location.href = 'dashboard.html';
-                    } else {
-                        const err = await res.json();
-                        Swal.fire('Erro', err.message || 'Erro ao salvar.', 'error');
-                    }
-                } catch (err) { Swal.fire('Erro', 'Falha na conexão.', 'error'); }
-            }
-
-            // Funções de Carregamento (Veículos e Edição)
-            async function carregarVeiculos() {
-                try {
-                    const res = await fetch(`${LOCAL_API_URL}/propostas`, { headers: { 'Authorization': `Bearer ${localToken}` } });
-                    const lista = await res.json();
+                statusMsg.innerHTML = `<i class="fas fa-check-circle"></i> <b>${fileInput.files[0].name}</b> lido!`;
+                statusMsg.style.color = "green";
+                
+                // Lógica da Placa
+                let msgPlaca = '';
+                if (d.placa) {
                     const sel = document.getElementById('veiculo_id');
-                    sel.innerHTML = '<option value="">-- Selecione --</option>';
-                    lista.forEach(p => {
-                        const opt = document.createElement('option');
-                        opt.value = p.id;
-                        opt.text = `${p.nome} | ${p.placa}`;
-                        sel.appendChild(opt);
-                    });
-                } catch (e) { console.error(e); }
-            }
-
-            async function prepararModoEdicao() {
-                try {
-                    const elTitulo = document.getElementById('titulo-pagina');
-                    if(elTitulo) elTitulo.innerText = `Editando Apólice #${idEdicao}`;
-                    const elBtn = document.getElementById('btn-acao-salvar');
-                    if(elBtn) elBtn.innerHTML = 'ATUALIZAR DADOS';
-                    const elPdf = document.getElementById('pdf_upload');
-                    if(elPdf) elPdf.disabled = true;
-
-                    const res = await fetch(`${LOCAL_API_URL}/apolices/${idEdicao}`, { headers: { 'Authorization': `Bearer ${localToken}` } });
-                    if (!res.ok) throw new Error("Erro buscar dados");
-                    const d = await res.json();
-
-                    setValor('veiculo_id', d.veiculo_id);
-                    setValor('numero_apolice', d.numero_apolice);
-                    setValor('numero_proposta', d.numero_proposta);
-                    setValor('premio_liquido', d.premio_liquido);
-                    setValor('premio_total', d.premio_total);
-                    setValor('franquia_casco', d.franquia_casco);
+                    let achou = false;
+                    const busca = d.placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
                     
-                    if (d.vigencia_inicio) setValor('vigencia_inicio', d.vigencia_inicio.split('T')[0]);
-                    if (d.vigencia_fim) setValor('vigencia_fim', d.vigencia_fim.split('T')[0]);
+                    for (let i = 0; i < sel.options.length; i++) {
+                        const txt = sel.options[i].text.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                        if (txt.includes(busca)) {
+                            sel.selectedIndex = i;
+                            achou = true;
+                            break;
+                        }
+                    }
+                    msgPlaca = achou ? `<br>✅ Veículo Identificado` : `<br>❌ Placa ${d.placa} não cadastrada`;
+                }
 
-                } catch (e) { console.error(e); }
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Dados Carregados!',
+                    html: `Total: <b>${document.getElementById('premio_total').value}</b><br>${msgPlaca}`,
+                    timer: 2000
+                });
+
+            } catch (err) {
+                console.error(err);
+                statusMsg.innerText = "Erro ao processar.";
+                Swal.fire('Erro', 'Falha ao ler PDF.', 'error');
             }
-        })();
-    </script>
-    
+        }
 
+        // ============================================================
+        // 💾 SALVAR APÓLICE (COM ARQUIVO)
+        // ============================================================
+        async function ejecutarSalvamento(e) {
+            if(e) e.preventDefault();
+            const veiculo = document.getElementById('veiculo_id').value;
+            if (!veiculo) { Swal.fire('Erro', 'Selecione o Veículo.', 'warning'); return; }
+
+            // Endpoint
+            const endpoint = idEdicao ? `${BASE_URL}/apolices/${idEdicao}` : `${BASE_URL}/cadastrar-apolice`;
+            const method = idEdicao ? 'PUT' : 'POST';
+            
+            // Verifica arquivo
+            const fileInput = document.getElementById('pdf_upload');
+            // Se for NOVO REGISTRO e tiver arquivo, OU se for EDIÇÃO e tiver arquivo novo
+            const temArquivo = fileInput && fileInput.files.length > 0;
+
+            // 1. Cria FormData (Obrigatório se tiver arquivo)
+            // Se não tiver arquivo, podemos enviar FormData mesmo assim, o multer ignora o campo vazio
+            const formData = new FormData();
+
+            formData.append('veiculo_id', veiculo);
+            formData.append('numero_apolice', document.getElementById('numero_apolice').value);
+            formData.append('numero_proposta', document.getElementById('numero_proposta').value);
+            formData.append('vigencia_inicio', document.getElementById('vigencia_inicio').value);
+            formData.append('vigencia_fim', document.getElementById('vigencia_fim').value);
+            
+            // Converte de volta para americano para salvar
+            formData.append('premio_liquido', getValorMoeda('premio_liquido'));
+            formData.append('premio_total', getValorMoeda('premio_total'));
+            formData.append('franquia_casco', getValorMoeda('franquia_casco'));
+
+            // Anexa arquivo se existir
+            if (temArquivo) {
+                formData.append('arquivo_pdf', fileInput.files[0]);
+            }
+
+            // Headers (IMPORTANTE: Não setar Content-Type para FormData, o browser faz isso)
+            const headers = { 'Authorization': `Bearer ${localToken}` };
+
+            // Se for EDIÇÃO e NÃO tiver arquivo novo, seria melhor mandar JSON, mas vamos padronizar FormData
+            // O backend está preparado para uploadSave.single(), se não vier arquivo, ele segue.
+            
+            try {
+                Swal.fire({ title: 'Salvando...', didOpen: () => Swal.showLoading() });
+                
+                // Se for PUT e quisermos mandar JSON (caso seu backend tenha rotas distintas para update sem arquivo)
+                // Mas seu backend suporta update com arquivo?
+                // Vamos tentar FormData. Se seu backend no PUT não usa 'uploadSave', isso pode falhar.
+                // VERIFICAÇÃO: Seu server.js no PUT não tem 'uploadSave'. Então:
+                
+                let res;
+                if (method === 'POST') {
+                    // POST (Criar): Usa FormData (Backend espera uploadSave)
+                    res = await fetch(endpoint, { method, headers, body: formData });
+                } else {
+                    // PUT (Editar): Seu backend atual NÃO tem upload no PUT.
+                    // Então mandamos JSON e ignoramos o arquivo por enquanto no update (limitação atual do backend)
+                    // Se você quiser update de arquivo, precisa mudar o server.js.
+                    // Por enquanto, salvamos os dados:
+                    const jsonBody = {};
+                    formData.forEach((value, key) => jsonBody[key] = value);
+                    
+                    headers['Content-Type'] = 'application/json';
+                    res = await fetch(endpoint, { method, headers, body: JSON.stringify(jsonBody) });
+                }
+                
+                if (res.ok) {
+                    await Swal.fire('Sucesso!', 'Apólice salva com sucesso.', 'success');
+                    window.location.href = 'dashboard.html';
+                } else {
+                    const err = await res.json();
+                    Swal.fire('Erro', err.message || 'Erro ao salvar.', 'error');
+                }
+            } catch (err) { 
+                console.error(err);
+                Swal.fire('Erro', 'Falha na conexão.', 'error'); 
+            }
+        }
+
+        async function executarSalvamento(e) { return ejecutarSalvamento(e); }
+
+        async function carregarVeiculos() {
+            try {
+                const res = await fetch(`${BASE_URL}/propostas`, { headers: { 'Authorization': `Bearer ${localToken}` } });
+                const lista = await res.json();
+                const sel = document.getElementById('veiculo_id');
+                sel.innerHTML = '<option value="">-- Selecione --</option>';
+                lista.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.text = `${p.nome} | ${p.placa}`;
+                    sel.appendChild(opt);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function prepararModoEdicao() {
+            try {
+                document.getElementById('titulo-pagina').innerText = `Editando Apólice #${idEdicao}`;
+                document.getElementById('btn-acao-salvar').innerHTML = 'ATUALIZAR DADOS';
+                // Mostra upload para permitir substituição
+                const area = document.querySelector('.upload-container');
+                if(area) area.style.display = 'flex'; 
+
+                const res = await fetch(`${BASE_URL}/apolices/${idEdicao}`, { headers: { 'Authorization': `Bearer ${localToken}` } });
+                const d = await res.json();
+
+                setValorTexto('veiculo_id', d.veiculo_id);
+                setValorTexto('numero_apolice', d.numero_apolice);
+                setValorTexto('numero_proposta', d.numero_proposta);
+                
+                setValorMoeda('premio_liquido', d.premio_liquido);
+                setValorMoeda('premio_total', d.premio_total);
+                setValorMoeda('franquia_casco', d.franquia_casco);
+                
+                if (d.vigencia_inicio) setValorTexto('vigencia_inicio', d.vigencia_inicio.split('T')[0]);
+                if (d.vigencia_fim) setValorTexto('vigencia_fim', d.vigencia_fim.split('T')[0]);
+            } catch (e) { console.error(e); }
+        }
+    })();
+    </script>
 </body>
 </html>
