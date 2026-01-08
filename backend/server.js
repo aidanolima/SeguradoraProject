@@ -16,7 +16,7 @@ const port = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'seguradora_chave_secreta_super_segura_2024';
 
 // ==================================================
-// 🚨 MIDDLEWARES (CONFIGURAÇÕES GLOBAIS)
+// 🚨 MIDDLEWARES
 // ==================================================
 app.use(express.json());       
 app.use(cors());               
@@ -24,11 +24,10 @@ app.use((req, res, next) => {
     console.log(`[LOG] ${req.method} ${req.url}`);
     next();
 });
-// Serve a pasta de uploads para o frontend acessar os PDFs
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ==================================================
-// 📂 CONFIGURAÇÃO DE UPLOAD
+// 📂 UPLOAD
 // ==================================================
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
@@ -48,7 +47,7 @@ const pool = mysql.createPool({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     port: process.env.DB_PORT,
-    ssl: { rejectUnauthorized: false }, // Essencial para nuvem (Aiven/Render)
+    ssl: { rejectUnauthorized: false }, 
     waitForConnections: true,
     connectionLimit: 5,
     queueLimit: 0
@@ -72,14 +71,13 @@ function authenticateToken(req, res, next) {
 const safeCurrency = (value) => {
     if (!value || value === '') return 0;
     if (typeof value === 'number') return value;
-    // Remove R$, espaços e converte formato BR (1.000,00) para US (1000.00)
     const clean = value.toString().replace(/[R$\s.]/g, '').replace(',', '.');
     const number = parseFloat(clean);
     return isNaN(number) ? 0 : number;
 };
 
 // ==================================================
-// 🚪 ROTA DE LOGIN (PÚBLICA)
+// 🚪 LOGIN
 // ==================================================
 app.post('/login', async (req, res) => {
     try {
@@ -107,7 +105,7 @@ app.post('/login', async (req, res) => {
 });
 
 // ==================================================
-// 👤 GESTÃO DE USUÁRIOS
+// 👤 USUÁRIOS
 // ==================================================
 app.post('/registrar', authenticateToken, async (req, res) => {
     try {
@@ -137,9 +135,11 @@ app.put('/usuarios/:id', authenticateToken, async (req, res) => {
     try {
         const { nome, email, senha, tipo } = req.body;
         if (senha && senha.trim() !== "") {
-            await pool.query('UPDATE usuarios SET nome=?, email=?, senha=?, tipo=? WHERE id=?', [nome, email, senha, tipo, req.params.id]);
+            await pool.query('UPDATE usuarios SET nome=?, email=?, senha=?, tipo=? WHERE id=?', 
+                [nome, email, senha, tipo, req.params.id]);
         } else {
-            await pool.query('UPDATE usuarios SET nome=?, email=?, tipo=? WHERE id=?', [nome, email, tipo, req.params.id]);
+            await pool.query('UPDATE usuarios SET nome=?, email=?, tipo=? WHERE id=?', 
+                [nome, email, tipo, req.params.id]);
         }
         res.json({ message: "Usuário atualizado com sucesso!" });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -170,10 +170,10 @@ app.get('/dashboard-resumo', authenticateToken, async (req, res) => {
 });
 
 // ==================================================
-// 📝 PROPOSTAS / CLIENTES (CORRIGIDO E COMPLETO)
+// 📝 PROPOSTAS / CLIENTES (ATUALIZADO PARA CADASTRO COMPLETO)
 // ==================================================
 
-// Listar Todos
+// 1. Listar
 app.get('/propostas', authenticateToken, async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM propostas ORDER BY id DESC');
@@ -181,7 +181,7 @@ app.get('/propostas', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Buscar UM (Corrigindo o erro 404)
+// 2. Buscar por ID (IMPORTANTE para edição)
 app.get('/propostas/:id', authenticateToken, async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM propostas WHERE id = ?', [req.params.id]);
@@ -190,10 +190,11 @@ app.get('/propostas/:id', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Cadastrar (Campos completos)
+// 3. Cadastrar (Com todos os campos do novo formulário)
 app.post('/cadastrar-proposta', authenticateToken, async (req, res) => {
     try {
         const d = req.body;
+        // Query expandida para incluir CEP, Endereço, Chassi, etc.
         const sql = `INSERT INTO propostas (
             nome, documento, email, telefone, placa, modelo, 
             cep, endereco, bairro, cidade, uf, numero, complemento,
@@ -213,7 +214,7 @@ app.post('/cadastrar-proposta', authenticateToken, async (req, res) => {
     } catch(e) { res.status(500).json({message: e.message}); }
 });
 
-// Editar (Campos completos)
+// 4. Editar (Com todos os campos)
 app.put('/propostas/:id', authenticateToken, async (req, res) => {
     try {
         const d = req.body;
@@ -237,7 +238,7 @@ app.put('/propostas/:id', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Excluir
+// 5. Excluir
 app.delete('/propostas/:id', authenticateToken, async (req, res) => {
     try {
         await pool.query('DELETE FROM propostas WHERE id = ?', [req.params.id]);
