@@ -457,6 +457,39 @@ app.get('/diagnostico-banco', async (req, res) => {
     }
 });
 
+// ==================================================
+// 🚑 ROTA DE CORREÇÃO TOTAL (Adiciona numero_proposta e outras)
+// ==================================================
+app.get('/fix-banco-final', async (req, res) => {
+    try {
+        let log = "<h2>🛠️ Atualizando Banco de Dados...</h2>";
+
+        // 1. Tenta criar 'numero_proposta' (O erro atual)
+        try {
+            // Adiciona como VARCHAR (texto) pois pode ter letras/hifens
+            await pool.query("ALTER TABLE apolices ADD COLUMN numero_proposta VARCHAR(100) DEFAULT NULL");
+            log += "<p style='color:green'>✅ Coluna <b>'numero_proposta'</b> criada com sucesso!</p>";
+        } catch (e) {
+            log += `<p style='color:orange'>⚠️ 'numero_proposta': ${e.message} (Talvez já exista)</p>`;
+        }
+
+        // 2. Reforça a criação das anteriores (caso tenha falhado antes)
+        try {
+            await pool.query("ALTER TABLE apolices ADD COLUMN premio_liquido DECIMAL(10,2) DEFAULT 0.00");
+            log += "<p style='color:green'>✅ Coluna <b>'premio_liquido'</b> criada.</p>";
+        } catch (e) {} // Ignora erro se já existir
+
+        try {
+            await pool.query("ALTER TABLE apolices ADD COLUMN franquia_casco DECIMAL(10,2) DEFAULT 0.00");
+            log += "<p style='color:green'>✅ Coluna <b>'franquia_casco'</b> criada.</p>";
+        } catch (e) {} // Ignora erro se já existir
+
+        res.send(log + "<br><a href='/dashboard.html'>VOLTAR PARA O DASHBOARD</a>");
+    } catch (e) {
+        res.status(500).send("❌ Erro Crítico: " + e.message);
+    }
+});
+
 app.listen(port, () => {
     console.log(`\n==================================================`);
     console.log(`🚀 SERVIDOR RODANDO NA PORTA ${port}`);
