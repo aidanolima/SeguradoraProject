@@ -490,6 +490,51 @@ app.get('/fix-banco-final', async (req, res) => {
     }
 });
 
+// ==================================================
+// 🚑 ROTA DE CORREÇÃO FINAL DA ESTRUTURA (Salva-Vidas)
+// ==================================================
+app.get('/fix-estrutura-final', async (req, res) => {
+    try {
+        let log = "<h2>🛠️ Atualizando Estrutura do Banco (Render)...</h2>";
+
+        // 1. Cria 'numero_proposta' (O erro atual)
+        try {
+            await pool.query("ALTER TABLE apolices ADD COLUMN numero_proposta VARCHAR(100) DEFAULT NULL");
+            log += "<p style='color:green'>✅ Coluna <b>'numero_proposta'</b> criada com sucesso!</p>";
+        } catch (e) {
+            log += `<p style='color:blue'>ℹ️ 'numero_proposta': ${e.message} (Provavelmente já existe)</p>`;
+        }
+
+        // 2. Garante 'premio_liquido'
+        try {
+            await pool.query("ALTER TABLE apolices ADD COLUMN premio_liquido DECIMAL(10,2) DEFAULT 0.00");
+            log += "<p style='color:green'>✅ Coluna <b>'premio_liquido'</b> criada.</p>";
+        } catch (e) { 
+            log += `<p style='color:blue'>ℹ️ 'premio_liquido': Já existe.</p>`;
+        }
+
+        // 3. Garante 'franquia_casco'
+        try {
+            await pool.query("ALTER TABLE apolices ADD COLUMN franquia_casco DECIMAL(10,2) DEFAULT 0.00");
+            log += "<p style='color:green'>✅ Coluna <b>'franquia_casco'</b> criada.</p>";
+        } catch (e) {
+             log += `<p style='color:blue'>ℹ️ 'franquia_casco': Já existe.</p>`;
+        }
+
+        // 4. Garante 'arquivo_pdf' (Só por segurança)
+        try {
+            await pool.query("ALTER TABLE apolices ADD COLUMN arquivo_pdf VARCHAR(255) DEFAULT NULL");
+            log += "<p style='color:green'>✅ Coluna <b>'arquivo_pdf'</b> criada.</p>";
+        } catch (e) {
+             log += `<p style='color:blue'>ℹ️ 'arquivo_pdf': Já existe.</p>`;
+        }
+
+        res.send(log + "<br><br><a href='/dashboard.html' style='padding:10px; background:blue; color:white; text-decoration:none; border-radius:5px;'>VOLTAR E TESTAR</a>");
+    } catch (e) {
+        res.status(500).send("❌ Erro Crítico de Conexão: " + e.message);
+    }
+});
+
 app.listen(port, () => {
     console.log(`\n==================================================`);
     console.log(`🚀 SERVIDOR RODANDO NA PORTA ${port}`);
