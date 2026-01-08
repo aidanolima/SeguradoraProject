@@ -383,31 +383,31 @@ app.post('/importar-pdf', authenticateToken, uploadSave.any(), async (req, res) 
 // ==================================================
 
 // ==================================================
-// 🚑 ROTA DE EMERGÊNCIA (Atualizar Tabela Apólices)
+// 🚑 ROTA PARA CRIAR COLUNAS FALTANTES
 // ==================================================
-app.get('/update-db-colunas', async (req, res) => {
+app.get('/fix-tabelas', async (req, res) => {
     try {
-        console.log("🚑 Tentando adicionar colunas faltantes...");
+        let msg = "<h3>Iniciando atualização do banco...</h3>";
 
-        // 1. Adiciona premio_liquido
+        // 1. Tenta criar premio_liquido
         try {
             await pool.query("ALTER TABLE apolices ADD COLUMN premio_liquido DECIMAL(10,2) DEFAULT 0.00");
-            console.log("✅ Coluna premio_liquido criada.");
+            msg += "✅ Coluna 'premio_liquido' criada com sucesso.<br>";
         } catch (e) {
-            console.log("⚠️ premio_liquido já existe ou erro:", e.message);
+            msg += "⚠️ 'premio_liquido': " + e.message + "<br>";
         }
 
-        // 2. Adiciona franquia_casco (provavelmente falta também)
+        // 2. Tenta criar franquia_casco (provavelmente falta também)
         try {
             await pool.query("ALTER TABLE apolices ADD COLUMN franquia_casco DECIMAL(10,2) DEFAULT 0.00");
-            console.log("✅ Coluna franquia_casco criada.");
+            msg += "✅ Coluna 'franquia_casco' criada com sucesso.<br>";
         } catch (e) {
-            console.log("⚠️ franquia_casco já existe ou erro:", e.message);
+            msg += "⚠️ 'franquia_casco': " + e.message + "<br>";
         }
 
-        res.send("✅ PROCESSO CONCLUÍDO! As colunas foram adicionadas ao banco da nuvem. Tente salvar a apólice novamente.");
+        res.send(msg + "<br><b>Pode voltar e tentar salvar a apólice novamente!</b>");
     } catch (e) {
-        res.status(500).send("❌ Erro geral: " + e.message);
+        res.status(500).send("Erro fatal: " + e.message);
     }
 });
 
