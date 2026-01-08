@@ -282,7 +282,7 @@ app.delete('/apolices/:id', authenticateToken, async (req, res) => {
 });
 
 // ==================================================
-// ⚡ IMPORTAR PDF
+// ⚡ IMPORTAR PDF (VERSÃO ROBUSTA)
 // ==================================================
 app.post('/importar-pdf', authenticateToken, uploadSave.any(), async (req, res) => {
     try {
@@ -290,35 +290,65 @@ app.post('/importar-pdf', authenticateToken, uploadSave.any(), async (req, res) 
         
         const dataBuffer = fs.readFileSync(req.files[0].path);
         const data = await pdf(dataBuffer);
-        const txt = data.text.replace(/\s+/g, ' '); 
+        // Limpa quebras de linha estranhas
+        const txt = data.text.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ');
 
         let dados = { premio_total: "0.00", numero_apolice: "", placa: "" };
 
-        // Regex para capturar valor (1.234,56 ou 1234.56)
-        const matchTotal = txt.match(/(?:Total|Prêmio Líquido|Valor)[:\sR$]*([\d\.,]+)/i);
-        if(matchTotal) {
-            // Limpa formatação para 1234.56
-            let val = matchTotal[1].replace(/\./g, '').replace(',', '.');
-            dados.premio_total = val;
+        // 1. TENTA VÁRIOS PADRÕES PARA O VALOR (Ordem de prioridade)
+        // Padrão 1: "Prêmio Total: R$ 1.200,00" ou "Valor Líquido 1200.00"
+        const regexValores = [
+            /(?:Prêmio Total|Premio Total|Valor Total|Custo Total).*?R?\$?\s*([\d\.,]+)/i,
+            /(?:Prêmio Líquido|Premio Liquido).*?R?\$?\s*([\d\.,]+)/i,
+            /(?:Importância Segurada).*?R?\$?\s*([\d\.,]+)/i
+        ];
+
+        for (const regex of regexValores) {
+            const match = txt.match(regex);
+            if (match) {
+                // Limpa formatação (1.234,56 -> 1234.56)
+                let val = match[1].replace(/\./g, '').replace(',', '.');
+                // Validação extra: Se for um número válido e maior que zero
+                if (!isNaN(parseFloat(val)) && parseFloat(val) > 0) {
+                    dados.premio_total = val;
+                    break; // Achou, para de procurar
+                }
+            }
         }
 
-        const matchApolice = txt.match(/(?:Apólice|Contrato)[:\s]*([\d\.-]{5,})/i);
-        if (matchApolice) dados.numero_apolice = matchApolice[1].replace(/[^0-9]/g, '');
+        // 2. NÚMERO DA APÓLICE (Procura sequências longas de números)
+        const matchApolice = txt.match(/(?:Apólice|Contrato|Certificado)[:\s]*([\d\.-]{5,})/i);
+        if (matchApolice) {
+            dados.numero_apolice = matchApolice[1].replace(/[^0-9]/g, '');
+        } else {
+            // Fallback: Procura qualquer sequência de 10 a 20 dígitos isolada
+            const matchNumeros = txt.match(/\b\d{10,20}\b/);
+            if(matchNumeros) dados.numero_apolice = matchNumeros[0];
+        }
 
-        const matchPlaca = txt.match(/[A-Z]{3}[-\s]?[0-9][0-9A-Z][0-9]{2}/i);
-        if(matchPlaca) dados.placa = matchPlaca[0].replace(/[-\s]/g, '').toUpperCase();
+        // 3. PLACA (Padrão Mercosul ou Antigo)
+        const matchPlaca = txt.match(/[A-Z]{3}[0-9][0-9A-Z][0-9]{2}/i);
+        if(matchPlaca) dados.placa = matchPlaca[0].toUpperCase();
 
-        const regexDatas = /(\d{2})[\/\-](\d{2})[\/\-](\d{4})/g;
+        // 4. DATAS (Vigência)
+        const regexDatas = /(\d{2})\/(\d{2})\/(\d{4})/g;
         let m; const dates = [];
         while ((m = regexDatas.exec(txt)) !== null) {
-            if(m[3] > 2000 && m[3] < 2040) dates.push(`${m[3]}-${m[2]}-${m[1]}`);
+            const ano = parseInt(m[3]);
+            if(ano > 2000 && ano < 2040) dates.push(`${m[3]}-${m[2]}-${m[1]}`);
         }
-        dates.sort();
-        if(dates.length) { dados.vigencia_inicio = dates[0]; dados.vigencia_fim = dates[dates.length-1]; }
+        dates.sort(); // Ordena cronologicamente
+        if(dates.length > 0) {
+            dados.vigencia_inicio = dates[0]; // Primeira data encontrada
+            dados.vigencia_fim = dates[dates.length-1]; // Última data encontrada
+        }
         
-        console.log("✅ PDF Lido:", dados);
+        console.log("✅ PDF Lido (Melhorado):", dados);
         res.json({ mensagem: "Sucesso", dados });
-    } catch (e) { console.error(e); res.status(500).json({message: "Erro PDF"}); }
+    } catch (e) { 
+        console.error("Erro PDF:", e);
+        res.status(500).json({message: "Erro ao ler PDF"}); 
+    }
 });
 
 // ==================================================
