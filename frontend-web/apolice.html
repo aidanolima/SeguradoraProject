@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Emissão de Apólice - Gestor</title>
+    <title>Emissão de Apólice</title>
     
     <script src="js/config.js"></script>
 
@@ -16,31 +16,20 @@
 
     <style>
         .loading { color: #666; font-style: italic; }
-        .btn-processar { background-color: #2e7d32; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; margin-top: 10px; display: none; }
+        .btn-processar { background-color: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; }
         .btn-processar:hover { background-color: #1b5e20; }
-        #status-pdf { font-size:14px; margin-top:10px; min-height: 20px; font-weight: bold; }
-
-        /* Estilo do Container de Upload */
+        .btn-salvar { width: 100%; margin-top: 20px; padding: 15px; background-color: #1976d2; color: white; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        .btn-salvar:hover { background-color: #1565c0; }
+        
         .upload-container {
-            background-color: #f8f9fa;
+            background-color: #e3f2fd;
             border: 2px dashed #1976d2;
             padding: 20px;
             border-radius: 8px;
             margin-top: 15px;
-            min-height: 80px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            text-align: center;
         }
-
-        #pdf_upload {
-            display: block !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-            margin: 10px auto !important;
-            max-width: 100%;
-        }
+        #status-pdf { font-weight: bold; margin-top: 10px; min-height: 20px; }
     </style>
 </head>
 <body class="dashboard-body">
@@ -54,96 +43,81 @@
             <a href="relatorios.html" class="header-link">RELATÓRIOS</a>
         </nav>
         <div class="header-user-area">
-            <div class="user-info">
-                <span class="user-name">Olá, <strong id="user-name-display">...</strong></span>
-                <span class="user-role" id="user-role-display">...</span>
-            </div>
+            <div class="user-info"><span class="user-name">Olá, <strong id="user-name-display">...</strong></span></div>
             <button id="btn-logout" class="btn-logout-panel">SAIR</button>
         </div>
     </header>
 
     <div class="main-container">
         <div style="margin-bottom: 20px; border-left: 5px solid #2e7d32; padding-left: 15px;">
-            <h2 id="titulo-pagina" style="color: #444; margin:0;">Emissão de Apólice</h2>
-            <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Preencha os dados manualmente ou importe um PDF.</p>
+            <h2 style="color: #444; margin:0;">Emissão de Apólice</h2>
+            <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Importe o PDF e salve os dados.</p>
         </div>
 
         <div class="upload-container">
-            <p style="font-size:14px; color:#555; margin-bottom:10px;">
-                Selecione o PDF da apólice para preencher os dados automaticamente.
-            </p>
-            <input type="file" id="pdf_upload" name="arquivo_pdf" accept="application/pdf">
-            
+            <p style="font-size:15px; color:#333; margin-bottom:10px;"><b>Passo 1:</b> Selecione o PDF da apólice</p>
+            <input type="file" id="pdf_upload" name="arquivo_pdf" accept="application/pdf" style="margin-bottom: 10px;">
+            <br>
             <button type="button" id="btn-ler-pdf" class="btn-processar">
-                <i class="fas fa-bolt"></i> Processar Dados do PDF
+                <i class="fas fa-magic"></i> Ler Dados do PDF
             </button>
             <p id="status-pdf"></p>
         </div>
 
-        <div class="card" id="painel-apolice">
+        <div class="card" id="painel-apolice" style="margin-top: 20px;">
             <h3 style="margin:0 0 20px 0; color:#2e7d32; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                <i class="fas fa-pen-nib"></i> 2. Dados da Apólice
+                Passo 2: Conferir Dados
             </h3>
             
-            <fieldset style="border: 1px solid #ddd; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-                <legend style="font-weight: bold; color: #555; padding: 0 5px;">Dados do Vínculo</legend>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="veiculo_id">Selecione o Cliente / Veículo *</label>
-                        <select id="veiculo_id" class="campo-obrigatorio" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                            <option value="">Carregando clientes...</option>
-                        </select>
-                    </div>
-                </div>
-            </fieldset>
+            <label style="font-weight:bold;">Veículo / Cliente *</label>
+            <select id="veiculo_id" style="width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 4px; background: #fff;">
+                <option value="">Carregando...</option>
+            </select>
 
-            <fieldset style="border: 1px solid #ddd; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-                <legend style="font-weight: bold; color: #555; padding: 0 5px;">Detalhes do Contrato</legend>
-                <div class="form-row" style="display: flex; gap: 15px; margin-bottom: 15px;">
-                    <div class="form-group" style="flex: 1;">
-                        <label for="numero_apolice">Nº da Apólice</label>
-                        <input type="text" id="numero_apolice" class="campo-dado" placeholder="Ex: 005.123.456" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="numero_proposta">Nº da Proposta (Cia)</label>
-                        <input type="text" id="numero_proposta" class="campo-dado" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
+            <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                <div style="flex: 1;">
+                    <label>Nº Apólice</label>
+                    <input type="text" id="numero_apolice" class="campo-dado" style="width: 100%; padding: 10px;">
                 </div>
-                <div class="form-row" style="display: flex; gap: 15px;">
-                    <div class="form-group" style="flex: 1;">
-                        <label for="vigencia_inicio">Início Vigência</label>
-                        <input type="date" id="vigencia_inicio" class="campo-dado" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="vigencia_fim">Fim Vigência</label>
-                        <input type="date" id="vigencia_fim" class="campo-dado" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
+                <div style="flex: 1;">
+                    <label>Nº Proposta</label>
+                    <input type="text" id="numero_proposta" class="campo-dado" style="width: 100%; padding: 10px;">
                 </div>
-            </fieldset>
+            </div>
 
-            <fieldset style="border: 1px solid #ddd; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-                <legend style="font-weight: bold; color: #555; padding: 0 5px;">Valores Financeiros</legend>
-                <div class="form-row" style="display: flex; gap: 15px;">
-                    <div class="form-group" style="flex: 1;">
-                        <label for="premio_liquido">Prêmio Líquido (R$)</label>
-                        <input type="text" id="premio_liquido" class="campo-dado" placeholder="0,00" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="premio_total">Prêmio Total (R$)</label>
-                        <input type="text" id="premio_total" class="campo-dado" placeholder="0,00" style="width: 100%; padding: 10px; background:#e8f5e9; border:1px solid #2e7d32; border-radius: 4px; font-weight: bold;">
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="franquia_casco">Franquia (R$)</label>
-                        <input type="text" id="franquia_casco" class="campo-dado" placeholder="0,00" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
+            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                <div style="flex: 1;">
+                    <label>Início Vigência</label>
+                    <input type="date" id="vigencia_inicio" class="campo-dado" style="width: 100%; padding: 10px;">
                 </div>
-            </fieldset>
+                <div style="flex: 1;">
+                    <label>Fim Vigência</label>
+                    <input type="date" id="vigencia_fim" class="campo-dado" style="width: 100%; padding: 10px;">
+                </div>
+            </div>
 
-            <button type="button" id="btn-acao-salvar" class="btn-novo" style="width:100%; margin-top:10px; padding: 15px; background-color: #2e7d32; color: white; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; font-size: 16px;">
+            <h4 style="margin: 0 0 10px 0; color: #555;">Valores Financeiros (Use ponto 1000.00)</h4>
+            <div style="display: flex; gap: 15px;">
+                <div style="flex: 1;">
+                    <label>Prêmio Líquido</label>
+                    <input type="text" id="premio_liquido" style="width: 100%; padding: 10px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: #2e7d32; font-weight: bold;">Prêmio Total</label>
+                    <input type="text" id="premio_total" style="width: 100%; padding: 10px; background-color: #e8f5e9; font-weight: bold; border: 1px solid #2e7d32;">
+                </div>
+                <div style="flex: 1;">
+                    <label>Franquia</label>
+                    <input type="text" id="franquia_casco" style="width: 100%; padding: 10px;">
+                </div>
+            </div>
+
+            <button type="button" id="btn-acao-salvar" class="btn-salvar">
                 <i class="fas fa-save"></i> SALVAR APÓLICE
             </button>
         </div>
-        <div class="system-credits" style="text-align: center;">By Áidano Lima - ASL TECH</div>
+        
+        <div style="text-align:center; margin-top:20px; color:#999; font-size:12px;">ASL TECH SYSTEM</div>
     </div>
 
     <script>
@@ -153,286 +127,155 @@
         const urlParams = new URLSearchParams(window.location.search);
         const idEdicao = urlParams.get('id');
 
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log("🚀 Sistema Iniciado.");
-            if (!localToken) { window.location.href = 'index.html'; return; }
-            
-            const nome = localStorage.getItem('usuario_logado');
-            if (document.getElementById('user-name-display') && nome) 
-                document.getElementById('user-name-display').innerText = nome.split(' ')[0];
+        if (!localToken) { window.location.href = 'index.html'; return; }
 
-            document.getElementById('btn-logout')?.addEventListener('click', () => { 
-                localStorage.clear(); window.location.href = 'index.html'; 
-            });
-
-            // Upload PDF
-            const pdfInput = document.getElementById('pdf_upload');
-            const btnLer = document.getElementById('btn-ler-pdf');
-            
-            if(pdfInput && btnLer) {
-                pdfInput.addEventListener('change', () => {
-                    if(pdfInput.files.length > 0) {
-                        btnLer.style.display = 'inline-block';
-                        document.getElementById('status-pdf').innerText = ""; 
-                    }
-                });
-                btnLer.addEventListener('click', (e) => { e.preventDefault(); processarPDF(); });
-            }
-
-            const btnSalvar = document.getElementById('btn-acao-salvar');
-            if(btnSalvar) btnSalvar.addEventListener('click', executarSalvamento);
-
-            carregarVeiculos().then(() => { if (idEdicao) prepararModoEdicao(); });
-        });
-
-        // ============================================================
-        // 🔧 1. SETTERS ESPECÍFICOS (SEM AMBIGUIDADE)
-        // ============================================================
-
-        // Apenas para TEXTO (Placa, Apólice, Datas)
-        function setValorTexto(id, valor) {
+        function setValor(id, valor) {
             const el = document.getElementById(id);
-            if (!el) return;
-            el.value = (valor || '').toString();
+            if(el && valor !== undefined && valor !== null) {
+                el.value = valor;
+            }
         }
 
-        // Apenas para MOEDA (Converte 1000.00 -> 1.000,00)
-        function setValorMoeda(id, valor) {
-            const el = document.getElementById(id);
-            if (!el) return;
-            
-            if (!valor && valor !== 0) {
-                el.value = '';
-                return;
-            }
-
-            // Limpa qualquer lixo, garante float
-            let str = valor.toString().replace('R$', '').trim();
-            let num = parseFloat(str);
-
-            if (isNaN(num)) {
-                el.value = ''; // Falhou, limpa
-            } else {
-                // Formatação Brasileira
-                el.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            }
-            console.log(`💰 Setando [${id}] orig(${valor}) -> tela(${el.value})`);
-        }
-
-        // ============================================================
-        // 🔧 2. GETTER PARA SALVAR (Converte 1.000,00 -> 1000.00)
-        // ============================================================
-        function getValorMoeda(id) {
-            const el = document.getElementById(id);
-            if (!el || !el.value) return '0.00';
-            
-            let val = el.value;
-            // Se tiver vírgula, é BR. Remove ponto milhar, troca vírgula por ponto.
-            if(val.includes(',')) {
-                val = val.replace(/\./g, ''); // Remove milhar
-                val = val.replace(',', '.');  // Decimal
-            }
-            return val;
-        }
-
-        // ============================================================
-        // 📄 PROCESSAR PDF
-        // ============================================================
-        async function processarPDF() {
+        // LER PDF
+        document.getElementById('btn-ler-pdf').addEventListener('click', async (e) => {
+            e.preventDefault(); 
             const fileInput = document.getElementById('pdf_upload');
             const statusMsg = document.getElementById('status-pdf');
 
-            if (!fileInput.files.length) {
-                Swal.fire('Atenção', 'Selecione um arquivo.', 'warning');
-                return;
-            }
+            if (fileInput.files.length === 0) return Swal.fire('Atenção', 'Selecione o arquivo PDF primeiro.', 'warning');
 
-            statusMsg.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
-            statusMsg.style.color = "orange";
-
-            const formData = new FormData();
-            formData.append('arquivoPdf', fileInput.files[0]);
+            statusMsg.innerText = "Processando...";
+            
+            const fd = new FormData();
+            fd.append('arquivoPdf', fileInput.files[0]);
 
             try {
                 const res = await fetch(`${BASE_URL}/importar-pdf`, { 
                     method: 'POST', 
                     headers: { 'Authorization': `Bearer ${localToken}` },
-                    body: formData 
+                    body: fd 
                 });
-                
-                if (!res.ok) throw new Error("Erro de comunicação.");
-                
                 const json = await res.json();
                 const d = json.dados;
                 
-                console.log("📦 DADOS DO PDF:", d);
+                console.log("DADOS DO PDF:", d);
 
-                // --- PREENCHIMENTO EXPLÍCITO ---
-                setValorTexto('numero_apolice', d.numero_apolice);
-                setValorTexto('numero_proposta', d.numero_proposta);
-                setValorTexto('vigencia_inicio', d.vigencia_inicio);
-                setValorTexto('vigencia_fim', d.vigencia_fim);
+                setValor('numero_apolice', d.numero_apolice);
+                setValor('numero_proposta', d.numero_proposta);
+                setValor('vigencia_inicio', d.vigencia_inicio);
+                setValor('vigencia_fim', d.vigencia_fim);
                 
-                // Use a função de MOEDA
-                setValorMoeda('premio_total', d.premio_total);
-                setValorMoeda('premio_liquido', d.premio_liquido);
-                setValorMoeda('franquia_casco', d.franquia_casco);
+                // MANTÉM O VALOR COMO VEIO (STRING) PARA NÃO ZERAR
+                setValor('premio_total', d.premio_total);
+                setValor('premio_liquido', d.premio_liquido);
+                setValor('franquia_casco', d.franquia_casco);
 
-                statusMsg.innerHTML = `<i class="fas fa-check-circle"></i> <b>${fileInput.files[0].name}</b> lido!`;
+                statusMsg.innerText = "Lido com sucesso!";
                 statusMsg.style.color = "green";
-                
-                // Lógica da Placa
-                let msgPlaca = '';
+
                 if (d.placa) {
                     const sel = document.getElementById('veiculo_id');
-                    let achou = false;
                     const busca = d.placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                    
-                    for (let i = 0; i < sel.options.length; i++) {
-                        const txt = sel.options[i].text.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                        if (txt.includes(busca)) {
+                    for(let i=0; i<sel.options.length; i++) {
+                        if(sel.options[i].text.replace(/[^A-Z0-9]/g, '').includes(busca)) {
                             sel.selectedIndex = i;
-                            achou = true;
                             break;
                         }
                     }
-                    msgPlaca = achou ? `<br>✅ Veículo Identificado` : `<br>❌ Placa ${d.placa} não cadastrada`;
                 }
-
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Dados Carregados!',
-                    html: `Total: <b>${document.getElementById('premio_total').value}</b><br>${msgPlaca}`,
-                    timer: 2000
-                });
-
-            } catch (err) {
+            } catch(err) {
                 console.error(err);
-                statusMsg.innerText = "Erro ao processar.";
-                Swal.fire('Erro', 'Falha ao ler PDF.', 'error');
+                statusMsg.innerText = "Erro ao ler.";
+                Swal.fire('Erro', 'Falha na leitura do PDF.', 'error');
             }
-        }
+        });
 
-        // ============================================================
-        // 💾 SALVAR APÓLICE (COM ARQUIVO)
-        // ============================================================
-        async function ejecutarSalvamento(e) {
-            if(e) e.preventDefault();
+        // SALVAR APÓLICE
+        document.getElementById('btn-acao-salvar').addEventListener('click', async (e) => {
+            e.preventDefault();
+            
             const veiculo = document.getElementById('veiculo_id').value;
-            if (!veiculo) { Swal.fire('Erro', 'Selecione o Veículo.', 'warning'); return; }
+            if (!veiculo) return Swal.fire('Erro', 'Selecione o Cliente/Veículo!', 'error');
 
-            // Endpoint
-            const endpoint = idEdicao ? `${BASE_URL}/apolices/${idEdicao}` : `${BASE_URL}/cadastrar-apolice`;
-            const method = idEdicao ? 'PUT' : 'POST';
-            
-            // Verifica arquivo
             const fileInput = document.getElementById('pdf_upload');
-            // Se for NOVO REGISTRO e tiver arquivo, OU se for EDIÇÃO e tiver arquivo novo
-            const temArquivo = fileInput && fileInput.files.length > 0;
-
-            // 1. Cria FormData (Obrigatório se tiver arquivo)
-            // Se não tiver arquivo, podemos enviar FormData mesmo assim, o multer ignora o campo vazio
-            const formData = new FormData();
-
-            formData.append('veiculo_id', veiculo);
-            formData.append('numero_apolice', document.getElementById('numero_apolice').value);
-            formData.append('numero_proposta', document.getElementById('numero_proposta').value);
-            formData.append('vigencia_inicio', document.getElementById('vigencia_inicio').value);
-            formData.append('vigencia_fim', document.getElementById('vigencia_fim').value);
             
-            // Converte de volta para americano para salvar
-            formData.append('premio_liquido', getValorMoeda('premio_liquido'));
-            formData.append('premio_total', getValorMoeda('premio_total'));
-            formData.append('franquia_casco', getValorMoeda('franquia_casco'));
+            if (!idEdicao && fileInput.files.length === 0) {
+                return Swal.fire('Atenção', 'O arquivo PDF não foi detectado. Selecione novamente.', 'warning');
+            }
 
-            // Anexa arquivo se existir
-            if (temArquivo) {
+            const formData = new FormData();
+            formData.append('veiculo_id', veiculo);
+            formData.append('numero_apolice', document.getElementById('numero_apolice').value || '');
+            formData.append('numero_proposta', document.getElementById('numero_proposta').value || '');
+            formData.append('vigencia_inicio', document.getElementById('vigencia_inicio').value || '');
+            formData.append('vigencia_fim', document.getElementById('vigencia_fim').value || '');
+            
+            // PEGA O VALOR DO INPUT DIRETAMENTE
+            formData.append('premio_liquido', document.getElementById('premio_liquido').value);
+            formData.append('premio_total', document.getElementById('premio_total').value);
+            formData.append('franquia_casco', document.getElementById('franquia_casco').value);
+
+            if (fileInput.files.length > 0) {
                 formData.append('arquivo_pdf', fileInput.files[0]);
             }
 
-            // Headers (IMPORTANTE: Não setar Content-Type para FormData, o browser faz isso)
-            const headers = { 'Authorization': `Bearer ${localToken}` };
+            const endpoint = idEdicao ? `${BASE_URL}/apolices/${idEdicao}` : `${BASE_URL}/cadastrar-apolice`;
+            const method = idEdicao ? 'PUT' : 'POST';
 
-            // Se for EDIÇÃO e NÃO tiver arquivo novo, seria melhor mandar JSON, mas vamos padronizar FormData
-            // O backend está preparado para uploadSave.single(), se não vier arquivo, ele segue.
-            
             try {
                 Swal.fire({ title: 'Salvando...', didOpen: () => Swal.showLoading() });
+
+                const res = await fetch(endpoint, { 
+                    method: method, 
+                    headers: { 'Authorization': `Bearer ${localToken}` },
+                    body: formData 
+                });
                 
-                // Se for PUT e quisermos mandar JSON (caso seu backend tenha rotas distintas para update sem arquivo)
-                // Mas seu backend suporta update com arquivo?
-                // Vamos tentar FormData. Se seu backend no PUT não usa 'uploadSave', isso pode falhar.
-                // VERIFICAÇÃO: Seu server.js no PUT não tem 'uploadSave'. Então:
-                
-                let res;
-                if (method === 'POST') {
-                    // POST (Criar): Usa FormData (Backend espera uploadSave)
-                    res = await fetch(endpoint, { method, headers, body: formData });
-                } else {
-                    // PUT (Editar): Seu backend atual NÃO tem upload no PUT.
-                    // Então mandamos JSON e ignoramos o arquivo por enquanto no update (limitação atual do backend)
-                    // Se você quiser update de arquivo, precisa mudar o server.js.
-                    // Por enquanto, salvamos os dados:
-                    const jsonBody = {};
-                    formData.forEach((value, key) => jsonBody[key] = value);
-                    
-                    headers['Content-Type'] = 'application/json';
-                    res = await fetch(endpoint, { method, headers, body: JSON.stringify(jsonBody) });
-                }
-                
+                const json = await res.json();
+
                 if (res.ok) {
-                    await Swal.fire('Sucesso!', 'Apólice salva com sucesso.', 'success');
+                    await Swal.fire('Sucesso!', 'Apólice e Arquivo salvos!', 'success');
                     window.location.href = 'dashboard.html';
                 } else {
-                    const err = await res.json();
-                    Swal.fire('Erro', err.message || 'Erro ao salvar.', 'error');
+                    Swal.fire('Erro', json.message || 'Erro ao salvar.', 'error');
                 }
-            } catch (err) { 
+            } catch(err) {
                 console.error(err);
-                Swal.fire('Erro', 'Falha na conexão.', 'error'); 
+                Swal.fire('Erro', 'Falha de conexão com o servidor.', 'error');
             }
-        }
+        });
 
-        async function executarSalvamento(e) { return ejecutarSalvamento(e); }
-
-        async function carregarVeiculos() {
+        // CARREGAR DADOS
+        (async () => {
             try {
                 const res = await fetch(`${BASE_URL}/propostas`, { headers: { 'Authorization': `Bearer ${localToken}` } });
-                const lista = await res.json();
+                const list = await res.json();
                 const sel = document.getElementById('veiculo_id');
-                sel.innerHTML = '<option value="">-- Selecione --</option>';
-                lista.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.id;
-                    opt.text = `${p.nome} | ${p.placa}`;
-                    sel.appendChild(opt);
+                list.forEach(i => {
+                    sel.innerHTML += `<option value="${i.id}">${i.nome} | ${i.placa}</option>`;
                 });
-            } catch (e) { console.error(e); }
-        }
+            } catch(e) {}
 
-        async function prepararModoEdicao() {
-            try {
-                document.getElementById('titulo-pagina').innerText = `Editando Apólice #${idEdicao}`;
-                document.getElementById('btn-acao-salvar').innerHTML = 'ATUALIZAR DADOS';
-                // Mostra upload para permitir substituição
-                const area = document.querySelector('.upload-container');
-                if(area) area.style.display = 'flex'; 
+            if(idEdicao) {
+                document.getElementById('btn-acao-salvar').innerText = "ATUALIZAR DADOS";
+                try {
+                    const res = await fetch(`${BASE_URL}/apolices/${idEdicao}`, { headers: { 'Authorization': `Bearer ${localToken}` } });
+                    const d = await res.json();
+                    setValor('veiculo_id', d.veiculo_id);
+                    setValor('numero_apolice', d.numero_apolice);
+                    setValor('numero_proposta', d.numero_proposta);
+                    setValor('premio_total', d.premio_total);
+                    setValor('premio_liquido', d.premio_liquido);
+                    setValor('franquia_casco', d.franquia_casco);
+                    if(d.vigencia_inicio) setValor('vigencia_inicio', d.vigencia_inicio.split('T')[0]);
+                    if(d.vigencia_fim) setValor('vigencia_fim', d.vigencia_fim.split('T')[0]);
+                } catch(e) {}
+            }
+        })();
 
-                const res = await fetch(`${BASE_URL}/apolices/${idEdicao}`, { headers: { 'Authorization': `Bearer ${localToken}` } });
-                const d = await res.json();
-
-                setValorTexto('veiculo_id', d.veiculo_id);
-                setValorTexto('numero_apolice', d.numero_apolice);
-                setValorTexto('numero_proposta', d.numero_proposta);
-                
-                setValorMoeda('premio_liquido', d.premio_liquido);
-                setValorMoeda('premio_total', d.premio_total);
-                setValorMoeda('franquia_casco', d.franquia_casco);
-                
-                if (d.vigencia_inicio) setValorTexto('vigencia_inicio', d.vigencia_inicio.split('T')[0]);
-                if (d.vigencia_fim) setValorTexto('vigencia_fim', d.vigencia_fim.split('T')[0]);
-            } catch (e) { console.error(e); }
-        }
+        document.getElementById('btn-logout').addEventListener('click', () => { 
+            localStorage.clear(); window.location.href = 'index.html'; 
+        });
     })();
     </script>
 </body>
