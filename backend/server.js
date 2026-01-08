@@ -382,6 +382,35 @@ app.post('/importar-pdf', authenticateToken, uploadSave.any(), async (req, res) 
 // 🚀 INICIALIZAÇÃO
 // ==================================================
 
+// ==================================================
+// 🚑 ROTA DE EMERGÊNCIA (Atualizar Tabela Apólices)
+// ==================================================
+app.get('/update-db-colunas', async (req, res) => {
+    try {
+        console.log("🚑 Tentando adicionar colunas faltantes...");
+
+        // 1. Adiciona premio_liquido
+        try {
+            await pool.query("ALTER TABLE apolices ADD COLUMN premio_liquido DECIMAL(10,2) DEFAULT 0.00");
+            console.log("✅ Coluna premio_liquido criada.");
+        } catch (e) {
+            console.log("⚠️ premio_liquido já existe ou erro:", e.message);
+        }
+
+        // 2. Adiciona franquia_casco (provavelmente falta também)
+        try {
+            await pool.query("ALTER TABLE apolices ADD COLUMN franquia_casco DECIMAL(10,2) DEFAULT 0.00");
+            console.log("✅ Coluna franquia_casco criada.");
+        } catch (e) {
+            console.log("⚠️ franquia_casco já existe ou erro:", e.message);
+        }
+
+        res.send("✅ PROCESSO CONCLUÍDO! As colunas foram adicionadas ao banco da nuvem. Tente salvar a apólice novamente.");
+    } catch (e) {
+        res.status(500).send("❌ Erro geral: " + e.message);
+    }
+});
+
 app.listen(port, () => {
     console.log(`\n==================================================`);
     console.log(`🚀 SERVIDOR RODANDO NA PORTA ${port}`);
