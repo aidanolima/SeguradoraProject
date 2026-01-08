@@ -411,6 +411,52 @@ app.get('/fix-tabelas', async (req, res) => {
     }
 });
 
+// ==================================================
+// 🕵️ ROTA DIAGNÓSTICO + CORREÇÃO AUTOMÁTICA
+// ==================================================
+app.get('/diagnostico-banco', async (req, res) => {
+    try {
+        // 1. Pergunta ao banco quais colunas existem DE VERDADE
+        const [cols] = await pool.query("SHOW COLUMNS FROM apolices");
+        const colunasExistentes = cols.map(c => c.Field);
+        
+        let html = "<h2>🕵️ Relatório do Banco de Dados (Render)</h2>";
+        html += "<p><strong>Colunas encontradas na tabela 'apolices':</strong><br>" + colunasExistentes.join(", ") + "</p>";
+        
+        // 2. Verifica se 'premio_liquido' existe
+        if (!colunasExistentes.includes('premio_liquido')) {
+            html += "<p style='color:red'>🔴 ERRO: A coluna 'premio_liquido' NÃO existe neste banco.</p>";
+            html += "<p>🛠️ Tentando corrigir agora...</p>";
+            try {
+                await pool.query("ALTER TABLE apolices ADD COLUMN premio_liquido DECIMAL(10,2) DEFAULT 0.00");
+                html += "<p style='color:green'>✅ SUCESSO: Coluna 'premio_liquido' foi criada!</p>";
+            } catch (err) {
+                html += "<p style='color:red'>❌ FALHA ao criar: " + err.message + "</p>";
+            }
+        } else {
+            html += "<p style='color:green'>🟢 A coluna 'premio_liquido' já existe. (Estranho dar erro, verifique nomes)</p>";
+        }
+
+        // 3. Verifica se 'franquia_casco' existe
+        if (!colunasExistentes.includes('franquia_casco')) {
+            html += "<p style='color:red'>🔴 ERRO: A coluna 'franquia_casco' NÃO existe neste banco.</p>";
+            html += "<p>🛠️ Tentando corrigir agora...</p>";
+            try {
+                await pool.query("ALTER TABLE apolices ADD COLUMN franquia_casco DECIMAL(10,2) DEFAULT 0.00");
+                html += "<p style='color:green'>✅ SUCESSO: Coluna 'franquia_casco' foi criada!</p>";
+            } catch (err) {
+                html += "<p style='color:red'>❌ FALHA ao criar: " + err.message + "</p>";
+            }
+        } else {
+            html += "<p style='color:green'>🟢 A coluna 'franquia_casco' já existe.</p>";
+        }
+
+        res.send(html + "<br><button onclick='window.location.reload()'>🔄 Verificar Novamente</button>");
+    } catch (e) {
+        res.status(500).send("❌ Erro fatal ao conectar no banco: " + e.message);
+    }
+});
+
 app.listen(port, () => {
     console.log(`\n==================================================`);
     console.log(`🚀 SERVIDOR RODANDO NA PORTA ${port}`);
