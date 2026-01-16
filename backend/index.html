@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Seguradora Enterprise</title>
+    
+    <link rel="icon" href="assets/logo.png" type="image/png">
+    
+    <meta http-equiv="Content-Security-Policy" 
+    content="default-src * 'self' blob: data: gap:; 
+    style-src * 'self' 'unsafe-inline' blob: data: gap:; 
+    script-src * 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net blob: data: gap:; 
+    connect-src 'self' http://localhost:3000 https://seguradoraproject.onrender.com * 'unsafe-inline' blob: data: gap:;">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="js/config.js"></script>
+
+    <style>
+        /* Visual Enterprise Centralizado */
+        body.login-body {
+            background: linear-gradient(135deg, #003366 0%, #001a33 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            border-top: 5px solid #00a86b;
+        }
+
+        .login-logo { max-width: 160px; margin-bottom: 25px; }
+        .login-title { color: #333; font-size: 22px; margin-bottom: 30px; font-weight: 600; }
+
+        .input-group { position: relative; margin-bottom: 20px; text-align: left; }
+        .input-group i { position: absolute; top: 50%; transform: translateY(-50%); left: 15px; color: #888; font-size: 14px; }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px 12px 12px 40px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .input-group input:focus { border-color: #003366; outline: none; }
+
+        .btn-login {
+            background-color: #003366;
+            color: white;
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        .btn-login:hover { background-color: #002244; }
+        
+        /* Link de recuperação */
+        .forgot-link {
+            display: block;
+            margin-top: 15px;
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .forgot-link:hover {
+            color: #003366;
+            text-decoration: underline;
+        }
+
+        .footer-text { margin-top: 25px; font-size: 12px; color: #999; }
+    </style>
+</head>
+<body class="login-body">
+
+    <div class="login-card">
+        <img src="assets/logo.png" alt="Logo" class="login-logo">
+        <h2 class="login-title">Gestão de Clientes e Apólices</h2>
+        
+        <form id="form-login">
+            <div class="input-group">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="email" placeholder="E-mail Corporativo" required>
+            </div>
+            
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="senha" placeholder="Sua Senha" required>
+            </div>
+
+            <button type="submit" class="btn-login">ENTRAR</button>
+        </form>        
+        
+        <a href="recuperar.html" class="forgot-link">Esqueci minha senha</a>
+
+        <p class="footer-text">
+            &copy; 2025 Seguradora System.<br>Todos os direitos reservados ASL TECH Áidano Lima.
+        </p>
+    </div>
+
+    <script>
+        // --- CORREÇÃO DO ERRO API_URL ---
+        // Se API_URL não foi definida pelo config.js, usamos a origem atual (ex: http://localhost:3000)
+        // Isso garante que o login funcione mesmo se a pasta JS não for encontrada
+        const BASE_API = (typeof API_URL !== 'undefined') ? API_URL : window.location.origin;
+
+        // Verifica se já está logado e redireciona
+        if (localStorage.getItem('token')) {
+            window.location.href = 'dashboard.html';
+        }
+
+        document.getElementById('form-login').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const senha = document.getElementById('senha').value.trim();
+            const btn = document.querySelector('.btn-login');
+            const originalText = btn.innerText;
+
+            if(!email || !senha) {
+                Swal.fire('Atenção', 'Preencha todos os campos.', 'warning');
+                return;
+            }
+
+            try {
+                // Estado de Carregamento
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validando...';
+                btn.disabled = true;
+                btn.style.opacity = '0.7';
+
+                console.log("Tentando login em:", `${BASE_API}/login`);
+
+                const response = await fetch(`${BASE_API}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, senha })
+                });
+
+                const data = await response.json(); 
+
+                if (response.ok) {
+                    // Login Sucesso: Salva tudo
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('usuario_logado', data.usuario.nome);
+                    localStorage.setItem('tipo_usuario', data.usuario.tipo);
+                    
+                    // Feedback Visual Rápido
+                    const Toast = Swal.mixin({
+                        toast: true, position: 'top-end', showConfirmButton: false, timer: 1000
+                    });
+                    
+                    await Toast.fire({ icon: 'success', title: 'Login realizado!' });
+                    
+                    // Redireciona
+                    window.location.href = 'dashboard.html';
+                } else {
+                    throw new Error(data.message || 'Dados inválidos');
+                }
+            } catch (error) {
+                console.error("Erro Login:", error);
+                
+                let msg = error.message;
+                if (msg.includes('Unexpected token') || msg.includes('JSON')) {
+                    msg = "Erro de conexão com o servidor. Verifique se o Backend está rodando.";
+                }
+
+                Swal.fire({ 
+                    icon: 'error', 
+                    title: 'Acesso Negado', 
+                    text: msg,
+                    confirmButtonColor: '#003366'
+                });
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        });
+    </script>
+</body>
+</html>
