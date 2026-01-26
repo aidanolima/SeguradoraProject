@@ -49,7 +49,7 @@
         /* --- LAYOUT DOS CARDS --- */
         .stats-container { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-right: 5px; }
         
-        /* Estilo padrão do card (mantido para estrutura) */
+        /* Estilo padrão do card */
         .stat-card { 
             flex: 1; 
             min-width: 150px; 
@@ -64,8 +64,7 @@
             overflow: hidden; 
         }
 
-        /* --- NOVO ESTILO: CARD EM DESENVOLVIMENTO --- */
-        /* Substitui as cores por um padrão cinza e tracejado, igual ao placeholder grande */
+        /* --- CARD EM DESENVOLVIMENTO --- */
         .stat-card.dev-mode {
             background-color: #f8f9fa !important;
             border: 2px dashed #ddd !important;
@@ -84,7 +83,7 @@
         .badge-user { background-color: #1976d2; color: white; }
         .section-title { color: #444; padding-left: 10px; margin: 0; text-transform: uppercase; font-weight: 800; }
         
-        /* --- PLACEHOLDER GRANDE (GRÁFICOS E LISTAS) --- */
+        /* --- PLACEHOLDER GRANDE --- */
         .dev-placeholder {
             text-align: center;
             padding: 40px 20px;
@@ -120,8 +119,7 @@
         </nav>
         <div class="header-user-area">
             <div class="user-info">
-                <span class="user-name">Olá, <strong id="user-name-display">...</strong></span>
-                <span class="user-role" id="user-role-display">...</span>
+                <span class="user-name" style="color: white;">Olá, <strong id="user-name-display">...</strong></span>
             </div>
             <button id="btn-logout" class="btn-logout-panel">SAIR</button>
         </div>
