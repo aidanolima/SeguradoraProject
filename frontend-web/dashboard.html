@@ -2,6 +2,9 @@
 <html lang="pt-BR">
 <head>
     <script src="js/config.js"></script>
+    <script src="js/masks.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
@@ -23,34 +26,56 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
-        .stats-container { display: flex; justify-content: space-between; gap: 25px; flex-wrap: wrap; padding-right: 5px; }
-        .stat-card { flex: 1; min-width: 220px; margin-bottom: 0; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        /* --- LAYOUT DOS CARDS --- */
+        .stats-container { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-right: 5px; }
+        .stat-card { flex: 1; min-width: 150px; margin-bottom: 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; }
+        .stat-info { flex: 1; min-width: 0; }
+        .stat-info h3 { margin: 0; font-size: 1.3em; font-weight: 800; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } 
+        .stat-card.money .stat-info h3 { font-size: 1.2em; }
+        .stat-info p { margin: 0; color: #666; font-size: 0.85em; white-space: nowrap; }
+        .stat-icon { font-size: 2em; opacity: 0.8; margin-left: 10px; flex-shrink: 0; }
+        .stat-card.green { border-left: 5px solid #00a86b; }
+        .stat-card.blue { border-left: 5px solid #1976d2; }
+        .stat-card.orange { border-left: 5px solid #ff9800; }
+        .stat-card.purple { border-left: 5px solid #7b1fa2; }
+        .stat-card.money { border-left: 5px solid #28a745; background-color: #fff; }
+
+        /* --- ESTILOS GERAIS --- */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; display: inline-block; }
         .badge-admin { background-color: #7b1fa2; color: white; }
         .badge-user { background-color: #1976d2; color: white; }
+        .section-title { color: #444; padding-left: 10px; margin: 0; text-transform: uppercase; font-weight: 800; }
         
-        /* Estilo Botões Ação */
-        .action-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 4px; border: none; cursor: pointer; color: white; transition: 0.2s; text-decoration: none; margin-right: 5px; }
-        .btn-pdf-active { background-color: #d32f2f; } /* Vermelho PDF */
-        .btn-pdf-active:hover { background-color: #b71c1c; }
-        .btn-pdf-disabled { background-color: #e0e0e0; color: #9e9e9e; cursor: not-allowed; }
-        .btn-edit { background-color: #1976d2; }
-        .btn-edit:hover { background-color: #1565c0; }
-        .btn-delete { background-color: #455a64; } /* Cinza escuro para deletar (mais seguro) */
-        .btn-delete:hover { background-color: #37474f; }
+        /* --- ESTILO DE DESENVOLVIMENTO (PLACEHOLDER) --- */
+        .dev-placeholder {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: #f8f9fa;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            color: #777;
+        }
+        .dev-placeholder i { font-size: 3em; color: #ccc; margin-bottom: 10px; }
+        .dev-placeholder h4 { margin: 0; text-transform: uppercase; font-weight: 700; color: #555; }
+        
+        /* --- BOTÕES E GRÁFICOS --- */
+        .btn-novo { text-decoration: none !important; color: white !important; display: inline-block; border-radius: 4px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; }
+        .btn-novo:hover { opacity: 0.9; text-decoration: none; }
+        .charts-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-top: 20px; margin-bottom: 30px;}
+        .chart-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .chart-header h3 { margin: 0; color: #333; font-size: 1.1em; }
     </style>
 </head>
 <body class="dashboard-body">
     
     <header class="app-header">
-        <div class="header-brand">
-            <a href="dashboard.html"><img src="assets/logo.png" alt="Logo" class="header-logo"></a>
-        </div>
+        <div class="header-brand"><a href="dashboard.html"><img src="assets/logo.png" alt="Logo" class="header-logo"></a></div>
         <nav class="header-nav">
             <a href="dashboard.html" class="header-link active">DASHBOARD</a>
-            <a href="apolice.html" class="header-link">APÓLICES</a>
+            <a href="#" class="header-link" style="opacity:0.5; cursor:not-allowed" title="Em breve">APÓLICES</a>
             <a href="registro.html?origin=dashboard" class="header-link">USUÁRIOS</a>
-            <a href="relatorios.html" class="header-link">RELATÓRIOS</a>
+            <a href="#" class="header-link" style="opacity:0.5; cursor:not-allowed" title="Em breve">RELATÓRIOS</a>
         </nav>
         <div class="header-user-area">
             <div class="user-info">
@@ -64,85 +89,93 @@
     <div class="main-container">
         
         <div class="stats-container" style="margin-bottom: 30px;">
-            <div class="stat-card green">
-                <div class="stat-info"><h3 id="total-clientes">...</h3><p>Clientes Ativos</p></div>
-                <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-card purple" id="card-admin-stat" onclick="window.location.href='registro.html?origin=dashboard'" style="cursor: pointer; display: none;">
+                <div class="stat-info"><h3 id="total-usuarios">...</h3><p>Usuários Sistema</p></div>
+                <div class="stat-icon" style="color: #7b1fa2;"><i class="fas fa-user-shield"></i></div>
             </div>
-            <div class="stat-card blue">
-                <div class="stat-info"><h3 id="total-veiculos">...</h3><p>Veículos Cadastrados</p></div>
-                <div class="stat-icon"><i class="fas fa-car"></i></div>
+            
+            <div class="stat-card green" style="display: none;"> <div class="stat-info"><h3 id="total-clientes">...</h3><p>Clientes Ativos</p></div>
+                <div class="stat-icon" style="color: #00a86b;"><i class="fas fa-users"></i></div>
             </div>
-            <div class="stat-card orange">
-                <div class="stat-info"><h3 id="total-apolices">...</h3><p>Apólices Emitidas</p></div>
-                <div class="stat-icon"><i class="fas fa-file-contract"></i></div>
+            <div class="stat-card blue" style="display: none;"> <div class="stat-info"><h3 id="total-veiculos">...</h3><p>Veículos</p></div>
+                <div class="stat-icon" style="color: #1976d2;"><i class="fas fa-car"></i></div>
             </div>
-            <div class="stat-card purple">
-                <div class="stat-info"><h3 id="total-usuarios">...</h3><p>Usuários do Sistema</p></div>
-                <div class="stat-icon"><i class="fas fa-user-shield"></i></div>
+            <div class="stat-card orange" style="display: none;"> <div class="stat-info"><h3 id="total-apolices">...</h3><p>Apólices Emitidas</p></div>
+                <div class="stat-icon" style="color: #ff9800;"><i class="fas fa-file-contract"></i></div>
+            </div>
+            <div class="stat-card money" style="display: none;"> <div class="stat-info"><h3 id="total-comissoes" style="color: #28a745;">R$ 0,00</h3><p>Comissões</p></div>
+                <div class="stat-icon" style="color: #28a745;"><i class="fas fa-hand-holding-usd"></i></div>
+            </div>
+        </div>
+
+        <div class="charts-container" id="area-graficos">
+            <div class="chart-card">
+                <div class="chart-header"><h3><i class="fas fa-chart-pie"></i> Status da Carteira</h3></div>
+                <div class="dev-placeholder">
+                    <i class="fas fa-code"></i>
+                    <h4>Em Desenvolvimento!</h4>
+                    <p>Gráficos em breve.</p>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header"><h3><i class="fas fa-chart-bar"></i> Evolução de Vendas</h3></div>
+                <div class="dev-placeholder">
+                    <i class="fas fa-tools"></i>
+                    <h4>Em Desenvolvimento!</h4>
+                    <p>Análises em breve.</p>
+                </div>
             </div>
         </div>
 
         <div class="card">
             <div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="color: #444; border-left: 5px solid #ff9800; padding-left: 10px; margin: 0;">Gestão de Apólices</h3>
-                    <a href="apolice.html" class="btn-novo" style="background-color: #ff9800; width: auto; padding: 10px 20px;">+ Nova Apólice</a>
+                    <h3 style="color: #444; border-left: 5px solid #ff9800; padding-left: 10px; margin: 0; text-transform: uppercase; font-weight: 800;">Gestão de Apólices</h3>
+                    <button class="btn-novo" style="background-color: #ccc; cursor: not-allowed;">+ Nova Apólice</button>
                 </div>
-                <div style="overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 8px;">
-                    <table class="tabela-crud">
-                        <thead>
-                            <tr>
-                                <th>Nº Apólice</th>
-                                <th>Cliente / Veículo</th>
-                                <th>Vigência Fim</th>
-                                <th>Prêmio Total</th>
-                                <th style="text-align:center">Ações</th> 
-                            </tr>
-                        </thead>
-                        <tbody id="lista-apolices">
-                            <tr><td colspan="5" style="text-align:center; padding: 20px;">Carregando dados...</td></tr>
-                        </tbody>
-                    </table>
+
+                <div class="dev-placeholder">
+                    <i class="fas fa-hard-hat"></i>
+                    <h4>Módulo em Desenvolvimento!</h4>
+                    <p>A gestão completa de apólices estará disponível na próxima atualização.</p>
                 </div>
             </div>
         </div>
 
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="color: #444; border-left: 5px solid #00a86b; padding-left: 10px; margin: 0;">Gestão de Clientes</h3>
-                <a href="cadastro.html" class="btn-novo" style="background-color: #00a86b; width: auto; padding: 10px 20px; text-decoration: none;">+ Nova Proposta</a>
+                <h3 style="color: #444; border-left: 5px solid #00a86b; padding-left: 10px; margin: 0; text-transform: uppercase; font-weight: 800;">Gestão de Clientes</h3>
+                <button class="btn-novo" style="background-color: #ccc; cursor: not-allowed;">+ Nova Proposta</button>
             </div>
-            <div style="overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 8px;">
-                <table class="tabela-crud">
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>CPF/CNPJ</th>
-                            <th>Placa</th>
-                            <th>Modelo</th>
-                            <th style="text-align:center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="lista-clientes">
-                        <tr><td colspan="5" style="text-align:center; padding: 20px;">Carregando dados...</td></tr>
-                    </tbody>
-                </table>
+            
+            <div class="dev-placeholder">
+                <i class="fas fa-users-cog"></i>
+                <h4>Módulo em Desenvolvimento!</h4>
+                <p>O cadastro de clientes está sendo finalizado pela equipe de TI.</p>
             </div>
         </div>
 
-        <div class="card" id="secao-usuarios">
+        <div class="card" id="secao-usuarios" style="display: none;">
             <div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="color: #444; border-left: 5px solid #7b1fa2; padding-left: 10px; margin: 0;">Gestão de Usuários </h3>
+                    <h3 style="color: #444; border-left: 5px solid #7b1fa2; padding-left: 10px; margin: 0; text-transform: uppercase; font-weight: 800;">Gestão de Usuários </h3>
                     <a href="registro.html?origin=dashboard" class="btn-novo" style="background-color: #7b1fa2; width: auto; padding: 10px 20px;">+ Novo Usuário</a>
                 </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" id="busca-usuarios" class="form-control" placeholder="Pesquisar por Nome ou E-mail...">
+                        </div>
+                    </div>
+                </div>
                 <div style="overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 8px;">
-                    <table class="tabela-crud">
+                    <table class="tabela-crud" id="tabela-usuarios">
                         <thead>
                             <tr>
-                                <th>Nome</th>
-                                <th>E-mail</th>
-                                <th>Perfil</th>
+                                <th onclick="ordenarTabela(0, 'tabela-usuarios')" style="cursor: pointer">Nome <i class="fas fa-sort"></i></th>
+                                <th onclick="ordenarTabela(1, 'tabela-usuarios')" style="cursor: pointer">E-mail <i class="fas fa-sort"></i></th>
+                                <th onclick="ordenarTabela(2, 'tabela-usuarios')" style="cursor: pointer">Perfil <i class="fas fa-sort"></i></th>
                                 <th style="text-align: center;">Ações</th>
                             </tr>
                         </thead>
@@ -150,6 +183,7 @@
                             <tr><td colspan="4" style="text-align:center; padding: 20px;">Carregando dados...</td></tr>
                         </tbody>
                     </table>
+                    <div id="paginacao-usuarios" class="pagination-container"></div>
                 </div>
             </div>
         </div>
@@ -157,168 +191,6 @@
         <div class="system-credits" style="text-align: center;">By Áidano Lima - ASL TECH</div>
     </div> 
     
-   <script>
-    (function() {
-        const LOCAL_API_URL = (typeof API_URL !== 'undefined') ? API_URL : 'http://localhost:3000';
-        const localToken = localStorage.getItem('token');
-
-        console.log("🚀 Dashboard Enterprise Iniciado");
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!localToken) { window.location.href = 'index.html'; return; }
-
-            const nome = localStorage.getItem('usuario_logado');
-            const tipo = localStorage.getItem('tipo_usuario');
-            if (document.getElementById('user-name-display') && nome) 
-                document.getElementById('user-name-display').innerText = nome.split(' ')[0];
-            if (document.getElementById('user-role-display') && tipo) 
-                document.getElementById('user-role-display').innerText = tipo.toUpperCase();
-
-            document.getElementById('btn-logout')?.addEventListener('click', () => { 
-                localStorage.clear(); window.location.href = 'index.html'; 
-            });
-
-            carregarResumo();
-            carregarTabelaApolices();
-            carregarTabelaClientes(); 
-            carregarTabelaUsuarios();
-        });
-
-        // --- APÓLICES (COM BOTÃO PDF CORRIGIDO) ---
-        async function carregarTabelaApolices() {
-            const tbody = document.getElementById('lista-apolices');
-            if(!tbody) return;
-            try {
-                const res = await fetch(`${LOCAL_API_URL}/apolices`, { headers: { 'Authorization': `Bearer ${localToken}` } });
-                const lista = await res.json();
-                tbody.innerHTML = '';
-
-                if (lista.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Nenhuma apólice encontrada.</td></tr>';
-                    return;
-                }
-
-                lista.forEach(item => {
-                    const dataFim = item.vigencia_fim ? new Date(item.vigencia_fim).toLocaleDateString('pt-BR') : '-';
-                    
-                    // Formatação de Moeda
-                    let valor = 'R$ 0,00';
-                    if (item.premio_total) {
-                        const num = parseFloat(item.premio_total);
-                        if(!isNaN(num)) valor = num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                    }
-
-                    const clienteInfo = item.cliente ? `<strong>${item.cliente}</strong><br><small style="color:#666">${item.placa || ''}</small>` : `<span style="color:#999">Sem vínculo</span>`;
-                    
-                    // --- LÓGICA DO BOTÃO PDF ---
-                    // Verifica se existe arquivo e se não é "null" (string) ou null (objeto)
-                    const temArquivo = item.arquivo_pdf && item.arquivo_pdf !== 'null' && item.arquivo_pdf !== '';
-                    const urlPdf = temArquivo ? `${LOCAL_API_URL}/uploads/${item.arquivo_pdf}` : '#';
-                    
-                    const botaoPdfHtml = temArquivo
-                        ? `<a href="${urlPdf}" target="_blank" class="action-btn btn-pdf-active" title="Ver PDF"><i class="fas fa-file-pdf"></i></a>`
-                        : `<button class="action-btn btn-pdf-disabled" disabled title="Sem arquivo"><i class="fas fa-file-pdf"></i></button>`;
-
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td style="font-weight:bold; color:#003366;">${item.numero_apolice || 'S/N'}</td>
-                        <td>${clienteInfo}</td>
-                        <td>Até ${dataFim}</td>
-                        <td style="color:#00a86b; font-weight:bold;">${valor}</td>
-                        <td style="text-align:center">
-                            ${botaoPdfHtml}
-                            <a href="apolice.html?id=${item.id}" class="action-btn btn-edit" title="Editar"><i class="fas fa-edit"></i></a>
-                            <button onclick="excluirItem('apolices', ${item.id})" class="action-btn btn-delete" title="Excluir"><i class="fas fa-trash"></i></button>
-                        </td>`;
-                    tbody.appendChild(tr);
-                });
-            } catch (error) { 
-                console.error(error);
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Erro ao carregar dados.</td></tr>'; 
-            }
-        }
-
-        // --- CARDS ---
-        async function carregarResumo() {
-            try {
-                const res = await fetch(`${LOCAL_API_URL}/dashboard-resumo`, { headers: { 'Authorization': `Bearer ${localToken}` } });
-                const d = await res.json();
-                if(document.getElementById('total-clientes')) document.getElementById('total-clientes').innerText = d.clientes || '0';
-                if(document.getElementById('total-veiculos')) document.getElementById('total-veiculos').innerText = d.veiculos || '0';
-                if(document.getElementById('total-apolices')) document.getElementById('total-apolices').innerText = d.apolices || '0';
-                if(document.getElementById('total-usuarios')) document.getElementById('total-usuarios').innerText = d.usuarios || '0';
-            } catch (e) { console.error("Erro resumo:", e); }
-        }
-
-        // --- CLIENTES ---
-        async function carregarTabelaClientes() {
-            const tbody = document.getElementById('lista-clientes');
-            if(!tbody) return;
-            try {
-                const res = await fetch(`${LOCAL_API_URL}/propostas`, { headers: { 'Authorization': `Bearer ${localToken}` } });
-                const lista = await res.json();
-                tbody.innerHTML = '';
-                if (lista.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Nenhum cliente encontrado.</td></tr>'; return; }
-                lista.forEach(item => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td style="font-weight:bold;">${item.nome ? item.nome.toUpperCase() : 'SEM NOME'}</td>
-                        <td>${item.documento || '-'}</td>
-                        <td><span style="background:#eee; padding:2px 6px; border-radius:4px; font-weight:bold;">${item.placa || 'S/PLACA'}</span></td>
-                        <td>${item.modelo_veiculo || '-'}</td>
-                        <td style="text-align:center">
-                            <a href="cadastro.html?id=${item.id}" class="action-btn btn-edit"><i class="fas fa-edit"></i></a>
-                            <button onclick="excluirItem('propostas', ${item.id})" class="action-btn btn-delete"><i class="fas fa-trash"></i></button>
-                        </td>`;
-                    tbody.appendChild(tr);
-                });
-            } catch (error) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Erro ao carregar clientes.</td></tr>'; }
-        }
-
-        // --- USUÁRIOS ---
-        async function carregarTabelaUsuarios() {
-            const tbody = document.getElementById('lista-usuarios');
-            if(!tbody) return;
-            try {
-                const res = await fetch(`${LOCAL_API_URL}/usuarios`, { headers: { 'Authorization': `Bearer ${localToken}` } });
-                const lista = await res.json();
-                tbody.innerHTML = '';
-                lista.forEach(item => {
-                    const badgeClass = item.tipo === 'admin' ? 'badge-admin' : 'badge-user';
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td style="font-weight:bold;">${item.nome}</td>
-                        <td>${item.email}</td>
-                        <td><span class="badge ${badgeClass}">${item.tipo.toUpperCase()}</span></td>
-                        <td style="text-align:center">
-                            <a href="registro.html?id=${item.id}" class="action-btn btn-edit"><i class="fas fa-edit"></i></a>
-                            <button onclick="excluirItem('usuarios', ${item.id})" class="action-btn btn-delete"><i class="fas fa-trash"></i></button>
-                        </td>`;
-                    tbody.appendChild(tr);
-                });
-            } catch (error) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Erro ao carregar usuários.</td></tr>'; }
-        }
-
-        // --- EXCLUSÃO ---
-        window.excluirItem = async function(rota, id) {
-            const confirm = await Swal.fire({
-                title: 'Tem certeza?', text: "Essa ação é irreversível.", icon: 'warning',
-                showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sim, excluir!'
-            });
-            if (confirm.isConfirmed) {
-                try {
-                    const res = await fetch(`${LOCAL_API_URL}/${rota}/${id}`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': `Bearer ${localToken}` }
-                    });
-                    if (res.ok) {
-                        Swal.fire('Excluído!', 'Registro removido.', 'success');
-                        carregarResumo(); carregarTabelaApolices(); carregarTabelaClientes(); carregarTabelaUsuarios();
-                    } else { Swal.fire('Erro', 'Não foi possível excluir.', 'error'); }
-                } catch (e) { Swal.fire('Erro', 'Falha na conexão.', 'error'); }
-            }
-        };
-    })();
-</script>
+    <script src="js/dashboard.js"></script>
 </body>
 </html>
