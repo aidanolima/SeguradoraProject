@@ -26,6 +26,26 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
+        /* --- FAIXA DE HOMOLOGAÇÃO (NOVO) --- */
+        .homolog-ribbon {
+            background-color: #ff9800; /* Laranja igual ao login */
+            color: #fff;
+            padding: 8px 0;
+            text-align: center;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 13px;
+            letter-spacing: 1px;
+            width: 100%;
+            position: relative;
+            z-index: 9999;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
         /* --- LAYOUT DOS CARDS --- */
         .stats-container { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-right: 5px; }
         .stat-card { flex: 1; min-width: 150px; margin-bottom: 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; }
@@ -68,6 +88,10 @@
     </style>
 </head>
 <body class="dashboard-body">
+
+    <div class="homolog-ribbon">
+        <i class="fas fa-flask"></i> AMBIENTE DE HOMOLOGAÇÃO - APENAS TESTES
+    </div>
     
     <header class="app-header">
         <div class="header-brand"><a href="dashboard.html"><img src="assets/logo.png" alt="Logo" class="header-logo"></a></div>
@@ -159,31 +183,13 @@
             <div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h3 style="color: #444; border-left: 5px solid #7b1fa2; padding-left: 10px; margin: 0; text-transform: uppercase; font-weight: 800;">Gestão de Usuários </h3>
-                    <a href="registro.html?origin=dashboard" class="btn-novo" style="background-color: #7b1fa2; width: auto; padding: 10px 20px;">+ Novo Usuário</a>
+                    <button class="btn-novo" style="background-color: #ccc; cursor: not-allowed;">+ Novo Usuário</button>
                 </div>
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" id="busca-usuarios" class="form-control" placeholder="Pesquisar por Nome ou E-mail...">
-                        </div>
-                    </div>
-                </div>
-                <div style="overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-radius: 8px;">
-                    <table class="tabela-crud" id="tabela-usuarios">
-                        <thead>
-                            <tr>
-                                <th onclick="ordenarTabela(0, 'tabela-usuarios')" style="cursor: pointer">Nome <i class="fas fa-sort"></i></th>
-                                <th onclick="ordenarTabela(1, 'tabela-usuarios')" style="cursor: pointer">E-mail <i class="fas fa-sort"></i></th>
-                                <th onclick="ordenarTabela(2, 'tabela-usuarios')" style="cursor: pointer">Perfil <i class="fas fa-sort"></i></th>
-                                <th style="text-align: center;">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="lista-usuarios">
-                            <tr><td colspan="4" style="text-align:center; padding: 20px;">Carregando dados...</td></tr>
-                        </tbody>
-                    </table>
-                    <div id="paginacao-usuarios" class="pagination-container"></div>
+                
+                <div class="dev-placeholder">
+                    <i class="fas fa-user-lock"></i>
+                    <h4>Módulo em Desenvolvimento!</h4>
+                    <p>A gestão de usuários e permissões estará disponível em breve.</p>
                 </div>
             </div>
         </div>
