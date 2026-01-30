@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Senha</title>
+    <link rel="icon" href="assets/logo.png" type="image/png">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/config.js"></script> </head>
+<body class="login-body" style="background-color: #f4f6f8; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; font-family:sans-serif;">
+
+    <div class="login-container" style="background:white; padding:40px; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.1); width:100%; max-width:400px; text-align:center;">
+        
+        <h2 style="color:#2e7d32; margin-bottom:10px;">Redefinir Senha</h2>
+        <p style="color:#666; font-size:14px; margin-bottom:20px;">Digite sua nova senha abaixo.</p>
+
+        <form id="form-reset">
+            <div style="margin-bottom:15px; text-align:left;">
+                <label>Nova Senha</label>
+                <input type="password" id="nova_senha" required minlength="4" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px;">
+            </div>
+
+            <div style="margin-bottom:20px; text-align:left;">
+                <label>Confirmar Senha</label>
+                <input type="password" id="confirma_senha" required minlength="4" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:4px;">
+            </div>
+
+            <button type="submit" style="width:100%; padding:12px; background:#2e7d32; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">
+                SALVAR NOVA SENHA
+            </button>
+        </form>
+
+    </div>
+
+    <script>
+        const API_BASE_URL = (typeof API_URL !== 'undefined') ? API_URL : 'https://seguradoraproject.onrender.com';
+
+        document.getElementById('form-reset').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const senha = document.getElementById('nova_senha').value;
+            const confirma = document.getElementById('confirma_senha').value;
+            
+            // Pega ID e Token da URL (que vieram do email)
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            const token = urlParams.get('token');
+
+            if (senha !== confirma) {
+                return Swal.fire('Erro', 'As senhas não coincidem.', 'warning');
+            }
+
+            if (!id || !token) {
+                return Swal.fire('Erro', 'Link inválido. Solicite novamente.', 'error');
+            }
+
+            try {
+                Swal.fire({ title: 'Salvando...', didOpen: () => Swal.showLoading() });
+
+                const res = await fetch(`${API_BASE_URL}/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, token, novaSenha: senha })
+                });
+
+                const json = await res.json();
+
+                if (res.ok) {
+                    await Swal.fire('Sucesso!', 'Sua senha foi alterada.', 'success');
+                    window.location.href = 'index.html';
+                } else {
+                    Swal.fire('Erro', json.message || 'Link expirado.', 'error');
+                }
+            } catch (error) {
+                Swal.fire('Erro', 'Falha ao conectar no servidor.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -3,43 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="js/config.js"></script>
+    <script src="js/masks.js"></script>
     
-    <meta http-equiv="Content-Security-Policy" 
-    content="default-src * 'self' blob: data: gap:; 
-    style-src * 'self' 'unsafe-inline' blob: data: gap:; 
-    script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; 
-    object-src * 'self' blob: data: gap:; 
-    img-src * 'self' 'unsafe-inline' blob: data: gap:; 
-    connect-src 'self' * 'unsafe-inline' blob: data: gap:; 
-    font-src 'self' data: https://cdnjs.cloudflare.com; 
-    frame-src * 'self' blob: data: gap:;">
-
     <title>Relatórios - Gestor Clientes</title>
     
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* --- ESTILOS DE TELA (PADRÃO) --- */
+        .filter-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .filter-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+        
+        .btn-action { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        .btn-search { background-color: #1976d2; }
+        .btn-print { background-color: #555; }
+        .btn-excel { background-color: #2e7d32; } /* Verde Excel */
+        .btn-clear { background-color: #d32f2f; }
+        .btn-action:hover { opacity: 0.9; }
+
+        .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; } /* Fonte levemente menor para caber colunas */
+        .report-table th, .report-table td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+        .report-table th { background-color: #f8f9fa; color: #333; font-weight: bold; border-bottom: 2px solid #ddd; white-space: nowrap; }
+        
+        .report-footer { margin-top: 20px; padding: 15px; background: #f1f8e9; border-radius: 5px; display: flex; justify-content: space-between; font-size: 1.1em; border: 1px solid #c5e1a5; flex-wrap: wrap; gap: 15px; }
+
+        /* Cabeçalho de Impressão (Escondido na tela) */
+        .print-header { display: none; }
+
+        /* --- ESTILOS DE IMPRESSÃO --- */
+        @media print {
+            @page { size: A4 landscape; margin: 1cm; } /* Paisagem para caber colunas financeiras */
+            body { 
+                background: white; 
+                font-family: 'Arial', sans-serif; 
+                font-size: 11px; 
+                color: #000;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .app-header, .filter-card, .system-credits, .filter-buttons, #btn-logout { display: none !important; }
+            .main-container { margin: 0; padding: 0; width: 100%; }
+            .results-card { box-shadow: none; border: none; padding: 0; }
+            .print-header { 
+                display: flex !important; 
+                justify-content: space-between; 
+                align-items: center; 
+                margin-bottom: 20px; 
+                border-bottom: 2px solid #333; 
+                padding-bottom: 15px; 
+            }
+            .print-logo { height: 50px; }
+            .print-info { text-align: right; }
+            .print-info h1 { margin: 0; font-size: 16px; color: #333; text-transform: uppercase; }
+            .print-info p { margin: 2px 0; color: #666; font-size: 10px; }
+            .report-table { width: 100%; border: 1px solid #000; }
+            .report-table th { background-color: #ddd !important; color: #000 !important; border: 1px solid #000; font-size: 10px; }
+            .report-table td { border: 1px solid #999; padding: 4px; font-size: 10px; }
+            .badge { border: 1px solid #000; color: white !important; padding: 1px 4px; font-size: 9px; }
+            .report-footer { border: 1px solid #000; background-color: #fff !important; margin-top: 15px; }
+        }
+    </style>
 </head>
 <body>
 
     <header class="app-header">
         <div class="header-brand">
-            <img src="assets/logo.png" alt="Logo" class="header-logo">
-            <h1 class="header-title">Relatórios Gerais</h1>
+            <a href="dashboard.html"><img src="assets/logo.png" alt="Logo" class="header-logo"></a>
+            <h1 class="header-title" style="color:white; margin-left:15px;">Relatórios Gerenciais</h1>
         </div>
-
         <nav class="header-nav">
-            <a href="dashboard.html" class="header-link">
-                <i class="fas fa-arrow-left"></i> Voltar ao Painel
-            </a>
-            <a href="#" class="header-link active">
-                <i class="fas fa-file-alt"></i> Relatórios
-            </a>
+            <a href="dashboard.html" class="header-link"><i class="fas fa-arrow-left"></i> Voltar ao Painel</a>
         </nav>
-
         <div class="header-user-area">
             <div class="user-info">
-                <span class="user-name">Olá, <span id="user-name-display">Administrador</span></span>
-                <span class="user-role" id="user-role-display">Global (ADMIN)</span>
+                <span class="user-name">Olá, <span id="user-name-display">...</span></span>
             </div>
             <button id="btn-logout" class="btn-logout-panel">SAIR</button>
         </div>
@@ -47,10 +89,27 @@
 
     <div class="main-container">
         
+        <div class="print-header">
+            <img src="assets/logo.png" alt="Logo Empresa" class="print-logo">
+            <div class="print-info">
+                <h1>Relatório Gerencial</h1>
+                <p>Gerado em: <strong id="data-impressao"></strong></p>
+                <p>Sistema de Gestão de Apólices</p>
+            </div>
+        </div>
+
         <div class="card filter-card">
             <h3><i class="fas fa-filter"></i> Filtros de Pesquisa</h3>
             <form id="form-filtros" class="filter-grid">
                 
+                <div class="form-group">
+                    <label>Tipo de Relatório</label>
+                    <select id="tipo_relatorio">
+                        <option value="apolices">Apólices Emitidas</option>
+                        <option value="clientes">Clientes Cadastrados</option>
+                    </select>
+                </div>
+
                 <div class="form-group">
                     <label>Data Início</label>
                     <input type="date" id="data_inicio">
@@ -65,24 +124,27 @@
                     <label>Status</label>
                     <select id="status_filtro">
                         <option value="">Todos</option>
-                        <option value="ativo">Ativo</option>
-                        <option value="pendente">Pendente</option>
-                        <option value="cancelado">Cancelado</option>
+                        <option value="vigente">Vigente</option>
+                        <option value="avencer">A Vencer (30 dias)</option>
+                        <option value="vencida">Vencida</option>
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label>Buscar (Nome/Email)</label>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Buscar (Nome, Placa ou Nº)</label>
                     <input type="text" id="busca_geral" placeholder="Digite para filtrar...">
                 </div>
             </form>
 
             <div class="filter-buttons">
-                <button type="button" class="btn-action btn-search" onclick="aplicarFiltros()">
-                    <i class="fas fa-search"></i> Visualizar em Tela
+                <button type="button" class="btn-action btn-search" onclick="gerarRelatorio()">
+                    <i class="fas fa-search"></i> Gerar Relatório
                 </button>
                 <button type="button" class="btn-action btn-print" onclick="window.print()">
-                    <i class="fas fa-print"></i> Imprimir Relatório
+                    <i class="fas fa-print"></i> Imprimir
+                </button>
+                <button type="button" class="btn-action btn-excel" onclick="exportarExcel()">
+                    <i class="fas fa-file-excel"></i> Exportar Excel
                 </button>
                 <button type="button" class="btn-action btn-clear" onclick="limparFiltros()">
                     <i class="fas fa-eraser"></i> Limpar
@@ -91,45 +153,39 @@
         </div>
 
         <div class="card results-card">
+            <div id="titulo-relatorio" style="margin-bottom:15px; font-weight:bold; font-size:1.2em; color:#333; border-bottom:2px solid #ddd; padding-bottom:10px;">
+                Selecione os filtros e clique em Gerar.
+            </div>
+
             <div class="table-responsive">
                 <table class="report-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Cliente / Nome</th>
-                            <th>E-mail</th>
-                            <th>Data Cadastro</th>
-                            <th>Status</th>
-                            <th>Valor (R$)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabela-corpo">
-                        </tbody>
+                    <thead id="tabela-head"></thead>
+                    <tbody id="tabela-corpo"></tbody>
                 </table>
             </div>
             
-            <div class="report-footer">
+            <div class="report-footer" id="footer-resumo" style="display:none;">
                 <span>Registros: <strong id="total-registros">0</strong></span>
-                <span>Total: <strong id="valor-total">R$ 0,00</strong></span>
+                <span id="box-total-valor">Prêmio Total: <strong id="valor-total" style="color:#1976d2;">R$ 0,00</strong></span>
+                <span id="box-total-comissao">Total Comissões: <strong id="total-comissao" style="color:#2e7d32;">R$ 0,00</strong></span>
             </div>
         </div>
 
-        <div class="system-credits" style="text-align: center;">
-            By Áidano Lima - ASL TECH
-        </div>
-
+        <div class="system-credits" style="text-align: center; margin-top:20px; color:#999;">By Áidano Lima - ASL TECH</div>
     </div>
 
-    <script src="js/relatorios.js"></script>
     <script>
-        // Pequeno script extra para garantir que o nome/cargo apareçam corretamente neste layout
-        document.addEventListener('DOMContentLoaded', () => {
-            const nome = localStorage.getItem('usuario_logado');
-            const tipo = localStorage.getItem('tipo_usuario');
-            
-            if(nome) document.getElementById('user-name-display').innerText = nome.split(' ')[0];
-            if(tipo) document.getElementById('user-role-display').innerText = tipo.toUpperCase();
-        });
+        function atualizarDataImpressao() {
+            const agora = new Date();
+            const dataFmt = agora.toLocaleDateString('pt-BR');
+            const horaFmt = agora.toLocaleTimeString('pt-BR');
+            const elem = document.getElementById('data-impressao');
+            if(elem) elem.innerText = `${dataFmt} às ${horaFmt}`;
+        }
+        window.addEventListener('load', atualizarDataImpressao);
+        window.onbeforeprint = atualizarDataImpressao;
     </script>
+
+    <script src="js/relatorios.js"></script>
 </body>
 </html>

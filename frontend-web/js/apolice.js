@@ -36,7 +36,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             btnProcessar.disabled = true;
 
             try {
-                const res = await fetch('https://https://seguradoraproject.onrender.com/importar-pdf', { method: 'POST', body: formData });
+                // CORREÇÃO: Removido o https:// duplicado
+                const res = await fetch('https://seguradoraproject.onrender.com/importar-pdf', { method: 'POST', body: formData });
                 
                 if (!res.ok) throw new Error("Erro ao ler PDF.");
 
@@ -63,6 +64,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             e.preventDefault();
             
             // Cria um FormData (pacote que suporta arquivos)
+            // O campo 'valor_comissao' será incluído automaticamente se estiver no HTML
             const formData = new FormData(formApolice);
             
             // Validação simples
@@ -71,17 +73,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             // PEGA O ARQUIVO PDF DO CAMPO DE IMPORTAÇÃO E ADICIONA AO ENVIO
-            // O usuário já selecionou o arquivo lá em cima para ler, vamos reusar ele para salvar.
             const inputPdf = document.getElementById('pdf_upload');
             if (inputPdf && inputPdf.files[0]) {
                 formData.append('arquivo_pdf', inputPdf.files[0]);
             }
 
             try {
-                // Removemos o header 'Content-Type': 'application/json' 
-                // porque o fetch define automaticamente como multipart/form-data quando enviamos formData
-                const res = await fetch('https://https://seguradoraproject.onrender.com/cadastrar-apolice', {
+                // CORREÇÃO: Removido o https:// duplicado
+                const res = await fetch('https://seguradoraproject.onrender.com/cadastrar-apolice', {
                     method: 'POST',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }, // Adicionado Token por segurança
                     body: formData 
                 });
 
@@ -107,7 +108,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         if(!select) return;
 
         try {
-            const res = await fetch('https://https://seguradoraproject.onrender.com/propostas');
+            // CORREÇÃO: Removido o https:// duplicado
+            const res = await fetch('https://seguradoraproject.onrender.com/propostas', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+
             if(res.ok) {
                 const clientes = await res.json();
                 
@@ -151,7 +156,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             for(let i=0; i<select.options.length; i++) {
                 const placaOpt = (select.options[i].getAttribute('data-placa') || "");
                 
-                // Compara a placa do PDF com a placa escondida na option
                 if (placaOpt && placaPDF.includes(placaOpt)) { 
                     select.selectedIndex = i; 
                     encontrou = true;
@@ -163,7 +167,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // 2. Preenche Datas
         if (dados.datas && dados.datas.length) {
-            // Converte datas dd/mm/yyyy para objetos Date e ordena
             const dts = dados.datas.map(d => {
                 const parts = d.split('/');
                 if(parts.length === 3) return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
@@ -171,9 +174,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             }).filter(d => d != null).sort((a,b)=>a-b);
             
             if (dts.length > 0) {
-                const fim = dts[dts.length-1]; // A maior data costuma ser o fim da vigência
+                const fim = dts[dts.length-1]; 
                 const ini = new Date(fim); 
-                ini.setFullYear(fim.getFullYear()-1); // Chuta 1 ano antes
+                ini.setFullYear(fim.getFullYear()-1); 
                 
                 const elFim = document.getElementById('vigencia_fim');
                 const elIni = document.getElementById('vigencia_inicio');
@@ -183,17 +186,26 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         }
 
-        // 3. Preenche Valores (Pega o maior valor monetário encontrado)
+        // 3. Preenche Valores e CALCULA COMISSÃO
         if (dados.valores && dados.valores.length) {
             const nums = dados.valores.map(v => {
-                // Limpa R$, pontos e vírgulas para float
                 return parseFloat(v.replace(/[^0-9,]/g,'').replace(',','.'));
-            }).filter(n => !isNaN(n) && n > 100); // Filtra valores pequenos
+            }).filter(n => !isNaN(n) && n > 100);
 
             if (nums.length) {
                 const max = Math.max(...nums);
                 const elTotal = document.getElementById('premio_total');
-                if(elTotal) elTotal.value = max.toFixed(2);
+                
+                // Formata para o padrão BR (com vírgula) para máscaras funcionarem melhor
+                if(elTotal) elTotal.value = max.toFixed(2).replace('.', ',');
+
+                // --- NOVA REGRA: Sugerir Comissão (15%) ---
+                const elComissao = document.getElementById('valor_comissao');
+                if(elComissao) {
+                     // Calcula 15% e formata com vírgula
+                     const comissao = (max * 0.15).toFixed(2).replace('.', ',');
+                     elComissao.value = comissao;
+                }
             }
         }
     }

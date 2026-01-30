@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Seguradora Enterprise (Homologação)</title>
+    <title>Login - Seguradora Enterprise</title>
     
     <link rel="icon" href="assets/logo.png" type="image/png">
     
@@ -30,7 +30,6 @@
             height: 100vh;
             margin: 0;
             font-family: 'Segoe UI', sans-serif;
-            overflow: hidden; /* Evita scroll se o badge passar um pouco */
         }
 
         .login-card {
@@ -42,8 +41,6 @@
             max-width: 380px;
             text-align: center;
             border-top: 5px solid #00a86b;
-            position: relative; /* Necessário para posicionar o badge interno se quisesse */
-            z-index: 1;
         }
 
         .login-logo { max-width: 160px; margin-bottom: 25px; }
@@ -93,50 +90,12 @@
         }
 
         .footer-text { margin-top: 25px; font-size: 12px; color: #999; }
-
-        /* --- FAIXA DE HOMOLOGAÇÃO --- */
-        .homolog-ribbon {
-            background-color: #ff9800; /* Laranja de Alerta */
-            color: #fff;
-            padding: 8px;
-            text-align: center;
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 14px;
-            letter-spacing: 1px;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 100;
-        }
-
-        /* Badge dentro do card também, para reforçar */
-        .homolog-badge {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            display: inline-block;
-        }
     </style>
 </head>
 <body class="login-body">
 
-    <div class="homolog-ribbon">
-        <i class="fas fa-flask"></i> Ambiente de Homologação - Apenas Testes
-    </div>
-
     <div class="login-card">
         <img src="assets/logo.png" alt="Logo" class="login-logo">
-        
-        <div class="homolog-badge">AMBIENTE DE TESTES</div>
-
         <h2 class="login-title">Gestão de Clientes e Apólices</h2>
         
         <form id="form-login">

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Senha</title>
+    <link rel="icon" href="assets/logo.png" type="image/png">
+    <style>
+        body { background: #f4f6f8; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; }
+        .card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; border-top: 5px solid #2e7d32; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #2e7d32; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        button:hover { background: #1b5e20; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/config.js"></script> 
+</head>
+<body>
+    <div class="card">
+        <h2 style="color:#2e7d32; margin-top:0;">Redefinir Senha</h2>
+        <p style="color:#666; font-size:14px;">Digite sua nova senha abaixo.</p>
+
+        <form id="form-reset">
+            <input type="password" id="nova_senha" placeholder="Nova Senha" required minlength="4">
+            <input type="password" id="confirma_senha" placeholder="Confirmar Senha" required minlength="4">
+            <button type="submit">SALVAR NOVA SENHA</button>
+        </form>
+    </div>
+
+    <script>
+        // Tenta pegar do config.js, senão usa o host atual (funciona pra local e render)
+        const API_BASE_URL = (typeof API_URL !== 'undefined') ? API_URL : window.location.origin;
+
+        document.getElementById('form-reset').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const senha = document.getElementById('nova_senha').value;
+            const confirma = document.getElementById('confirma_senha').value;
+            
+            // Pega ID e Token da URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            const token = urlParams.get('token');
+
+            if (senha !== confirma) return Swal.fire('Erro', 'As senhas não coincidem.', 'warning');
+            if (!id || !token) return Swal.fire('Erro', 'Link inválido. Solicite novamente.', 'error');
+
+            try {
+                Swal.fire({ title: 'Salvando...', didOpen: () => Swal.showLoading() });
+                
+                const res = await fetch(`${API_BASE_URL}/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, token, novaSenha: senha })
+                });
+
+                const json = await res.json();
+
+                if (res.ok) {
+                    await Swal.fire('Sucesso!', 'Senha alterada! Faça login.', 'success');
+                    // Redireciona para o login (ajuste se seu login estiver em outra rota/porta)
+                    window.location.href = '/'; 
+                } else {
+                    Swal.fire('Erro', json.message || 'Link expirado.', 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Erro', 'Falha ao conectar no servidor.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>

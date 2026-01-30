@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/masks.js"></script> 
 
     <style>
         .loading { color: #666; font-style: italic; }
@@ -20,15 +21,7 @@
         .btn-processar:hover { background-color: #1b5e20; }
         .btn-salvar { width: 100%; margin-top: 20px; padding: 15px; background-color: #1976d2; color: white; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
         .btn-salvar:hover { background-color: #1565c0; }
-        
-        .upload-container {
-            background-color: #e3f2fd;
-            border: 2px dashed #1976d2;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 15px;
-            text-align: center;
-        }
+        .upload-container { background-color: #e3f2fd; border: 2px dashed #1976d2; padding: 20px; border-radius: 8px; margin-top: 15px; text-align: center; }
         #status-pdf { font-weight: bold; margin-top: 10px; min-height: 20px; }
     </style>
 </head>
@@ -56,19 +49,14 @@
 
         <div class="upload-container">
             <p style="font-size:15px; color:#333; margin-bottom:10px;"><b>Passo 1:</b> Selecione o PDF da apólice</p>
-            
             <input type="file" id="pdf_upload" name="arquivo_pdf" accept="application/pdf" style="margin-bottom: 10px;">
             <br>
-            <button type="button" id="btn-ler-pdf" class="btn-processar">
-                <i class="fas fa-magic"></i> Ler Dados do PDF
-            </button>
+            <button type="button" id="btn-ler-pdf" class="btn-processar"><i class="fas fa-magic"></i> Ler Dados do PDF</button>
             <p id="status-pdf"></p>
         </div>
 
         <div class="card" id="painel-apolice" style="margin-top: 20px;">
-            <h3 style="margin:0 0 20px 0; color:#2e7d32; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                Passo 2: Conferir Dados
-            </h3>
+            <h3 style="margin:0 0 20px 0; color:#2e7d32; border-bottom: 1px solid #eee; padding-bottom: 10px;">Passo 2: Conferir Dados</h3>
             
             <label style="font-weight:bold;">Veículo / Cliente *</label>
             <select id="veiculo_id" style="width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 4px; background: #fff;">
@@ -76,46 +64,45 @@
             </select>
 
             <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-                <div style="flex: 1;">
-                    <label>Nº Apólice</label>
-                    <input type="text" id="numero_apolice" class="campo-dado" style="width: 100%; padding: 10px;">
-                </div>
-                <div style="flex: 1;">
-                    <label>Nº Proposta</label>
-                    <input type="text" id="numero_proposta" class="campo-dado" style="width: 100%; padding: 10px;">
-                </div>
+                <div style="flex: 1;"><label>Nº Apólice</label><input type="text" id="numero_apolice" class="campo-dado" style="width: 100%; padding: 10px;"></div>
+                <div style="flex: 1;"><label>Nº Proposta</label><input type="text" id="numero_proposta" class="campo-dado" style="width: 100%; padding: 10px;"></div>
             </div>
 
             <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-                <div style="flex: 1;">
-                    <label>Início Vigência</label>
-                    <input type="date" id="vigencia_inicio" class="campo-dado" style="width: 100%; padding: 10px;">
-                </div>
-                <div style="flex: 1;">
-                    <label>Fim Vigência</label>
-                    <input type="date" id="vigencia_fim" class="campo-dado" style="width: 100%; padding: 10px;">
-                </div>
+                <div style="flex: 1;"><label>Início Vigência</label><input type="date" id="vigencia_inicio" class="campo-dado" style="width: 100%; padding: 10px;"></div>
+                <div style="flex: 1;"><label>Fim Vigência</label><input type="date" id="vigencia_fim" class="campo-dado" style="width: 100%; padding: 10px;"></div>
             </div>
 
-            <h4 style="margin: 0 0 10px 0; color: #555;">Valores Financeiros (Use ponto 1000.00)</h4>
-            <div style="display: flex; gap: 15px;">
-                <div style="flex: 1;">
+            <h4 style="margin: 0 0 10px 0; color: #555;">Valores Financeiros</h4>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 120px;">
                     <label>Prêmio Líquido</label>
-                    <input type="text" id="premio_liquido" style="width: 100%; padding: 10px;">
+                    <input type="text" id="premio_liquido" class="form-control mask-dinheiro" placeholder="R$ 0,00">
                 </div>
-                <div style="flex: 1;">
-                    <label style="color: #2e7d32; font-weight: bold;">Prêmio Total</label>
-                    <input type="text" id="premio_total" style="width: 100%; padding: 10px; background-color: #e8f5e9; font-weight: bold; border: 1px solid #2e7d32;">
+                <div style="flex: 1; min-width: 120px;">
+                    <label style="color: #2e7d32; font-weight: bold;">Prêmio Total</label>                             
+                    <input type="text" id="premio_total" class="form-control mask-dinheiro" placeholder="R$ 0,00">
                 </div>
-                <div style="flex: 1;">
+                <div style="flex: 1; min-width: 120px;">
                     <label>Franquia</label>
-                    <input type="text" id="franquia_casco" style="width: 100%; padding: 10px;">
+                   <input type="text" id="franquia_casco" class="form-control mask-dinheiro" placeholder="R$ 0,00">
+                </div>
+                
+                <div style="flex: 0 0 100px;"> 
+                    <label style="color: #1976d2; font-weight: bold; font-size:12px;">% Usada</label>
+                    <input type="number" id="porcentagem_comissao" class="form-control" placeholder="%" step="0.1" value="15">
+                </div>
+                <div style="flex: 1; min-width: 100px;">
+                    <label style="color: #1976d2; font-weight: bold;">Valor Repasse (R$)</label>
+                    <input type="text" id="valor_repasse" class="form-control" placeholder="0,00">
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                    <label style="color: #1976d2; font-weight: bold;">Comissão Recebida (R$)</label>
+                    <input type="text" id="valor_comissao" class="form-control mask-dinheiro" placeholder="R$ 0,00" readonly style="background-color: #f9f9f9; font-weight:bold;">
                 </div>
             </div>
 
-            <button type="button" id="btn-acao-salvar" class="btn-salvar">
-                <i class="fas fa-save"></i> SALVAR APÓLICE
-            </button>
+            <button type="button" id="btn-acao-salvar" class="btn-salvar"><i class="fas fa-save"></i> SALVAR APÓLICE</button>
         </div>
         
         <div style="text-align:center; margin-top:20px; color:#999; font-size:12px;">ASL TECH SYSTEM</div>
@@ -134,12 +121,67 @@
         if (document.getElementById('user-name-display') && nome) 
             document.getElementById('user-name-display').innerText = nome.split(' ')[0];
 
+        // --- CONVERSÃO INTELIGENTE (RESOLVE O PROBLEMA DO PONTO vs VÍRGULA) ---
+        function converterParaFloat(valor) {
+            if (!valor) return 0;
+            let str = valor.toString();
+            
+            // Se tiver vírgula e ponto (Ex: 1.200,50), remove ponto e troca vírgula
+            if (str.includes(',') && str.includes('.')) {
+                return parseFloat(str.replace(/\./g, '').replace(',', '.'));
+            }
+            // Se tiver só vírgula (Ex: 12,34 ou 1200,50)
+            if (str.includes(',')) {
+                return parseFloat(str.replace(/\./g, '').replace(',', '.'));
+            }
+            // Se tiver só ponto (Ex: 12.34), aceita como decimal direto
+            return parseFloat(str);
+        }
+
+        // --- CÁLCULO BLINDADO ---
+        function calcularComissao() {
+            let liquidoStr = document.getElementById('premio_liquido').value || '0';
+            const totalStr = document.getElementById('premio_total').value || '0'; // Fallback
+            const porcStr = document.getElementById('porcentagem_comissao').value || '0';
+            const repasseStr = document.getElementById('valor_repasse').value || '0';
+            
+            let liquido = converterParaFloat(liquidoStr);
+            let total = converterParaFloat(totalStr);
+            const porcentagem = parseFloat(porcStr);
+            const repasse = converterParaFloat(repasseStr);
+
+            // CORREÇÃO: Se Líquido for 0 mas Total tiver valor, usa o Total como base
+            if (liquido === 0 && total > 0) {
+                liquido = total;
+            }
+
+            // Valida NaN
+            const valLiquido = isNaN(liquido) ? 0 : liquido;
+            const valPorc = isNaN(porcentagem) ? 0 : porcentagem;
+            const valRepasse = isNaN(repasse) ? 0 : repasse;
+
+            // 1. Calcula a parte da porcentagem
+            const comissaoPorcentagem = valLiquido * (valPorc / 100);
+            
+            // 2. Soma o repasse
+            const comissaoFinal = comissaoPorcentagem + valRepasse;
+
+            // 3. Devolve formatado PT-BR
+            document.getElementById('valor_comissao').value = comissaoFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // LISTENERS
+        ['premio_liquido', 'premio_total', 'porcentagem_comissao', 'valor_repasse'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) {
+                el.addEventListener('input', calcularComissao);
+                el.addEventListener('blur', calcularComissao);
+            }
+        });
+
         function setValor(id, valor) {
             const el = document.getElementById(id);
-            // Aceita qualquer coisa que não seja null ou undefined (incluindo 0 ou string vazia)
-            if(el && valor !== undefined && valor !== null) {
-                el.value = valor;
-            }
+            if(el && valor !== undefined && valor !== null) el.value = valor;
         }
 
         // LER PDF
@@ -149,9 +191,7 @@
             const statusMsg = document.getElementById('status-pdf');
 
             if (fileInput.files.length === 0) return Swal.fire('Atenção', 'Selecione o arquivo PDF primeiro.', 'warning');
-
             statusMsg.innerText = "Processando...";
-            
             const fd = new FormData();
             fd.append('arquivoPdf', fileInput.files[0]);
 
@@ -164,17 +204,22 @@
                 const json = await res.json();
                 const d = json.dados;
                 
-                console.log("DADOS DO PDF:", d);
-
                 setValor('numero_apolice', d.numero_apolice);
                 setValor('numero_proposta', d.numero_proposta);
                 setValor('vigencia_inicio', d.vigencia_inicio);
                 setValor('vigencia_fim', d.vigencia_fim);
-                
-                // MANTÉM O VALOR COMO VEIO (STRING) PARA NÃO ZERAR
                 setValor('premio_total', d.premio_total);
                 setValor('premio_liquido', d.premio_liquido);
                 setValor('franquia_casco', d.franquia_casco);
+                
+                // Se líquido vier vazio do PDF, preenche com total
+                if (!d.premio_liquido && d.premio_total) {
+                    setValor('premio_liquido', d.premio_total);
+                }
+
+                setValor('valor_repasse', '0,00'); 
+                setValor('porcentagem_comissao', 15);
+                calcularComissao();
 
                 statusMsg.innerText = "Lido com sucesso!";
                 statusMsg.style.color = "green";
@@ -184,8 +229,7 @@
                     const busca = d.placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
                     for(let i=0; i<sel.options.length; i++) {
                         if(sel.options[i].text.replace(/[^A-Z0-9]/g, '').includes(busca)) {
-                            sel.selectedIndex = i;
-                            break;
+                            sel.selectedIndex = i; break;
                         }
                     }
                 }
@@ -199,15 +243,11 @@
         // SALVAR APÓLICE
         document.getElementById('btn-acao-salvar').addEventListener('click', async (e) => {
             e.preventDefault();
-            
             const veiculo = document.getElementById('veiculo_id').value;
             if (!veiculo) return Swal.fire('Erro', 'Selecione o Cliente/Veículo!', 'error');
-
-            const fileInput = document.getElementById('pdf_upload');
             
-            if (!idEdicao && fileInput.files.length === 0) {
-                return Swal.fire('Atenção', 'O arquivo PDF não foi detectado. Selecione novamente.', 'warning');
-            }
+            const fileInput = document.getElementById('pdf_upload');
+            if (!idEdicao && fileInput.files.length === 0) return Swal.fire('Atenção', 'Selecione o PDF.', 'warning');
 
             const formData = new FormData();
             formData.append('veiculo_id', veiculo);
@@ -216,39 +256,28 @@
             formData.append('vigencia_inicio', document.getElementById('vigencia_inicio').value || '');
             formData.append('vigencia_fim', document.getElementById('vigencia_fim').value || '');
             
-            // PEGA O VALOR DO INPUT DIRETAMENTE
+            // Envia valores padrão 0.00 se vazio
             formData.append('premio_liquido', document.getElementById('premio_liquido').value || '0.00');
             formData.append('premio_total', document.getElementById('premio_total').value || '0.00');
             formData.append('franquia_casco', document.getElementById('franquia_casco').value || '0.00');
+            formData.append('valor_comissao', document.getElementById('valor_comissao').value || '0.00');
+            formData.append('valor_repasse', document.getElementById('valor_repasse').value || '0.00');
 
-            if (fileInput.files.length > 0) {
-                formData.append('arquivo_pdf', fileInput.files[0]);
-            }
+            if (fileInput.files.length > 0) formData.append('arquivo_pdf', fileInput.files[0]);
 
             const endpoint = idEdicao ? `${BASE_URL}/apolices/${idEdicao}` : `${BASE_URL}/cadastrar-apolice`;
             const method = idEdicao ? 'PUT' : 'POST';
 
             try {
                 Swal.fire({ title: 'Salvando...', didOpen: () => Swal.showLoading() });
-
-                const res = await fetch(endpoint, { 
-                    method: method, 
-                    headers: { 'Authorization': `Bearer ${localToken}` },
-                    body: formData 
-                });
-                
+                const res = await fetch(endpoint, { method: method, headers: { 'Authorization': `Bearer ${localToken}` }, body: formData });
                 const json = await res.json();
 
                 if (res.ok) {
-                    await Swal.fire('Sucesso!', 'Apólice e Arquivo salvos!', 'success');
+                    await Swal.fire('Sucesso!', 'Salvo com sucesso!', 'success');
                     window.location.href = 'dashboard.html';
-                } else {
-                    Swal.fire('Erro', json.message || 'Erro ao salvar.', 'error');
-                }
-            } catch(err) {
-                console.error(err);
-                Swal.fire('Erro', 'Falha de conexão com o servidor.', 'error');
-            }
+                } else { Swal.fire('Erro', json.message || 'Erro ao salvar.', 'error'); }
+            } catch(err) { Swal.fire('Erro', 'Falha de conexão.', 'error'); }
         });
 
         // CARREGAR DADOS
@@ -276,15 +305,29 @@
                     setValor('premio_total', d.premio_total);
                     setValor('premio_liquido', d.premio_liquido);
                     setValor('franquia_casco', d.franquia_casco);
+                    setValor('valor_comissao', d.valor_comissao);
+                    setValor('valor_repasse', d.valor_repasse);
+
+                    // Recalcula % visual
+                    let liq = converterParaFloat(d.premio_liquido);
+                    let comTotal = converterParaFloat(d.valor_comissao);
+                    let rep = converterParaFloat(d.valor_repasse || '0');
+
+                    if(liq > 0 && comTotal > 0) {
+                        let comissaoBase = comTotal - rep;
+                        let perc = (comissaoBase / liq) * 100;
+                        setValor('porcentagem_comissao', Math.round(perc));
+                    } else {
+                        setValor('porcentagem_comissao', 15);
+                    }
+
                     if(d.vigencia_inicio) setValor('vigencia_inicio', d.vigencia_inicio.split('T')[0]);
                     if(d.vigencia_fim) setValor('vigencia_fim', d.vigencia_fim.split('T')[0]);
                 } catch(e) {}
             }
         })();
 
-        document.getElementById('btn-logout').addEventListener('click', () => { 
-            localStorage.clear(); window.location.href = 'index.html'; 
-        });
+        document.getElementById('btn-logout').addEventListener('click', () => { localStorage.clear(); window.location.href = 'index.html'; });
     })();
     </script>
 </body>

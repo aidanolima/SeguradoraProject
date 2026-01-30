@@ -7,77 +7,177 @@
     content="default-src * 'self' blob: data: gap:; 
     style-src * 'self' 'unsafe-inline' blob: data: gap:; 
     script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; 
-    object-src * 'self' blob: data: gap:; 
-    img-src * 'self' 'unsafe-inline' blob: data: gap:; 
-    connect-src 'self' * 'unsafe-inline' blob: data: gap:; 
-    font-src 'self' data: https://cdnjs.cloudflare.com; 
-    frame-src * 'self' blob: data: gap:;">
+    connect-src * 'unsafe-inline' blob: data: gap:;">
     
     <link rel="icon" href="assets/logo.png" type="image/png">
-    <title>Recuperação de Acesso</title>
+    <title>Recuperação de Acesso - Seguradora</title>
+    
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        /* Estilos específicos para esta página, complementando o style.css */
+        body.login-body {
+            background-color: #f4f6f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-header h1 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .login-header p {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box; /* Garante que padding não aumente a largura */
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: #2e7d32;
+            outline: none;
+        }
+
+        .btn-enviar {
+            width: 100%;
+            padding: 12px;
+            background-color: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn-enviar:hover {
+            background-color: #1b5e20;
+        }
+
+        .btn-enviar:disabled {
+            background-color: #a5d6a7;
+            cursor: not-allowed;
+        }
+
+        .links-uteis {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .links-uteis a {
+            color: #1976d2;
+            text-decoration: none;
+        }
+
+        .links-uteis a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body class="login-body">
 
-    <div id="global-header"></div>
-
-    <div class="login-container" style="margin-top: 50px;">
+    <div class="login-container">
         
         <div class="login-header">
-            <h1 style="color: #2e7d32;">Recuperação</h1>
-            <p>Digite seu e-mail para receber as instruções</p>
+            <div style="font-size: 48px; color: #2e7d32; margin-bottom: 10px;">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h1>Recuperação de Senha</h1>
+            <p>Informe o e-mail associado à sua conta para receber as instruções de redefinição.</p>
         </div>
 
-        <form id="form-recuperar" onsubmit="event.preventDefault(); return false;">
+        <form id="form-recuperar" onsubmit="event.preventDefault(); enviarRecuperacao();">
             <div class="form-group">
                 <label for="rec_email">E-mail Cadastrado</label>
-                <input type="email" id="rec_email" required placeholder="exemplo@email.com" 
-                       style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                <input type="email" id="rec_email" name="email" required placeholder="seu.email@exemplo.com" autocomplete="email">
             </div>
             
-            <button type="button" onclick="enviarRecuperacao()" 
-                    style="width: 100%; padding: 12px; background-color: #2e7d32; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px;">
+            <button type="submit" id="btn-submit" class="btn-enviar">
                 Enviar Instruções
             </button>
         </form>
 
-        <div style="margin-top: 20px; text-align: center;">
-            <a href="index.html" style="color: #666; text-decoration: none; font-size: 14px;">Voltar para Login</a>
+        <div class="links-uteis">
+            <a href="index.html"><i class="fas fa-arrow-left"></i> Voltar para o Login</a>
         </div>
 
     </div>
     
     <script>
-        // URL Base (Ajuste se necessário, geralmente é /auth para login/recuperação)
-        const API_URL = 'https://https://seguradoraproject.onrender.com/auth';
+        // Configuração da API
+        // Ajuste aqui se sua rota base for diferente
+        //const API_BASE_URL = 'https://seguradoraproject.onrender.com'; 
+        
+        // Use a porta onde seu Node está rodando (3000 ou 10000)
+        // Olhe no terminal do VS Code qual porta ele abriu
+        const API_BASE_URL = 'http://localhost:3000';
 
         async function enviarRecuperacao() {
-            const email = document.getElementById('rec_email').value;
+            const emailInput = document.getElementById('rec_email');
+            const btnSubmit = document.getElementById('btn-submit');
+            const email = emailInput.value.trim();
 
-            // 1. Validação Simples
-            if (!email) {
+            // 1. Validação de E-mail (Regex simples)
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email || !emailRegex.test(email)) {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Atenção',
-                    text: 'Por favor, digite seu e-mail.',
+                    title: 'E-mail Inválido',
+                    text: 'Por favor, insira um endereço de e-mail válido.',
                     confirmButtonColor: '#fbc02d'
                 });
                 return;
             }
 
-            try {
-                // Loading
-                Swal.fire({
-                    title: 'Enviando...',
-                    text: 'Verificando seu cadastro.',
-                    allowOutsideClick: false,
-                    didOpen: () => { Swal.showLoading() }
-                });
+            // Desabilita botão para evitar múltiplos envios
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
 
-                // 2. Fetch para o Backend
-                const response = await fetch(`${API_URL}/forgot-password`, {
+            try {
+                // 2. Requisição ao Backend
+                // A rota sugerida é /forgot-password. Verifique se ela existe no seu server.js
+                const response = await fetch(`${API_BASE_URL}/forgot-password`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
@@ -90,34 +190,35 @@
                     await Swal.fire({
                         icon: 'success',
                         title: 'E-mail Enviado!',
-                        text: result.message || 'Verifique sua caixa de entrada.',
+                        text: result.message || 'Verifique sua caixa de entrada (e spam) para redefinir sua senha.',
                         confirmButtonColor: '#2e7d32'
                     });
-                    // Redireciona para login
+                    // Redireciona para login após sucesso
                     window.location.href = 'index.html';
                 } else {
-                    // ERRO DO SERVIDOR (Ex: E-mail não encontrado)
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erro',
-                        text: result.message || 'Não foi possível processar.',
-                        confirmButtonColor: '#d32f2f'
-                    });
+                    // ERRO DO SERVIDOR (ex: Usuário não encontrado)
+                    throw new Error(result.message || 'Erro ao processar solicitação.');
                 }
 
             } catch (error) {
-                console.error(error);
-                // ERRO DE CONEXÃO (Servidor desligado ou Rota inexistente)
+                console.error("Erro na recuperação:", error);
+                
+                let msgErro = 'Não foi possível conectar ao servidor.';
+                if (error.message) msgErro = error.message;
+
                 Swal.fire({
                     icon: 'error',
-                    title: 'Erro de Conexão',
-                    text: 'Não foi possível conectar ao servidor. Verifique se o backend está rodando.',
+                    title: 'Falha no Envio',
+                    text: msgErro,
                     confirmButtonColor: '#d32f2f'
                 });
+            } finally {
+                // Restaura o botão
+                btnSubmit.disabled = false;
+                btnSubmit.innerText = 'Enviar Instruções';
             }
         }
     </script>
 
-    <script src="js/navbar.js"></script>
     </body>
 </html>

@@ -72,8 +72,7 @@
                     </div>
                     <div class="form-group">
                         <label for="documento">CPF / CNPJ *</label>
-                        <input type="text" id="documento" required placeholder="000.000.000-00" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
+                        <input type="text" id="documento" class="form-control mask-cpf" placeholder="000.000.000-00"></div>
                 </div>
                 
                 <div class="form-row">
@@ -83,14 +82,13 @@
                     </div>
                     <div class="form-group">
                         <label for="telefone">Celular / Telefone</label>
-                        <input type="tel" id="telefone" placeholder="(XX) 9XXXX-XXXX" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    </div>
+                        <input type="text" id="telefone" class="form-control mask-telefone" placeholder="(99) 99999-9999"> </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="cep">CEP</label>
-                        <input type="text" id="cep" maxlength="9" placeholder="00000-000" onblur="buscarEndereco(this.value)" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        <input type="text" id="cep" class="form-control mask-cep" placeholder="00000-000" maxlength="9" placeholder="00000-000" onblur="buscarEndereco(this.value)" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
                     </div>
                     <div class="form-group" style="flex: 2;">
                         <label for="endereco">Endereço</label>
@@ -165,7 +163,10 @@
                         <select id="utilizacao" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
                             <option value="particular">Passeio Particular</option>
                             <option value="comercial" selected>Comercial / Profissional</option>
+                            <option value="moto">Motocicleta</option>                            
                             <option value="aplicativo">Motorista de Aplicativo</option>
+                            <option value="taxi">Motorista de Taxi</option>
+
                         </select>
                     </div>
                 </div>
@@ -444,5 +445,10 @@
         }
     </script>
     <script src="js/auth.js"></script>
+    
+    <script src="js/masks.js"></script>
+    
+
+
 </body>
 </html>

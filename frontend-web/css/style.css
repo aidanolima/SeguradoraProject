@@ -391,28 +391,32 @@ tbody tr:hover {
 }
 
 /* =========================================
-   9. CARDS DE ESTATÍSTICAS (DASHBOARD)
+   9. CARDS DE ESTATÍSTICAS (DASHBOARD) - CORRIGIDO
    ========================================= */
 
 /* Container dos Cards */
 .stats-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 20px;
+    display: flex; /* Mudado de Grid para Flex para alinhar melhor */
+    justify-content: space-between;
+    gap: 12px; /* Espaço equilibrado */
+    flex-wrap: wrap; /* Permite quebra apenas em telas muito pequenas (celular) */
     margin-bottom: 30px;
 }
 
 /* Estilo Base do Stat Card */
 .stat-card {
+    flex: 1; /* Ocupa espaço igual */
+    min-width: 150px; /* Permite que fiquem 5 na mesma linha em telas normais */
     background: #fff;
-    padding: 20px;
+    padding: 15px; /* Padding levemente reduzido */
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
-    border-left: 5px solid transparent; /* Faixa colorida na esquerda */
+    border-left: 5px solid transparent; 
     display: flex;
     align-items: center;
     justify-content: space-between;
     transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden; /* Garante que o texto não saia do card */
 }
 
 .stat-card:hover {
@@ -420,66 +424,49 @@ tbody tr:hover {
     box-shadow: var(--shadow-md);
 }
 
-/* Ícone */
-.stat-icon {
-    font-size: 28px;
-    opacity: 0.8;
+/* Área de Texto (Protegida contra quebra) */
+.stat-info {
+    flex: 1;
+    min-width: 0; /* Truque CSS: permite encolher o texto se faltar espaço */
 }
 
-/* Conteúdo de Texto */
 .stat-info h3 {
     margin: 0;
-    font-size: 28px;
-    font-weight: 700;
+    font-size: 1.4em !important; /* Tamanho ideal (aprox 22px) */
+    font-weight: 800;
     color: var(--text-main);
-    border: none; /* Remove a linha padrão de h3 */
+    white-space: nowrap; /* Impede quebra de linha */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Coloca "..." se o valor for infinito */
+    border: none;
     padding: 0;
+}
+
+/* AJUSTE FINO PARA O CARD DE COMISSÃO (VALORES LONGOS) */
+.stat-card.money .stat-info h3 {
+    font-size: 1.25em !important; /* Levemente menor para caber "R$ 10.000,00" */
+    color: #28a745;
 }
 
 .stat-info p {
     margin: 0;
-    font-size: 13px;
+    font-size: 0.75em !important; /* Legenda compacta */
     color: var(--text-muted);
     text-transform: uppercase;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
-/* Variações de Cores (Estilo Enterprise) */
-
-/* Clientes (Verde) */
-.stat-card.green {
-    border-left-color: var(--accent-color);
-}
-.stat-card.green .stat-icon {
-    color: var(--accent-color);
+/* Ícone */
+.stat-icon {
+    font-size: 2em; /* Tamanho visualmente agradável */
+    opacity: 0.8;
+    margin-left: 10px;
+    flex-shrink: 0; /* IMPORTANTE: O ícone nunca vai ser esmagado */
 }
 
-/* Veículos (Azul) */
-.stat-card.blue {
-    border-left-color: #1976d2;
-}
-.stat-card.blue .stat-icon {
-    color: #1976d2;
-}
-
-/* Apólices (Laranja - Atenção) */
-.stat-card.orange {
-    border-left-color: var(--warning-color);
-}
-.stat-card.orange .stat-icon {
-    color: var(--warning-color);
-}
-
-/* Usuários (Roxo - Admin) */
-.stat-card.purple {
-    border-left-color: #7b1fa2;
-}
-.stat-card.purple .stat-icon {
-    color: #7b1fa2;
-}
-
-/* Reforço de Cores para os Cards */
+/* Cores Específicas */
 .stat-card.green { border-left: 5px solid #00a86b !important; }
 .stat-card.green .stat-icon { color: #00a86b !important; }
 
@@ -492,6 +479,57 @@ tbody tr:hover {
 .stat-card.purple { border-left: 5px solid #7b1fa2 !important; }
 .stat-card.purple .stat-icon { color: #7b1fa2 !important; }
 
-/* Ajuste de Fonte para ficar grande e bonito */
-.stat-info h3 { font-size: 32px !important; font-weight: 800 !important; color: #333 !important; }
-.stat-info p { font-size: 12px !important; color: #777 !important; letter-spacing: 1px !important; }
+.stat-card.money { border-left: 5px solid #28a745 !important; background: #fff; }
+.stat-card.money .stat-icon { color: #28a745 !important; }
+
+/* =========================================
+   10. PAGINAÇÃO (NOVO)
+   ========================================= */
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-top: 1px solid #eee;
+    margin-top: 10px;
+}
+
+.pagination-info {
+    font-size: 13px;
+    color: #666;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.page-btn {
+    background: #fff;
+    border: 1px solid #ddd;
+    color: #333;
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.page-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    font-weight: bold;
+}
+
+.page-btn:disabled {
+    background-color: #f4f4f4;
+    color: #ccc;
+    cursor: not-allowed;
+}

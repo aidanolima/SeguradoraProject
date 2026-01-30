@@ -1,304 +1,463 @@
-// js/dashboard.js - VERSÃO HÍBRIDA (LOCAL/PROD) CORRIGIDA
+// ==================================================
+// 1. CONFIGURAÇÕES GLOBAIS E ESTADO
+// ==================================================
+const API_BASE_URL = (typeof API_URL !== 'undefined') ? API_URL : 'https://seguradoraproject.onrender.com';
+const ITENS_POR_PAGINA = 5; 
 
-// 1. VERIFICAÇÃO DE SEGURANÇA
-// Se o config.js não carregou, paramos tudo para não dar erro
-if (typeof BASE_API_URL === 'undefined') {
-    console.warn("Aviso: config.js demorou a carregar. Usando padrão local.");
-    var BASE_API_URL = 'http://localhost:3000'; // Fallback de segurança
-}
+const estadoGlobal = {
+    apolices: { todos: [], filtrados: [], paginaAtual: 1 },
+    clientes: { todos: [], filtrados: [], paginaAtual: 1 },
+    usuarios: { todos: [], filtrados: [], paginaAtual: 1 }
+};
 
-const token = localStorage.getItem('token');
+let chartStatus = null;
+let chartVendas = null;
 
-// --- FUNÇÃO PARA LER DADOS DO TOKEN (Saber se é Admin) ---
-function lerDadosToken() {
-    if (!token) return null;
-    try {
-        const payload = token.split('.')[1];
-        const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
-        return decoded;
-    } catch (e) { return null; }
-}
-
-const usuarioLogado = lerDadosToken();
-// Se não conseguiu ler o token, assume que não é admin
-const isAdm = (usuarioLogado && usuarioLogado.tipo === 'admin');
-
-// --- ESTILOS DOS BOTÕES ---
-const btnBaseStyle = `
-    display: block; width: 100px; padding: 6px 0; margin: 0 auto 5px auto;    
-    font-size: 11px; font-weight: bold; font-family: sans-serif; text-align: center; 
-    border-radius: 4px; border: none; cursor: pointer; text-decoration: none; 
-    line-height: normal; color: white; text-transform: uppercase; box-shadow: 0 2px 3px rgba(0,0,0,0.2);
-`;
-const stylePDF    = `${btnBaseStyle} background-color: #007bff;`; // Azul
-const styleEditar = `${btnBaseStyle} background-color: #f0ad4e;`; // Laranja
-const styleExcluir= `${btnBaseStyle} background-color: #d9534f;`; // Vermelho
-
-// --- INICIALIZAÇÃO ---
+// ==================================================
+// 2. INICIALIZAÇÃO
+// ==================================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Bloqueio de segurança
-    if (!token) { 
-        window.location.href = 'index.html'; 
-        return; 
-    }
+    verificarLogin();
+    carregarResumoCards();
+    
+    // Inicializa dados e gráficos em sequência para garantir sincronia
+    inicializarDados();
 
-    console.log(`🚀 Dashboard iniciado.`);
-    console.log(`📡 Conectado em: ${BASE_API_URL}`);
-    console.log(`👤 Usuário: ${usuarioLogado?.email} (${usuarioLogado?.tipo})`);
-
-    // Atualiza cabeçalho
-    const elUser = document.getElementById('user-name');
-    const elRole = document.getElementById('user-role');
-    if(elUser) elUser.innerText = usuarioLogado?.nome || usuarioLogado?.email || 'Usuário';
-    if(elRole) elRole.innerText = isAdm ? 'ADMINISTRADOR' : 'OPERACIONAL';
-
-    // Remove modal antigo se existir (limpeza)
-    const modalVelho = document.getElementById('modal-confirmacao');
-    if (modalVelho) modalVelho.remove();
-
-    // Carrega os dados
-    carregarPropostas();
-    carregarUsuarios();
-    carregarApolices();
-
-    // Configura botão sair
-    const btnLogout = document.getElementById('btn-logout');
-    if(btnLogout) {
-        btnLogout.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.clear();
-            window.location.href = 'index.html';
-        });
-    }
+    configurarBusca('busca-apolices', 'apolices');
+    configurarBusca('busca-clientes', 'clientes');
+    configurarBusca('busca-usuarios', 'usuarios');
 });
 
-function atualizarCard(id, valor) { 
-    const el = document.getElementById(id); 
-    if(el) el.innerText = valor; 
+async function inicializarDados() {
+    await Promise.all([
+        buscarDadosApolices(),
+        buscarDadosClientes(),
+        buscarDadosUsuarios()
+    ]);
+    // Só monta o gráfico após ter certeza que os dados das apólices chegaram
+    carregarGraficos();
 }
 
-// ==========================================
-// 3. LISTAGEM DE PROPOSTAS
-// ==========================================
-async function carregarPropostas() {
-    const tbody = document.getElementById('lista-propostas');
-    if(!tbody) return;
-
-    try {
-        // ATENÇÃO: Usa BASE_API_URL (do config.js) em vez de variável fixa
-        const res = await fetch(`${BASE_API_URL}/propostas`, { 
-            headers: { 'Authorization': `Bearer ${token}` } 
+function configurarBusca(inputId, tipo) {
+    const input = document.getElementById(inputId);
+    if(input) {
+        input.addEventListener('input', (e) => {
+            const termo = e.target.value.toLowerCase();
+            estadoGlobal[tipo].filtrados = estadoGlobal[tipo].todos.filter(item => {
+                return JSON.stringify(item).toLowerCase().includes(termo);
+            });
+            estadoGlobal[tipo].paginaAtual = 1;
+            renderizarTabela(tipo);
         });
-        
-        const lista = await res.json();
-
-        // CORREÇÃO DO ERRO "forEach": Verifica se é uma lista válida
-        if (!Array.isArray(lista)) {
-            console.warn("API de Propostas não retornou uma lista:", lista);
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Erro ao carregar dados.</td></tr>';
-            return;
-        }
-
-        atualizarCard('total-clientes', lista.length);
-        atualizarCard('total-veiculos', lista.length);
-        tbody.innerHTML = '';
-        
-        if (lista.length === 0) { 
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;">Nenhum cliente cadastrado.</td></tr>'; 
-            return; 
-        }
-        
-        lista.forEach(p => {
-            const tr = document.createElement('tr');
-            const btnExcluir = isAdm ? `<button type="button" onclick="prepararExclusao('propostas', '${p.id}')" style="${styleExcluir}">EXCLUIR</button>` : '';
-
-            tr.innerHTML = `
-                <td style="vertical-align: middle;">${p.id}</td>
-                <td style="vertical-align: middle;">${p.nome}</td>
-                <td style="vertical-align: middle;">${p.modelo}</td>
-                <td style="vertical-align: middle;"><strong>${p.placa}</strong></td>
-                <td style="vertical-align: middle; padding: 10px;">
-                    <a href="cadastro.html?id=${p.id}" style="${styleEditar}">EDITAR</a>
-                    ${btnExcluir}
-                </td>`;
-            tbody.appendChild(tr);
-        });
-    } catch (e) { 
-        console.error("Erro propostas:", e); 
     }
 }
 
-// ==========================================
-// 4. LISTAGEM DE USUÁRIOS
-// ==========================================
-async function carregarUsuarios() {
-    const tbody = document.getElementById('lista-usuarios');
-    if(!tbody) return;
-
-    try {
-        const res = await fetch(`${BASE_API_URL}/usuarios`, { 
-            headers: { 'Authorization': `Bearer ${token}` } 
-        });
-
-        const lista = await res.json();
-
-        if (!Array.isArray(lista)) {
-            console.warn("API de Usuários não retornou lista.");
-            return;
-        }
-
-        atualizarCard('total-usuarios', lista.length);
-        tbody.innerHTML = '';
-        
-        lista.forEach(u => {
-            const tr = document.createElement('tr');
-            const badge = u.tipo === 'admin' ? 'badge-admin' : 'badge-user';
-            // Botão excluir
-            const btnExcluir = isAdm ? `<button type="button" onclick="prepararExclusao('usuarios', '${u.id}')" style="${styleExcluir}">EXCLUIR</button>` : '';
-
-            tr.innerHTML = `
-                <td style="vertical-align: middle;">${u.id}</td>
-                <td style="vertical-align: middle;">${u.nome}</td>
-                <td style="vertical-align: middle;">${u.email}</td>
-                <td style="vertical-align: middle;"><span class="badge ${badge}">${u.tipo ? u.tipo.toUpperCase() : 'USER'}</span></td>
-                <td style="vertical-align: middle; padding: 10px;">
-                    <a href="registro.html?id=${u.id}&origin=dashboard" style="${styleEditar}">EDITAR</a>
-                    ${btnExcluir}
-                </td>`;
-            tbody.appendChild(tr);
-        });
-    } catch (e) { console.error("Erro usuarios:", e); }
-}
-
-// ==========================================
-// 5. LISTAGEM DE APÓLICES
-// ==========================================
-async function carregarApolices() {
-    const tbody = document.getElementById('lista-apolices');
-    if(!tbody) return;
-
-    try {
-        const res = await fetch(`${BASE_API_URL}/apolices`, { 
-            headers: { 'Authorization': `Bearer ${token}` } 
-        });
-        const lista = await res.json();
-
-        if (!Array.isArray(lista)) {
-            console.warn("API de Apólices não retornou lista.");
-            return;
-        }
-
-        atualizarCard('total-apolices', lista.length);
-        tbody.innerHTML = '';
-        
-        if (lista.length === 0) { 
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;">Nenhuma apólice emitida.</td></tr>'; 
-            return; 
-        }
-
-        lista.forEach(a => {
-            const tr = document.createElement('tr');
-            const premio = a.premio_total ? parseFloat(a.premio_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00';
-            const vigencia = a.vigencia_fim ? new Date(a.vigencia_fim).toLocaleDateString('pt-BR') : '-';
-            const temPdf = a.arquivo_pdf ? '' : 'opacity:0.6;cursor:not-allowed;background:#6c757d;';
-            const clickPdf = a.arquivo_pdf ? `onclick="visualizarPDF(${a.id})"` : '';
-
-            const btnExcluir = isAdm ? `<button type="button" onclick="prepararExclusao('apolices', '${a.id}')" style="${styleExcluir}">EXCLUIR</button>` : '';
-
-            tr.innerHTML = `
-                <td style="vertical-align: middle;">${a.numero_apolice || 'S/N'}</td>
-                <td style="vertical-align: middle;">${a.cliente || 'ND'}</td>
-                <td style="vertical-align: middle;">${a.placa || '-'}</td>
-                <td style="vertical-align: middle;">${vigencia}</td>
-                <td style="vertical-align: middle;">${premio}</td>
-                <td style="vertical-align: middle; padding: 10px;">
-                    <button type="button" ${clickPdf} style="${stylePDF} ${temPdf}">PDF</button>
-                    <a href="apolice.html?id=${a.id}" style="${styleEditar}">EDITAR</a>
-                    ${btnExcluir}
-                </td>`;
-            tbody.appendChild(tr);
-        });
-    } catch (e) { console.error("Erro apolices:", e); }
-}
-
-// ==========================================
-// 6. FUNÇÃO PDF
-// ==========================================
-async function visualizarPDF(id) {
-    // Abre a janela antes para evitar bloqueio de popup
-    const win = window.open('', '_blank');
-    if(win) win.document.write('<h3>Aguarde, buscando PDF no servidor...</h3>');
+function verificarLogin() {
+    const token = localStorage.getItem('token');
+    if (!token) { window.location.href = 'index.html'; return; }
     
+    const nome = localStorage.getItem('usuario_logado');
+    const tipo = localStorage.getItem('tipo_usuario');
+    
+    if (document.getElementById('user-name-display') && nome) document.getElementById('user-name-display').innerText = nome.split(' ')[0];
+    if (document.getElementById('user-role-display') && tipo) document.getElementById('user-role-display').innerText = tipo.toUpperCase();
+
+    if (tipo !== 'admin') {
+        const cardAdmin = document.getElementById('card-admin-stat');
+        if(cardAdmin) cardAdmin.style.display = 'none';
+        const secaoUsers = document.getElementById('secao-usuarios');
+        if(secaoUsers) secaoUsers.style.display = 'none'; 
+    } else {
+        const cardAdmin = document.getElementById('card-admin-stat');
+        if(cardAdmin) cardAdmin.style.display = 'flex';
+        const secaoUsers = document.getElementById('secao-usuarios');
+        if(secaoUsers) secaoUsers.style.display = 'block'; 
+    }
+
+    const btnLogout = document.getElementById('btn-logout');
+    if(btnLogout) btnLogout.addEventListener('click', () => { localStorage.clear(); window.location.href = 'index.html'; });
+}
+
+// ==================================================
+// 3. CARREGAMENTO DE DADOS E GRÁFICOS
+// ==================================================
+
+async function carregarResumoCards() {
     try {
-        const res = await fetch(`${BASE_API_URL}/apolices/${id}/pdf`, { 
-            headers: { 'Authorization': `Bearer ${token}` } 
-        });
-        
-        if(res.ok) {
-            const blob = await res.blob();
-            const url = window.URL.createObjectURL(blob);
-            if(win) win.location.href = url; else window.open(url, '_blank');
+        const res = await fetch(`${API_BASE_URL}/dashboard-resumo`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+        const data = await res.json();
+        atualizarCard('total-apolices', data.apolices);
+        atualizarCard('total-usuarios', data.usuarios);
+        atualizarCard('total-veiculos', data.veiculos);
+        atualizarCard('total-clientes', data.clientes);
+
+        const resCom = await fetch(`${API_BASE_URL}/dashboard/comissoes`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+        const dataCom = await resCom.json();
+        const elCom = document.getElementById('total-comissoes');
+        if(elCom) elCom.innerText = parseFloat(dataCom.totalComissoes || 0).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+    } catch (error) { console.error("Erro cards:", error); }
+}
+
+function atualizarCard(id, valor) {
+    const el = document.getElementById(id);
+    if (el) el.innerText = valor || 0;
+}
+
+// --- CÁLCULO DE STATUS CORRIGIDO ---
+function calcularStatusLocalmente() {
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0);
+    
+    let vigentes = 0;
+    let aVencer = 0;
+    let vencidas = 0;
+
+    estadoGlobal.apolices.todos.forEach(a => {
+        let diffDays = -999; // Valor padrão negativo (Vencida) caso a data seja nula/inválida
+
+        // Se tiver data, calcula a diferença real
+        if (a.vigencia_fim) {
+            let dFim = new Date(a.vigencia_fim);
+            
+            // Correção de fuso horário para string YYYY-MM-DD
+            if(a.vigencia_fim.includes('-') && a.vigencia_fim.length === 10) {
+                const parts = a.vigencia_fim.split('-');
+                // Ano, Mês (0-11), Dia
+                dFim = new Date(parts[0], parts[1]-1, parts[2]);
+            }
+            
+            const diffTime = dFim - hoje;
+            diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        } 
+        // Se não tiver data (null), diffDays continua -999 (Vencida), igual na tabela.
+
+        if (diffDays < 0) {
+            vencidas++;
+        } else if (diffDays >= 0 && diffDays <= 30) {
+            aVencer++;
         } else {
-            if(win) win.close();
-            if(typeof Swal !== 'undefined') Swal.fire('Aviso', 'PDF não encontrado no servidor.', 'warning');
-            else alert('PDF não encontrado.');
+            vigentes++;
         }
-    } catch (e) { 
-        if(win) win.close(); 
-        console.error(e);
-        alert('Erro ao baixar PDF.'); 
+    });
+
+    return [vigentes, aVencer, vencidas];
+}
+
+async function carregarGraficos() {
+    try {
+        const res = await fetch(`${API_BASE_URL}/dashboard-graficos`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+        const dadosBackend = await res.json();
+
+        // Usa o cálculo local corrigido
+        const dadosStatusReais = calcularStatusLocalmente();
+        
+        const ctxStatus = document.getElementById('graficoStatus');
+        if(ctxStatus) {
+            const ctx = ctxStatus.getContext('2d');
+            if (chartStatus) chartStatus.destroy();
+            
+            chartStatus = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Vigentes', 'A Vencer (30d)', 'Vencidas'],
+                    datasets: [{ 
+                        data: dadosStatusReais, 
+                        backgroundColor: ['#00a86b', '#ff9800', '#d32f2f'], // Verde, Laranja, Vermelho
+                        borderWidth: 1 
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' } }
+                }
+            });
+        }
+
+        const ctxVendas = document.getElementById('graficoVendas');
+        if(ctxVendas) {
+            const ctx = ctxVendas.getContext('2d');
+            if (chartVendas) chartVendas.destroy();
+            chartVendas = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dadosBackend.vendas.labels,
+                    datasets: [{ label: 'Vendas (R$)', data: dadosBackend.vendas.valores, backgroundColor: '#1976d2', borderRadius: 4 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            });
+        }
+    } catch (error) { console.error("Erro gráficos:", error); }
+}
+
+// ==================================================
+// 4. FETCH DE TABELAS
+// ==================================================
+
+async function buscarDadosApolices() {
+    try {
+        const res = await fetch(`${API_BASE_URL}/apolices`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+        const dados = await res.json();
+        estadoGlobal.apolices.todos = dados;
+        estadoGlobal.apolices.filtrados = dados;
+        renderizarTabela('apolices');
+        return dados;
+    } catch (error) {
+        console.error(error);
+        document.getElementById('lista-apolices').innerHTML = '<tr><td colspan="7" style="text-align:center; color:red">Erro ao carregar.</td></tr>';
+        return [];
     }
 }
 
-// ==========================================
-// 7. SISTEMA DE EXCLUSÃO (Global)
-// ==========================================
-window.prepararExclusao = function(tipo, id) {
-    if(typeof Swal === 'undefined') {
-        if(confirm("Tem certeza que deseja excluir?")) executarExclusaoAPI(tipo, id);
+async function buscarDadosClientes() {
+    try {
+        const res = await fetch(`${API_BASE_URL}/propostas`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+        const dados = await res.json();
+        estadoGlobal.clientes.todos = dados;
+        estadoGlobal.clientes.filtrados = dados;
+        renderizarTabela('clientes');
+        return dados;
+    } catch (error) {
+        console.error(error);
+        return [];
+    }
+}
+
+async function buscarDadosUsuarios() {
+    const tipo = localStorage.getItem('tipo_usuario');
+    if(tipo !== 'admin') return [];
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/usuarios`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+        const dados = await res.json();
+        estadoGlobal.usuarios.todos = dados;
+        estadoGlobal.usuarios.filtrados = dados;
+        renderizarTabela('usuarios');
+        return dados;
+    } catch (error) {
+        console.error(error);
+        return [];
+    }
+}
+
+// ==================================================
+// 5. RENDERIZAÇÃO DE TABELAS
+// ==================================================
+
+function renderizarTabela(tipo) {
+    const estado = estadoGlobal[tipo];
+    const tbody = document.getElementById(`lista-${tipo}`);
+    const containerPaginacao = document.getElementById(`paginacao-${tipo}`);
+    
+    if(!tbody) return;
+
+    const totalItens = estado.filtrados.length;
+    const totalPaginas = Math.ceil(totalItens / ITENS_POR_PAGINA);
+    
+    if (estado.paginaAtual > totalPaginas && totalPaginas > 0) estado.paginaAtual = totalPaginas;
+    if (estado.paginaAtual < 1) estado.paginaAtual = 1;
+
+    const inicio = (estado.paginaAtual - 1) * ITENS_POR_PAGINA;
+    const fim = inicio + ITENS_POR_PAGINA;
+    const itensPagina = estado.filtrados.slice(inicio, fim);
+
+    tbody.innerHTML = '';
+
+    if (totalItens === 0) {
+        const cols = tipo === 'apolices' ? 7 : (tipo === 'clientes' ? 5 : 4);
+        tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center; padding: 20px;">Nenhum registro encontrado.</td></tr>`;
+        if(containerPaginacao) containerPaginacao.innerHTML = '';
         return;
     }
 
-    Swal.fire({
-        title: 'Confirmação',
-        text: `Você vai apagar o item #${id}. Essa ação não pode ser desfeita!`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d32f2f',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'SIM, EXCLUIR',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            executarExclusaoAPI(tipo, id);
-        }
+    itensPagina.forEach(item => {
+        if(tipo === 'apolices') renderLinhaApolice(item, tbody);
+        if(tipo === 'clientes') renderLinhaCliente(item, tbody);
+        if(tipo === 'usuarios') renderLinhaUsuario(item, tbody);
     });
+
+    if(containerPaginacao) {
+        atualizarControlesPaginacao(tipo, containerPaginacao, totalItens, totalPaginas);
+    }
 }
 
-async function executarExclusaoAPI(tipo, id) {
-    if(typeof Swal !== 'undefined') Swal.fire({ title: 'Excluindo...', didOpen: () => Swal.showLoading() });
-    
-    try {
-        const res = await fetch(`${BASE_API_URL}/${tipo}/${id}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+function atualizarControlesPaginacao(tipo, container, totalItens, totalPaginas) {
+    const estado = estadoGlobal[tipo];
+    const inicio = (estado.paginaAtual - 1) * ITENS_POR_PAGINA + 1;
+    const fim = Math.min(inicio + ITENS_POR_PAGINA - 1, totalItens);
 
-        if (res.ok) {
-            if(typeof Swal !== 'undefined') await Swal.fire('Sucesso!', 'Registro excluído.', 'success');
-            else alert("Registro excluído com sucesso.");
-            
-            // Recarrega a lista correta
-            if(tipo === 'propostas') carregarPropostas();
-            if(tipo === 'usuarios') carregarUsuarios();
-            if(tipo === 'apolices') carregarApolices();
+    let htmlBotoes = `
+        <div class="pagination-info">Mostrando ${inicio}-${fim} de ${totalItens}</div>
+        <div class="pagination-controls">
+            <button class="page-btn" ${estado.paginaAtual === 1 ? 'disabled' : ''} onclick="mudarPagina('${tipo}', ${estado.paginaAtual - 1})"><i class="fas fa-chevron-left"></i></button>
+    `;
+
+    let paginasParaMostrar = [];
+    if (totalPaginas <= 5) {
+        paginasParaMostrar = Array.from({length: totalPaginas}, (_, i) => i + 1);
+    } else {
+        if (estado.paginaAtual <= 3) paginasParaMostrar = [1, 2, 3, 4, '...', totalPaginas];
+        else if (estado.paginaAtual >= totalPaginas - 2) paginasParaMostrar = [1, '...', totalPaginas-3, totalPaginas-2, totalPaginas-1, totalPaginas];
+        else paginasParaMostrar = [1, '...', estado.paginaAtual - 1, estado.paginaAtual, estado.paginaAtual + 1, '...', totalPaginas];
+    }
+
+    paginasParaMostrar.forEach(p => {
+        if (p === '...') {
+            htmlBotoes += `<span style="padding:5px;">...</span>`;
         } else {
-            const err = await res.json();
-            if(typeof Swal !== 'undefined') Swal.fire('Erro', err.message || 'Falha ao excluir.', 'error');
-            else alert("Erro: " + (err.message || 'Falha ao excluir.'));
+            htmlBotoes += `<button class="page-btn ${p === estado.paginaAtual ? 'active' : ''}" onclick="mudarPagina('${tipo}', ${p})">${p}</button>`;
         }
-    } catch (error) { 
-        if(typeof Swal !== 'undefined') Swal.fire('Erro', 'Falha de conexão.', 'error'); 
-        else alert("Falha de conexão.");
+    });
+
+    htmlBotoes += `
+            <button class="page-btn" ${estado.paginaAtual === totalPaginas ? 'disabled' : ''} onclick="mudarPagina('${tipo}', ${estado.paginaAtual + 1})"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    `;
+
+    container.innerHTML = htmlBotoes;
+}
+
+window.mudarPagina = function(tipo, novaPagina) {
+    estadoGlobal[tipo].paginaAtual = novaPagina;
+    renderizarTabela(tipo);
+};
+
+// ==================================================
+// 6. FUNÇÕES DE LINHA (BADGES)
+// ==================================================
+
+function renderLinhaApolice(a, tbody) {
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    let statusClass = 'badge-vigente';
+    let statusTexto = 'VIGENTE';
+    
+    // Lógica robusta de data para a Tabela
+    let dFim = new Date(a.vigencia_fim); // Se null, vira 1969/1970
+    if(a.vigencia_fim && a.vigencia_fim.includes('-')) {
+        const parts = a.vigencia_fim.split('T')[0].split('-');
+        dFim = new Date(parts[0], parts[1]-1, parts[2]);
+    }
+
+    const diffDays = Math.ceil((dFim - hoje) / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) { statusClass = 'badge-vencida'; statusTexto = 'VENCIDA'; } 
+    else if (diffDays >= 0 && diffDays <= 30) { statusClass = 'badge-avencer'; statusTexto = 'A VENCER'; }
+
+    const valTotal = parseFloat(a.premio_total) || 0;
+    const valComissao = parseFloat(a.valor_comissao) || 0;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td>${a.cliente || 'Excluído'}</td>
+        <td><span class="badge-placa">${a.placa || '-'}</span></td>
+        <td>${a.numero_apolice || '-'}</td>
+        <td>${dFim.toLocaleDateString('pt-BR')} <br> <span class="badge ${statusClass}" style="margin-top:2px;">${statusTexto}</span></td>
+        <td>${valTotal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</td>
+        <td style="color:#2e7d32; font-weight:bold;">${valComissao.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</td>
+        <td style="text-align:center;">
+            <button class="action-btn btn-pdf-active" onclick="abrirPdfSeguro('${a.id}')" title="Ver PDF"><i class="fas fa-file-pdf"></i></button>
+            <button class="action-btn btn-edit" onclick="window.location.href='apolice.html?id=${a.id}'" title="Editar"><i class="fas fa-edit"></i></button>
+            <button class="action-btn btn-delete" onclick="deletarItem('apolices', ${a.id})" title="Excluir"><i class="fas fa-trash"></i></button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+}
+
+function renderLinhaCliente(c, tbody) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td>${c.nome || '-'}</td>
+        <td>${c.documento || '-'}</td>
+        <td><span class="badge-placa">${c.placa || '-'}</span></td>
+        <td>${c.modelo || c.modelo_veiculo || '-'}</td>
+        <td style="text-align:center;">
+            <button class="action-btn btn-edit" onclick="window.location.href='cadastro.html?id=${c.id}'" title="Editar"><i class="fas fa-edit"></i></button>
+            <button class="action-btn btn-delete" onclick="deletarItem('propostas', ${c.id})" title="Excluir"><i class="fas fa-trash"></i></button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+}
+
+function renderLinhaUsuario(u, tbody) {
+    const badgeClass = u.tipo === 'admin' ? 'badge-admin' : 'badge-user';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td>${u.nome}</td>
+        <td>${u.email}</td>
+        <td><span class="badge ${badgeClass}">${u.tipo.toUpperCase()}</span></td>
+        <td style="text-align:center;">
+            <button class="action-btn btn-edit" onclick="window.location.href='registro.html?id=${u.id}&origin=dashboard'" title="Editar"><i class="fas fa-edit"></i></button>
+            <button class="action-btn btn-delete" onclick="deletarItem('usuarios', ${u.id})" title="Excluir"><i class="fas fa-trash"></i></button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+}
+
+// ==================================================
+// 7. FUNÇÕES DE AÇÃO
+// ==================================================
+
+async function deletarItem(tipo, id) {
+    const result = await Swal.fire({
+        title: 'Tem certeza?', text: "Essa ação não pode ser desfeita!", icon: 'warning',
+        showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6', confirmButtonText: 'Sim, excluir!'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const res = await fetch(`${API_BASE_URL}/${tipo}/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            if (res.ok) {
+                await Swal.fire('Deletado!', 'Registro removido.', 'success');
+                if(tipo === 'apolices') buscarDadosApolices();
+                if(tipo === 'propostas') buscarDadosClientes();
+                if(tipo === 'usuarios') buscarDadosUsuarios();
+                carregarResumoCards();
+            } else {
+                Swal.fire('Erro', 'Não foi possível excluir.', 'error');
+            }
+        } catch (error) {
+            Swal.fire('Erro', 'Falha de conexão.', 'error');
+        }
+    }
+}
+
+async function abrirPdfSeguro(id) {
+    try {
+        Swal.fire({title: 'Abrindo...', didOpen: () => Swal.showLoading()});
+        const res = await fetch(`${API_BASE_URL}/apolices/${id}/pdf-seguro`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        const json = await res.json();
+        Swal.close();
+        
+        if (json.url) {
+            window.open(json.url, '_blank');
+        } else {
+            Swal.fire('Erro', 'Arquivo não encontrado ou link inválido.', 'error');
+        }
+    } catch (e) {
+        Swal.fire('Erro', 'Falha ao solicitar arquivo.', 'error');
+    }
+}
+
+function ordenarTabela(n, tabelaId) {
+    const table = document.getElementById(tabelaId);
+    let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+    switching = true; dir = "asc"; 
+    while (switching) {
+        switching = false; rows = table.rows;
+        for (i = 1; i < (rows.length - 1); i++) {
+            shouldSwitch = false;
+            x = rows[i].getElementsByTagName("TD")[n];
+            y = rows[i + 1].getElementsByTagName("TD")[n];
+            if (dir == "asc") { if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) { shouldSwitch = true; break; } } 
+            else if (dir == "desc") { if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) { shouldSwitch = true; break; } }
+        }
+        if (shouldSwitch) { rows[i].parentNode.insertBefore(rows[i + 1], rows[i]); switching = true; switchcount ++; } 
+        else { if (switchcount == 0 && dir == "asc") { dir = "desc"; switching = true; } }
     }
 }
