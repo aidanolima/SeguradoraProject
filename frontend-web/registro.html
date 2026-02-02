@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-
     <script src="js/config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +10,7 @@
     content="default-src * 'self' blob: data: gap:; 
     style-src * 'self' 'unsafe-inline' blob: data: gap:; 
     script-src * 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net blob: data: gap:; 
-    connect-src 'self' http://localhost:3000 https://seguradoraproject.onrender.com * 'unsafe-inline' blob: data: gap:;">
+    connect-src 'self' http://localhost:10000 http://localhost:3000 https://apolicesystem.onrender.com * 'unsafe-inline' blob: data: gap:;">
     
     <link rel="icon" href="assets/logo.png" type="image/png">
     <link rel="stylesheet" href="css/style.css">
@@ -26,6 +25,7 @@
             <a href="dashboard.html" class="header-link">DASHBOARD</a>
             <a href="apolice.html" class="header-link">APÓLICES</a>
             <a href="registro.html" class="header-link active">USUÁRIOS</a>
+            <a href="relatorios.html" class="header-link">RELATÓRIOS</a>
         </nav>
         <div class="header-user-area">
             <div class="user-info"><span class="user-name">Olá, <strong id="user-name-display">...</strong></span></div>
@@ -59,15 +59,16 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Senha de Acesso</label>
-                        <input type="password" id="senha" placeholder="******" required>
+                        <input type="password" id="senha" placeholder="******">
                         <small id="dica-senha" style="color:#666; display:none;">Deixe em branco para manter a senha atual.</small>
                     </div>
                     <div class="form-group">
                         <label>Perfil de Acesso</label>
                         <select id="tipo">
-                            <option value="padrao">Padrão (Visualizar)</option>
-                            <option value="admin">Administrador (Total)</option>
-                            <option value="ti">TI / Suporte</option> </select>
+                            <option value="padrao">Padrão Básico</option>
+                            <option value="admin">Administrador</option>
+                            <option value="ti">Suporte</option> 
+                        </select>
                     </div>
                 </div>
 
@@ -80,8 +81,11 @@
     </div>
 
     <script>
-        //const API_URL = 'http://localhost:3000';
+        // Configuração de API (Local vs Produção)
+        const BASE_API = (typeof API_URL !== 'undefined') ? API_URL : 'https://seguradoraproject.onrender.com';
+        
         const token = localStorage.getItem('token');
+        const tipoUsuarioLogado = localStorage.getItem('tipo_usuario'); // Recupera o tipo de usuário
         
         // Verifica se tem ID na URL (Modo Edição)
         const urlParams = new URLSearchParams(window.location.search);
@@ -89,6 +93,29 @@
 
         // Inicialização
         if (!token) window.location.href = 'index.html';
+
+        // ==================================================
+        // 🔒 TRAVA DE SEGURANÇA (CRÍTICO)
+        // ==================================================
+        // Define quem é MASTER (Admin ou TI)
+        const isMaster = (tipoUsuarioLogado === 'admin' || tipoUsuarioLogado === 'ti');
+
+        // Se NÃO é Master E NÃO tem ID na URL (tentativa de criar novo) -> BLOQUEIA
+        if (!isMaster && !idEdicao) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Acesso Restrito',
+                text: 'Seu perfil permite apenas editar seus próprios dados.',
+                confirmButtonColor: '#7b1fa2',
+                confirmButtonText: 'Voltar ao Painel',
+                allowOutsideClick: false
+            }).then(() => {
+                window.location.href = 'dashboard.html';
+            });
+            // Para a execução do script aqui para não carregar o resto
+            throw new Error("Acesso negado: Usuário padrão tentou criar novo registro.");
+        }
+        // ==================================================
         
         const nomeLogado = localStorage.getItem('usuario_logado');
         if(document.getElementById('user-name-display') && nomeLogado) 
@@ -97,6 +124,14 @@
         document.getElementById('btn-logout').addEventListener('click', () => {
             localStorage.clear(); window.location.href = 'index.html';
         });
+
+        // --- LÓGICA DE SEGURANÇA NO FRONT-END (DROPDOWN) ---
+        // Se NÃO for Master (Admin/TI), força o campo a ter apenas a opção 'padrao'
+        if (!isMaster) {
+            const selectTipo = document.getElementById('tipo');
+            selectTipo.innerHTML = '<option value="padrao">Padrão (Visualizar)</option>';
+            selectTipo.disabled = true; // Visualmente travado
+        }
 
         // --- LÓGICA DE EDIÇÃO ---
         if (idEdicao) {
@@ -113,7 +148,7 @@
 
             // 2. Carregar Dados
             try {
-                const res = await fetch(`${API_URL}/usuarios/${idEdicao}`, {
+                const res = await fetch(`${BASE_API}/usuarios/${idEdicao}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if(!res.ok) throw new Error("Erro ao buscar usuário");
@@ -122,7 +157,12 @@
                 
                 document.getElementById('nome').value = user.nome;
                 document.getElementById('email').value = user.email;
-                document.getElementById('tipo').value = user.tipo;
+                
+                // Se for Master (Admin/TI), carrega o valor real. 
+                // Se não for, já travamos como 'padrao' acima.
+                if (isMaster) {
+                    document.getElementById('tipo').value = user.tipo;
+                }
 
             } catch (error) {
                 console.error(error);
@@ -142,7 +182,7 @@
             };
 
             // Define URL e Método baseado no modo (Edição ou Criação)
-            const endpoint = idEdicao ? `${API_URL}/usuarios/${idEdicao}` : `${API_URL}/registrar`;
+            const endpoint = idEdicao ? `${BASE_API}/usuarios/${idEdicao}` : `${BASE_API}/registrar`;
             const method = idEdicao ? 'PUT' : 'POST';
 
             try {
@@ -169,9 +209,6 @@
             }
         });
     </script>
-
-    <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
 
 </body>
 </html>

@@ -18,6 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script src="js/config.js"></script>
+    
 
     <style>
         /* Visual Enterprise Centralizado */
@@ -95,7 +96,7 @@
 
     <div class="login-card">
         <img src="assets/logo.png" alt="Logo" class="login-logo">
-        <h2 class="login-title">Apólice System© 2026</h2>
+        <h2 class="login-title">Gestão de Clientes e Apólices</h2>
         
         <form id="form-login">
             <div class="input-group">
@@ -114,16 +115,11 @@
         <a href="recuperar.html" class="forgot-link">Esqueci minha senha</a>
 
         <p class="footer-text">
-            &copy; 2026 Seguradora System©.<br>Todos os direitos reservados ASL TECH Áidano Lima.
+            &copy; 2025 Seguradora System.<br>Todos os direitos reservados ASL TECH Áidano Lima.
         </p>
     </div>
 
     <script>
-        // --- CORREÇÃO DO ERRO API_URL ---
-        // Se API_URL não foi definida pelo config.js, usamos a origem atual (ex: http://localhost:3000)
-        // Isso garante que o login funcione mesmo se a pasta JS não for encontrada
-        const BASE_API = (typeof API_URL !== 'undefined') ? API_URL : window.location.origin;
-
         // Verifica se já está logado e redireciona
         if (localStorage.getItem('token')) {
             window.location.href = 'dashboard.html';
@@ -148,9 +144,7 @@
                 btn.disabled = true;
                 btn.style.opacity = '0.7';
 
-                console.log("Tentando login em:", `${BASE_API}/login`);
-
-                const response = await fetch(`${BASE_API}/login`, {
+                const response = await fetch(`${API_URL}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, senha })

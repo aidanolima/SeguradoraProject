@@ -14,7 +14,23 @@ let chartStatus = null;
 let chartVendas = null;
 
 // ==================================================
-// 2. INICIALIZAÇÃO
+// 2. UTILITÁRIOS (NOVO: Extrair ID do Token)
+// ==================================================
+function parseJwt(token) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        return null;
+    }
+}
+
+// ==================================================
+// 3. INICIALIZAÇÃO
 // ==================================================
 document.addEventListener('DOMContentLoaded', () => {
     verificarLogin();
@@ -56,30 +72,53 @@ function verificarLogin() {
     const token = localStorage.getItem('token');
     if (!token) { window.location.href = 'index.html'; return; }
     
+    // Leitura segura do Token para garantir permissões corretas
+    const payload = parseJwt(token);
+    const tipo = payload ? payload.tipo : localStorage.getItem('tipo_usuario');
     const nome = localStorage.getItem('usuario_logado');
-    const tipo = localStorage.getItem('tipo_usuario');
     
-    if (document.getElementById('user-name-display') && nome) document.getElementById('user-name-display').innerText = nome.split(' ')[0];
-    if (document.getElementById('user-role-display') && tipo) document.getElementById('user-role-display').innerText = tipo.toUpperCase();
+    if (document.getElementById('user-name-display') && nome) 
+        document.getElementById('user-name-display').innerText = nome.split(' ')[0];
+    if (document.getElementById('user-role-display') && tipo) 
+        document.getElementById('user-role-display').innerText = tipo.toUpperCase();
 
-    if (tipo !== 'admin') {
-        const cardAdmin = document.getElementById('card-admin-stat');
+    // Referências aos elementos
+    const secaoUsers = document.getElementById('secao-usuarios');
+    const cardAdmin = document.getElementById('card-admin-stat');
+    
+    // A tabela de usuários SEMPRE aparece (o conteúdo é filtrado)
+    if(secaoUsers) secaoUsers.style.display = 'block'; 
+
+    // --- REGRA DE OURO: ADMIN OU TI (MASTER) ---
+    const isMaster = (tipo === 'admin' || tipo === 'ti');
+
+    if (!isMaster) {
+        // Se for Padrão:
+        // 1. Esconde o card de estatísticas do topo
         if(cardAdmin) cardAdmin.style.display = 'none';
-        const secaoUsers = document.getElementById('secao-usuarios');
-        if(secaoUsers) secaoUsers.style.display = 'none'; 
+        
+        // 2. Esconde o botão "+ Novo Usuário" para evitar erro de duplicidade
+        // Ele só deve ver a tabela para editar a si mesmo
+        const btnNovoUser = document.querySelector('#secao-usuarios .btn-novo');
+        if(btnNovoUser) btnNovoUser.style.display = 'none';
+
     } else {
-        const cardAdmin = document.getElementById('card-admin-stat');
+        // Se for Admin ou TI: Mostra tudo
         if(cardAdmin) cardAdmin.style.display = 'flex';
-        const secaoUsers = document.getElementById('secao-usuarios');
-        if(secaoUsers) secaoUsers.style.display = 'block'; 
+        
+        const btnNovoUser = document.querySelector('#secao-usuarios .btn-novo');
+        if(btnNovoUser) btnNovoUser.style.display = 'inline-block';
     }
 
     const btnLogout = document.getElementById('btn-logout');
-    if(btnLogout) btnLogout.addEventListener('click', () => { localStorage.clear(); window.location.href = 'index.html'; });
+    if(btnLogout) btnLogout.addEventListener('click', () => { 
+        localStorage.clear(); 
+        window.location.href = 'index.html'; 
+    });
 }
 
 // ==================================================
-// 3. CARREGAMENTO DE DADOS E GRÁFICOS
+// 4. CARREGAMENTO DE DADOS E GRÁFICOS
 // ==================================================
 
 async function carregarResumoCards() {
@@ -113,23 +152,19 @@ function calcularStatusLocalmente() {
     let vencidas = 0;
 
     estadoGlobal.apolices.todos.forEach(a => {
-        let diffDays = -999; // Valor padrão negativo (Vencida) caso a data seja nula/inválida
+        let diffDays = -999; 
 
-        // Se tiver data, calcula a diferença real
         if (a.vigencia_fim) {
             let dFim = new Date(a.vigencia_fim);
             
-            // Correção de fuso horário para string YYYY-MM-DD
             if(a.vigencia_fim.includes('-') && a.vigencia_fim.length === 10) {
                 const parts = a.vigencia_fim.split('-');
-                // Ano, Mês (0-11), Dia
                 dFim = new Date(parts[0], parts[1]-1, parts[2]);
             }
             
             const diffTime = dFim - hoje;
             diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         } 
-        // Se não tiver data (null), diffDays continua -999 (Vencida), igual na tabela.
 
         if (diffDays < 0) {
             vencidas++;
@@ -148,7 +183,6 @@ async function carregarGraficos() {
         const res = await fetch(`${API_BASE_URL}/dashboard-graficos`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
         const dadosBackend = await res.json();
 
-        // Usa o cálculo local corrigido
         const dadosStatusReais = calcularStatusLocalmente();
         
         const ctxStatus = document.getElementById('graficoStatus');
@@ -162,7 +196,7 @@ async function carregarGraficos() {
                     labels: ['Vigentes', 'A Vencer (30d)', 'Vencidas'],
                     datasets: [{ 
                         data: dadosStatusReais, 
-                        backgroundColor: ['#00a86b', '#ff9800', '#d32f2f'], // Verde, Laranja, Vermelho
+                        backgroundColor: ['#00a86b', '#ff9800', '#d32f2f'], 
                         borderWidth: 1 
                     }]
                 },
@@ -191,7 +225,7 @@ async function carregarGraficos() {
 }
 
 // ==================================================
-// 4. FETCH DE TABELAS
+// 5. FETCH DE TABELAS
 // ==================================================
 
 async function buscarDadosApolices() {
@@ -204,7 +238,8 @@ async function buscarDadosApolices() {
         return dados;
     } catch (error) {
         console.error(error);
-        document.getElementById('lista-apolices').innerHTML = '<tr><td colspan="7" style="text-align:center; color:red">Erro ao carregar.</td></tr>';
+        const el = document.getElementById('lista-apolices');
+        if(el) el.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red">Erro ao carregar.</td></tr>';
         return [];
     }
 }
@@ -217,16 +252,12 @@ async function buscarDadosClientes() {
         estadoGlobal.clientes.filtrados = dados;
         renderizarTabela('clientes');
         return dados;
-    } catch (error) {
-        console.error(error);
-        return [];
-    }
+    } catch (error) { console.error(error); return []; }
 }
 
 async function buscarDadosUsuarios() {
-    const tipo = localStorage.getItem('tipo_usuario');
-    if(tipo !== 'admin') return [];
-
+    // --- CORREÇÃO: Removemos a trava anterior. Deixa o fetch acontecer.
+    // O backend decide se retorna tudo (Admin/TI) ou apenas o próprio (User).
     try {
         const res = await fetch(`${API_BASE_URL}/usuarios`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
         const dados = await res.json();
@@ -234,14 +265,11 @@ async function buscarDadosUsuarios() {
         estadoGlobal.usuarios.filtrados = dados;
         renderizarTabela('usuarios');
         return dados;
-    } catch (error) {
-        console.error(error);
-        return [];
-    }
+    } catch (error) { console.error(error); return []; }
 }
 
 // ==================================================
-// 5. RENDERIZAÇÃO DE TABELAS
+// 6. RENDERIZAÇÃO DE TABELAS
 // ==================================================
 
 function renderizarTabela(tipo) {
@@ -323,7 +351,7 @@ window.mudarPagina = function(tipo, novaPagina) {
 };
 
 // ==================================================
-// 6. FUNÇÕES DE LINHA (BADGES)
+// 7. FUNÇÕES DE LINHA (BADGES)
 // ==================================================
 
 function renderLinhaApolice(a, tbody) {
@@ -331,8 +359,7 @@ function renderLinhaApolice(a, tbody) {
     let statusClass = 'badge-vigente';
     let statusTexto = 'VIGENTE';
     
-    // Lógica robusta de data para a Tabela
-    let dFim = new Date(a.vigencia_fim); // Se null, vira 1969/1970
+    let dFim = new Date(a.vigencia_fim); 
     if(a.vigencia_fim && a.vigencia_fim.includes('-')) {
         const parts = a.vigencia_fim.split('T')[0].split('-');
         dFim = new Date(parts[0], parts[1]-1, parts[2]);
@@ -379,7 +406,24 @@ function renderLinhaCliente(c, tbody) {
 }
 
 function renderLinhaUsuario(u, tbody) {
-    const badgeClass = u.tipo === 'admin' ? 'badge-admin' : 'badge-user';
+    // Define a classe do badge baseado no tipo
+    const badgeClass = u.tipo === 'admin' ? 'badge-admin' : (u.tipo === 'ti' ? 'badge-admin' : 'badge-user'); // TI usa badge similar ou igual a Admin se preferir
+    
+    // --- PULO DO GATO ---
+    // Extrai o ID do TOKEN (mais seguro que localStorage)
+    const token = localStorage.getItem('token');
+    const payload = parseJwt(token);
+    const idLogado = payload ? payload.id : null;
+    const tipoLogado = payload ? payload.tipo : null;
+
+    // Regra Master: Admin ou TI
+    const isMaster = (tipoLogado === 'admin' || tipoLogado === 'ti');
+
+    // Se NÃO for Master (Admin/TI), só renderiza se o ID da linha for igual ao ID do token
+    if (!isMaster && String(u.id) !== String(idLogado)) {
+        return; 
+    }
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
         <td>${u.nome}</td>
@@ -387,14 +431,14 @@ function renderLinhaUsuario(u, tbody) {
         <td><span class="badge ${badgeClass}">${u.tipo.toUpperCase()}</span></td>
         <td style="text-align:center;">
             <button class="action-btn btn-edit" onclick="window.location.href='registro.html?id=${u.id}&origin=dashboard'" title="Editar"><i class="fas fa-edit"></i></button>
-            <button class="action-btn btn-delete" onclick="deletarItem('usuarios', ${u.id})" title="Excluir"><i class="fas fa-trash"></i></button>
+            ${isMaster ? `<button class="action-btn btn-delete" onclick="deletarItem('usuarios', ${u.id})" title="Excluir"><i class="fas fa-trash"></i></button>` : ''}
         </td>
     `;
     tbody.appendChild(tr);
 }
 
 // ==================================================
-// 7. FUNÇÕES DE AÇÃO
+// 8. FUNÇÕES DE AÇÃO
 // ==================================================
 
 async function deletarItem(tipo, id) {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Seguradora Enterprise</title>
+    <title>Apólice System - Manutenção</title>
     
     <link rel="icon" href="assets/logo.png" type="image/png">
     
@@ -40,13 +40,13 @@
             width: 100%;
             max-width: 380px;
             text-align: center;
-            border-top: 5px solid #00a86b;
+            border-top: 5px solid #ff9800; /* Laranja para Manutenção */
         }
 
         .login-logo { max-width: 160px; margin-bottom: 25px; }
         .login-title { color: #333; font-size: 22px; margin-bottom: 30px; font-weight: 600; }
 
-        .input-group { position: relative; margin-bottom: 20px; text-align: left; }
+        .input-group { position: relative; margin-bottom: 20px; text-align: left; opacity: 0.6; /* Campos desabilitados visualmente */ }
         .input-group i { position: absolute; top: 50%; transform: translateY(-50%); left: 15px; color: #888; font-size: 14px; }
         
         .input-group input {
@@ -55,14 +55,13 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 15px;
-            transition: border-color 0.3s;
             box-sizing: border-box;
+            background-color: #f5f5f5; /* Fundo cinza */
+            cursor: not-allowed;
         }
 
-        .input-group input:focus { border-color: #003366; outline: none; }
-
-        .btn-login {
-            background-color: #003366;
+        .btn-manutencao {
+            background-color: #ff9800; /* Laranja */
             color: white;
             width: 100%;
             padding: 12px;
@@ -73,20 +72,21 @@
             cursor: pointer;
             margin-top: 10px;
             transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
-        .btn-login:hover { background-color: #002244; }
+        .btn-manutencao:hover { background-color: #f57c00; }
         
         /* Link de recuperação */
         .forgot-link {
             display: block;
             margin-top: 15px;
-            color: #666;
+            color: #999;
             text-decoration: none;
             font-size: 14px;
-        }
-        .forgot-link:hover {
-            color: #003366;
-            text-decoration: underline;
+            pointer-events: none; /* Link desativado */
         }
 
         .footer-text { margin-top: 25px; font-size: 12px; color: #999; }
@@ -101,18 +101,20 @@
         <form id="form-login">
             <div class="input-group">
                 <i class="fas fa-envelope"></i>
-                <input type="email" id="email" placeholder="E-mail Corporativo" required>
+                <input type="email" id="email" placeholder="E-mail Corporativo" disabled>
             </div>
             
             <div class="input-group">
                 <i class="fas fa-lock"></i>
-                <input type="password" id="senha" placeholder="Sua Senha" required>
+                <input type="password" id="senha" placeholder="Sua Senha" disabled>
             </div>
 
-            <button type="submit" class="btn-login">ENTRAR</button>
+            <button type="button" class="btn-manutencao" onclick="exibirAvisoManutencao()">
+                <i class="fas fa-tools"></i> Sistema em Manutenção
+            </button>
         </form>        
         
-        <a href="recuperar.html" class="forgot-link">Esqueci minha senha</a>
+        <a href="#" class="forgot-link">Esqueci minha senha</a>
 
         <p class="footer-text">
             &copy; 2025 Seguradora System.<br>Todos os direitos reservados ASL TECH Áidano Lima.
@@ -120,76 +122,20 @@
     </div>
 
     <script>
-        // Verifica se já está logado e redireciona
-        if (localStorage.getItem('token')) {
-            window.location.href = 'dashboard.html';
+        // Função simples para exibir o alerta de manutenção
+        function exibirAvisoManutencao() {
+            Swal.fire({
+                icon: 'info',
+                title: 'Atenção',
+                text: 'Sistema em Manutenção da base de dados. Aguardem!',
+                confirmButtonColor: '#ff9800',
+                confirmButtonText: 'Entendido'
+            });
         }
 
-        document.getElementById('form-login').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value.trim();
-            const senha = document.getElementById('senha').value.trim();
-            const btn = document.querySelector('.btn-login');
-            const originalText = btn.innerText;
-
-            if(!email || !senha) {
-                Swal.fire('Atenção', 'Preencha todos os campos.', 'warning');
-                return;
-            }
-
-            try {
-                // Estado de Carregamento
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validando...';
-                btn.disabled = true;
-                btn.style.opacity = '0.7';
-
-                const response = await fetch(`${API_URL}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, senha })
-                });
-
-                const data = await response.json(); 
-
-                if (response.ok) {
-                    // Login Sucesso: Salva tudo
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('usuario_logado', data.usuario.nome);
-                    localStorage.setItem('tipo_usuario', data.usuario.tipo);
-                    
-                    // Feedback Visual Rápido
-                    const Toast = Swal.mixin({
-                        toast: true, position: 'top-end', showConfirmButton: false, timer: 1000
-                    });
-                    
-                    await Toast.fire({ icon: 'success', title: 'Login realizado!' });
-                    
-                    // Redireciona
-                    window.location.href = 'dashboard.html';
-                } else {
-                    throw new Error(data.message || 'Dados inválidos');
-                }
-            } catch (error) {
-                console.error("Erro Login:", error);
-                
-                let msg = error.message;
-                if (msg.includes('Unexpected token') || msg.includes('JSON')) {
-                    msg = "Erro de conexão com o servidor. Verifique se o Backend está rodando.";
-                }
-
-                Swal.fire({ 
-                    icon: 'error', 
-                    title: 'Acesso Negado', 
-                    text: msg,
-                    confirmButtonColor: '#003366'
-                });
-            } finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
-                btn.style.opacity = '1';
-            }
-        });
+        // Removemos a lógica de login e redirecionamento automático
+        // O sistema está travado na tela de login.
     </script>
+
 </body>
 </html>
