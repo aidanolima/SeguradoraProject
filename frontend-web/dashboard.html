@@ -19,13 +19,43 @@
     frame-src * 'self' blob: data: gap:;">
     
     <link rel="icon" href="assets/logo.png" type="image/png">
-    <title>Gestor Clientes e Apólices - Painel</title>
+    <title>Gestor Clientes e Apólices - Homologação</title>
     
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
+        /* --- BANNER DE HOMOLOGAÇÃO (NOVO) --- */
+        .homolog-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #ffc107; /* Amarelo alerta */
+            color: #333;
+            text-align: center;
+            padding: 8px 0;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 10010; /* Maior que o menu */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            height: 35px; /* Altura fixa para cálculo */
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .homolog-banner i { margin-right: 8px; color: #000; }
+
+        /* Ajuste do Corpo para não cortar o topo */
+        body.dashboard-body {
+            padding-top: 35px !important; /* Espaço para o banner */
+        }
+
         /* --- LAYOUT DOS CARDS --- */
         .stats-container { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-right: 5px; }
         .stat-card { flex: 1; min-width: 150px; margin-bottom: 0; display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; }
@@ -85,13 +115,13 @@
             }
             .mobile-menu-btn { display: block; }
 
-            /* MENU COM ANIMAÇÃO CORRETA */
+            /* MENU COM ANIMAÇÃO CORRETA - AJUSTADO PARA BANNER */
             .header-nav {
                 position: fixed !important;
-                top: 0 !important;
+                top: 35px !important; /* AJUSTE: Começa abaixo do banner */
                 left: 0 !important;
                 width: 280px !important;
-                height: 100vh !important;
+                height: calc(100vh - 35px) !important; /* AJUSTE: Altura desconta o banner */
                 background-color: #003366 !important;
                 flex-direction: column !important;
                 padding: 0;
@@ -166,7 +196,8 @@
             .menu-overlay {
                 display: none;
                 position: fixed;
-                top: 0; left: 0; width: 100%; height: 100%;
+                top: 35px; /* AJUSTE: Overlay começa abaixo do banner */
+                left: 0; width: 100%; height: 100%;
                 background: rgba(0,0,0,0.6); 
                 z-index: 10000; 
                 backdrop-filter: blur(3px);
@@ -178,6 +209,10 @@
     </style>
 </head>
 <body class="dashboard-body">
+
+    <div class="homolog-banner">
+        <i class="fas fa-flask"></i> AMBIENTE DE HOMOLOGAÇÃO - TESTES E TREINAMENTOS
+    </div>
 
     <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()"></div>
 
