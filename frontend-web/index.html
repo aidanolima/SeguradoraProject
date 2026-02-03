@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apólice System</title>
+    <title>Gestão Apólices - Homologação</title>
     
     <link rel="icon" href="assets/logo.png" type="image/png">
     
@@ -21,6 +21,30 @@
     
 
     <style>
+        /* --- BANNER DE HOMOLOGAÇÃO (NOVO) --- */
+        .homolog-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #ffc107; /* Amarelo alerta padrão */
+            color: #333;
+            text-align: center;
+            padding: 8px 0;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 9999;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Ajuste para ícone de alerta no banner */
+        .homolog-banner i {
+            margin-right: 8px;
+            color: #000;
+        }
+
         /* Visual Enterprise Centralizado */
         body.login-body {
             background: linear-gradient(135deg, #003366 0%, #001a33 100%);
@@ -30,6 +54,7 @@
             height: 100vh;
             margin: 0;
             font-family: 'Segoe UI', sans-serif;
+            overflow: hidden; /* Evita barra de rolagem pelo banner */
         }
 
         .login-card {
@@ -41,6 +66,7 @@
             max-width: 380px;
             text-align: center;
             border-top: 5px solid #00a86b;
+            position: relative; /* Para garantir z-index correto */
         }
 
         .login-logo { max-width: 160px; margin-bottom: 25px; }
@@ -93,6 +119,10 @@
     </style>
 </head>
 <body class="login-body">
+
+    <div class="homolog-banner">
+        <i class="fas fa-flask"></i> AMBIENTE DE HOMOLOGAÇÃO - TESTES
+    </div>
 
     <div class="login-card">
         <img src="assets/logo.png" alt="Logo" class="login-logo">
