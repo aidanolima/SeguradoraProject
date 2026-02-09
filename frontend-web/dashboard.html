@@ -19,43 +19,13 @@
     frame-src * 'self' blob: data: gap:;">
     
     <link rel="icon" href="assets/logo.png" type="image/png">
-    <title>Gestor Clientes e Apólices - Homologação</title>
+    <title>Gestor Clientes e Apólices - Painel</title>
     
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
-        /* --- BANNER DE HOMOLOGAÇÃO (NOVO) --- */
-        .homolog-banner {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: #ffc107; /* Amarelo alerta */
-            color: #333;
-            text-align: center;
-            padding: 8px 0;
-            font-weight: bold;
-            font-size: 14px;
-            z-index: 10010; /* Maior que o menu */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            height: 35px; /* Altura fixa para cálculo */
-            box-sizing: border-box;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .homolog-banner i { margin-right: 8px; color: #000; }
-
-        /* Ajuste do Corpo para não cortar o topo */
-        body.dashboard-body {
-            padding-top: 35px !important; /* Espaço para o banner */
-        }
-
         /* --- LAYOUT DOS CARDS --- */
         .stats-container { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-right: 5px; }
         .stat-card { flex: 1; min-width: 150px; margin-bottom: 0; display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; }
@@ -80,11 +50,18 @@
         .badge-indefinido { background-color: #757575; color: white; } 
         .badge-placa { background-color: #eaeaea; color: #333; padding: 5px 10px; border-radius: 6px; font-family: 'Courier New', monospace; font-weight: 900; font-size: 14px; display: inline-block; border: 1px solid #ccc; letter-spacing: 1px; text-transform: uppercase; }
         .tabela-crud tbody td:first-child { text-transform: uppercase; font-weight: 800; color: #2c3e50; font-size: 0.95em; }
+        
         .action-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px !important; height: 32px !important; border-radius: 4px; border: none; cursor: pointer; color: white; transition: 0.2s; text-decoration: none; margin: 0 2px; padding: 0; font-size: 14px; line-height: 1; vertical-align: middle; }
         .btn-pdf-active { background-color: #d32f2f; } .btn-pdf-active:hover { background-color: #b71c1c; }
         .btn-pdf-disabled { background-color: #e0e0e0; color: #9e9e9e; cursor: not-allowed; }
         .btn-edit { background-color: #f0ad4e; } .btn-edit:hover { background-color: #ec971f; }
         .btn-delete { background-color: #d9534f; } .btn-delete:hover { background-color: #c9302c; }
+        
+        /* NOVOS BOTÕES DE OBSERVAÇÃO */
+        .btn-obs-on { background-color: #ffca28; color: #333; } /* Amarelo alerta */
+        .btn-obs-on:hover { background-color: #ffb300; }
+        .btn-obs-off { background-color: #e0e0e0; color: #bbb; cursor: default; } /* Cinza apagado */
+
         .btn-novo { text-decoration: none !important; color: white !important; display: inline-block; border-radius: 4px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s; }
         .btn-novo:hover { opacity: 0.9; text-decoration: none; }
 
@@ -101,7 +78,7 @@
         .page-btn.active { background-color: #003366; color: white; border-color: #003366; font-weight: bold; }
         .page-btn:disabled { background-color: #f4f4f4; color: #ccc; cursor: not-allowed; }
 
-        /* --- MENU MOBILE RESPONSIVO (CORRIGIDO) --- */
+        /* --- MENU MOBILE RESPONSIVO --- */
         .mobile-menu-btn { display: none; background: none; border: none; color: white; font-size: 24px; cursor: pointer; margin-right: 15px; }
         .close-menu-btn { display: none; }
         .sidebar-logo { display: none; }
@@ -115,32 +92,25 @@
             }
             .mobile-menu-btn { display: block; }
 
-            /* MENU COM ANIMAÇÃO CORRETA - AJUSTADO PARA BANNER */
             .header-nav {
                 position: fixed !important;
-                top: 35px !important; /* AJUSTE: Começa abaixo do banner */
+                top: 0 !important;
                 left: 0 !important;
                 width: 280px !important;
-                height: calc(100vh - 35px) !important; /* AJUSTE: Altura desconta o banner */
+                height: 100vh !important;
                 background-color: #003366 !important;
                 flex-direction: column !important;
                 padding: 0;
                 box-shadow: 4px 0 15px rgba(0,0,0,0.5);
-                
-                /* Animação suave deslizando */
                 transform: translateX(-100%);
                 transition: transform 0.3s ease-in-out;
-                
                 z-index: 10006 !important;
                 justify-content: flex-start !important;
                 overflow-y: auto;
                 display: flex !important;
             }
 
-            /* Quando ativo, traz para a tela */
-            .header-nav.active { 
-                transform: translateX(0) !important;
-            }
+            .header-nav.active { transform: translateX(0) !important; }
 
             .sidebar-header {
                 display: flex;
@@ -151,11 +121,7 @@
                 margin-bottom: 10px;
             }
 
-            .sidebar-logo {
-                display: block;
-                height: 32px;
-                width: auto;
-            }
+            .sidebar-logo { display: block; height: 32px; width: auto; }
 
             .close-menu-btn {
                 display: block;
@@ -181,23 +147,13 @@
                 transition: all 0.2s;
             }
             
-            .header-link:hover {
-                background-color: rgba(255,255,255,0.1);
-                color: #fff !important;
-            }
-
-            .header-link.active {
-                background-color: rgba(255,255,255,0.15);
-                color: #fff !important;
-                font-weight: 700;
-                border-left: 4px solid #ff9800;
-            }
+            .header-link:hover { background-color: rgba(255,255,255,0.1); color: #fff !important; }
+            .header-link.active { background-color: rgba(255,255,255,0.15); color: #fff !important; font-weight: 700; border-left: 4px solid #ff9800; }
 
             .menu-overlay {
                 display: none;
                 position: fixed;
-                top: 35px; /* AJUSTE: Overlay começa abaixo do banner */
-                left: 0; width: 100%; height: 100%;
+                top: 0; left: 0; width: 100%; height: 100%;
                 background: rgba(0,0,0,0.6); 
                 z-index: 10000; 
                 backdrop-filter: blur(3px);
@@ -209,10 +165,6 @@
     </style>
 </head>
 <body class="dashboard-body">
-
-    <div class="homolog-banner">
-        <i class="fas fa-flask"></i> AMBIENTE DE HOMOLOGAÇÃO - TESTES E TREINAMENTOS
-    </div>
 
     <div class="menu-overlay" id="menu-overlay" onclick="toggleMenu()"></div>
 
@@ -384,7 +336,7 @@
             </div>
         </div>
         
-        <div class="system-credits" style="text-align: center;">By Áidano Lima - ASL TECH</div>
+        <div class="system-credits" style="text-align: center;">&copy; 2026 Apólices System.<br>Todos os direitos reservados ASL SOLUÇÕES TECH. By Áidano Lima</div>
     </div> 
     
     <script src="js/dashboard.js"></script>

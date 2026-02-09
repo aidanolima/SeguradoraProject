@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Emissão de Apólice</title>
@@ -43,12 +46,12 @@
 
     <div class="main-container">
         <div style="margin-bottom: 20px; border-left: 5px solid #2e7d32; padding-left: 15px;">
-            <h2 style="color: #444; margin:0;">Emissão de Apólice</h2>
-            <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Importe o PDF e salve os dados.</p>
+            <h2 style="color: #444; margin:0;" id="titulo-pagina">Emissão de Apólice</h2>
+            <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Preencha os dados abaixo ou importe via PDF.</p>
         </div>
 
         <div class="upload-container">
-            <p style="font-size:15px; color:#333; margin-bottom:10px;"><b>Passo 1:</b> Selecione o PDF da apólice</p>
+            <p style="font-size:15px; color:#333; margin-bottom:10px;"><b>Passo 1:</b> Selecione o PDF da apólice (Opcional na edição)</p>
             <input type="file" id="pdf_upload" name="arquivo_pdf" accept="application/pdf" style="margin-bottom: 10px;">
             <br>
             <button type="button" id="btn-ler-pdf" class="btn-processar"><i class="fas fa-magic"></i> Ler Dados do PDF</button>
@@ -60,7 +63,7 @@
             
             <label style="font-weight:bold;">Veículo / Cliente *</label>
             <select id="veiculo_id" style="width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 4px; background: #fff;">
-                <option value="">Carregando...</option>
+                <option value="">Carregando lista...</option>
             </select>
 
             <div style="display: flex; gap: 15px; margin-bottom: 15px;">
@@ -80,7 +83,7 @@
                     <input type="text" id="premio_liquido" class="form-control mask-dinheiro" placeholder="R$ 0,00">
                 </div>
                 <div style="flex: 1; min-width: 120px;">
-                    <label style="color: #2e7d32; font-weight: bold;">Prêmio Total</label>                             
+                    <label style="color: #2e7d32; font-weight: bold;">Prêmio Total</label>                                
                     <input type="text" id="premio_total" class="form-control mask-dinheiro" placeholder="R$ 0,00">
                 </div>
                 <div style="flex: 1; min-width: 120px;">
@@ -110,7 +113,8 @@
 
     <script>
     (function() {
-        const BASE_URL = (typeof API_URL !== 'undefined') ? API_URL : 'http://localhost:3000';
+        // Configuração Inicial
+        const BASE_URL = (typeof API_URL !== 'undefined') ? API_URL : 'https://seguradoraproject.onrender.com';
         const localToken = localStorage.getItem('token');
         const urlParams = new URLSearchParams(window.location.search);
         const idEdicao = urlParams.get('id');
@@ -121,27 +125,19 @@
         if (document.getElementById('user-name-display') && nome) 
             document.getElementById('user-name-display').innerText = nome.split(' ')[0];
 
-        // --- CONVERSÃO INTELIGENTE (RESOLVE O PROBLEMA DO PONTO vs VÍRGULA) ---
+        // --- CONVERSÃO INTELIGENTE ---
         function converterParaFloat(valor) {
             if (!valor) return 0;
             let str = valor.toString();
-            
-            // Se tiver vírgula e ponto (Ex: 1.200,50), remove ponto e troca vírgula
-            if (str.includes(',') && str.includes('.')) {
-                return parseFloat(str.replace(/\./g, '').replace(',', '.'));
-            }
-            // Se tiver só vírgula (Ex: 12,34 ou 1200,50)
-            if (str.includes(',')) {
-                return parseFloat(str.replace(/\./g, '').replace(',', '.'));
-            }
-            // Se tiver só ponto (Ex: 12.34), aceita como decimal direto
+            if (str.includes(',') && str.includes('.')) return parseFloat(str.replace(/\./g, '').replace(',', '.'));
+            if (str.includes(',')) return parseFloat(str.replace(/\./g, '').replace(',', '.'));
             return parseFloat(str);
         }
 
         // --- CÁLCULO BLINDADO ---
         function calcularComissao() {
             let liquidoStr = document.getElementById('premio_liquido').value || '0';
-            const totalStr = document.getElementById('premio_total').value || '0'; // Fallback
+            const totalStr = document.getElementById('premio_total').value || '0'; 
             const porcStr = document.getElementById('porcentagem_comissao').value || '0';
             const repasseStr = document.getElementById('valor_repasse').value || '0';
             
@@ -150,27 +146,19 @@
             const porcentagem = parseFloat(porcStr);
             const repasse = converterParaFloat(repasseStr);
 
-            // CORREÇÃO: Se Líquido for 0 mas Total tiver valor, usa o Total como base
-            if (liquido === 0 && total > 0) {
-                liquido = total;
-            }
+            if (liquido === 0 && total > 0) liquido = total;
 
-            // Valida NaN
             const valLiquido = isNaN(liquido) ? 0 : liquido;
             const valPorc = isNaN(porcentagem) ? 0 : porcentagem;
             const valRepasse = isNaN(repasse) ? 0 : repasse;
 
-            // 1. Calcula a parte da porcentagem
             const comissaoPorcentagem = valLiquido * (valPorc / 100);
-            
-            // 2. Soma o repasse
             const comissaoFinal = comissaoPorcentagem + valRepasse;
 
-            // 3. Devolve formatado PT-BR
             document.getElementById('valor_comissao').value = comissaoFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
-        // LISTENERS
+        // Listeners para cálculo automático
         ['premio_liquido', 'premio_total', 'porcentagem_comissao', 'valor_repasse'].forEach(id => {
             const el = document.getElementById(id);
             if(el) {
@@ -184,7 +172,7 @@
             if(el && valor !== undefined && valor !== null) el.value = valor;
         }
 
-        // LER PDF
+        // --- IMPORTAR PDF ---
         document.getElementById('btn-ler-pdf').addEventListener('click', async (e) => {
             e.preventDefault(); 
             const fileInput = document.getElementById('pdf_upload');
@@ -212,10 +200,7 @@
                 setValor('premio_liquido', d.premio_liquido);
                 setValor('franquia_casco', d.franquia_casco);
                 
-                // Se líquido vier vazio do PDF, preenche com total
-                if (!d.premio_liquido && d.premio_total) {
-                    setValor('premio_liquido', d.premio_total);
-                }
+                if (!d.premio_liquido && d.premio_total) setValor('premio_liquido', d.premio_total);
 
                 setValor('valor_repasse', '0,00'); 
                 setValor('porcentagem_comissao', 15);
@@ -240,13 +225,14 @@
             }
         });
 
-        // SALVAR APÓLICE
+        // --- SALVAR / ATUALIZAR ---
         document.getElementById('btn-acao-salvar').addEventListener('click', async (e) => {
             e.preventDefault();
             const veiculo = document.getElementById('veiculo_id').value;
             if (!veiculo) return Swal.fire('Erro', 'Selecione o Cliente/Veículo!', 'error');
             
             const fileInput = document.getElementById('pdf_upload');
+            // Se for criação e não tiver PDF, avisa. Se for edição, PDF é opcional.
             if (!idEdicao && fileInput.files.length === 0) return Swal.fire('Atenção', 'Selecione o PDF.', 'warning');
 
             const formData = new FormData();
@@ -256,7 +242,6 @@
             formData.append('vigencia_inicio', document.getElementById('vigencia_inicio').value || '');
             formData.append('vigencia_fim', document.getElementById('vigencia_fim').value || '');
             
-            // Envia valores padrão 0.00 se vazio
             formData.append('premio_liquido', document.getElementById('premio_liquido').value || '0.00');
             formData.append('premio_total', document.getElementById('premio_total').value || '0.00');
             formData.append('franquia_casco', document.getElementById('franquia_casco').value || '0.00');
@@ -274,31 +259,48 @@
                 const json = await res.json();
 
                 if (res.ok) {
-                    await Swal.fire('Sucesso!', 'Salvo com sucesso!', 'success');
+                    // Mensagem personalizada baseada no contexto
+                    const msgSucesso = idEdicao ? 'Dados Atualizados e salvo!' : 'Apólice Criada com Sucesso!';
+                    await Swal.fire('Sucesso!', msgSucesso, 'success');
                     window.location.href = 'dashboard.html';
                 } else { Swal.fire('Erro', json.message || 'Erro ao salvar.', 'error'); }
             } catch(err) { Swal.fire('Erro', 'Falha de conexão.', 'error'); }
         });
 
-        // CARREGAR DADOS
+        // --- CARREGAMENTO INICIAL DE DADOS ---
         (async () => {
+            // Se estiver editando, mostra Loading IMEDIATAMENTE
+            if (idEdicao) {
+                Swal.fire({
+                    title: 'Carregando...',
+                    text: 'Buscando dados da apólice',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+                document.getElementById('titulo-pagina').innerText = "Editar Apólice";
+                document.getElementById('btn-acao-salvar').innerText = "ATUALIZAR DADOS";
+            }
+
             try {
+                // 1. Carrega lista de veículos
                 const res = await fetch(`${BASE_URL}/propostas`, { headers: { 'Authorization': `Bearer ${localToken}` } });
                 const list = await res.json();
                 const sel = document.getElementById('veiculo_id');
+                sel.innerHTML = '<option value="">Selecione...</option>';
                 list.forEach(i => {
                     const opt = document.createElement('option');
                     opt.value = i.id;
                     opt.text = `${i.nome} | ${i.placa}`;
                     sel.appendChild(opt);
                 });
-            } catch(e) {}
 
-            if(idEdicao) {
-                document.getElementById('btn-acao-salvar').innerText = "ATUALIZAR DADOS";
-                try {
-                    const res = await fetch(`${BASE_URL}/apolices/${idEdicao}`, { headers: { 'Authorization': `Bearer ${localToken}` } });
-                    const d = await res.json();
+                // 2. Se for edição, carrega dados da apólice
+                if(idEdicao) {
+                    const resApolice = await fetch(`${BASE_URL}/apolices/${idEdicao}`, { headers: { 'Authorization': `Bearer ${localToken}` } });
+                    if(!resApolice.ok) throw new Error("Erro ao buscar apólice");
+                    
+                    const d = await resApolice.json();
+                    
                     setValor('veiculo_id', d.veiculo_id);
                     setValor('numero_apolice', d.numero_apolice);
                     setValor('numero_proposta', d.numero_proposta);
@@ -308,6 +310,9 @@
                     setValor('valor_comissao', d.valor_comissao);
                     setValor('valor_repasse', d.valor_repasse);
 
+                    if(d.vigencia_inicio) setValor('vigencia_inicio', d.vigencia_inicio.split('T')[0]);
+                    if(d.vigencia_fim) setValor('vigencia_fim', d.vigencia_fim.split('T')[0]);
+
                     // Recalcula % visual
                     let liq = converterParaFloat(d.premio_liquido);
                     let comTotal = converterParaFloat(d.valor_comissao);
@@ -316,14 +321,16 @@
                     if(liq > 0 && comTotal > 0) {
                         let comissaoBase = comTotal - rep;
                         let perc = (comissaoBase / liq) * 100;
-                        setValor('porcentagem_comissao', Math.round(perc));
+                        setValor('porcentagem_comissao', Math.round(perc * 10) / 10);
                     } else {
                         setValor('porcentagem_comissao', 15);
                     }
-
-                    if(d.vigencia_inicio) setValor('vigencia_inicio', d.vigencia_inicio.split('T')[0]);
-                    if(d.vigencia_fim) setValor('vigencia_fim', d.vigencia_fim.split('T')[0]);
-                } catch(e) {}
+                    
+                    Swal.close(); // Fecha o loading quando tudo estiver preenchido
+                }
+            } catch(e) {
+                console.error(e);
+                if(idEdicao) Swal.fire('Erro', 'Falha ao carregar dados da edição.', 'error');
             }
         })();
 

@@ -16,42 +16,67 @@ const multerS3 = require('multer-s3');
 console.log("⏳ Iniciando configurações do servidor...");
 
 const app = express();
+
+// 🚫 Middleware Anti-Cache Global para a API
+app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    next();
+});
+
 const port = process.env.PORT || 10000;
 const JWT_SECRET = process.env.JWT_SECRET || 'seguradora_chave_secreta_super_segura_2024';
 
 // ==================================================
-// ☁️ CONFIGURAÇÃO S3 (AWS)
+// ☁️ CONFIGURAÇÃO S3 (AWS) - BLINDADA
 // ==================================================
 let uploadS3; 
 let uploadMemory; 
 let s3Client; 
 
-try {
-    s3Client = new S3Client({
-        region: process.env.AWS_REGION,
-        credentials: {
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-        }
-    });
+// Verifica se as chaves existem antes de tentar conectar (Evita crash)
+const hasAwsKeys = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && process.env.AWS_BUCKET_NAME;
 
-    uploadS3 = multer({
-        storage: multerS3({
-            s3: s3Client,
-            bucket: process.env.AWS_BUCKET_NAME,
-            contentType: multerS3.AUTO_CONTENT_TYPE,
-            key: function (req, file, cb) {
-                const cleanName = file.originalname.replace(/\s+/g, '-').replace(/[^\w.-]/g, '');
-                cb(null, Date.now().toString() + '-' + cleanName);
+if (hasAwsKeys) {
+    try {
+        s3Client = new S3Client({
+            region: process.env.AWS_REGION || 'us-east-1',
+            credentials: {
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
             }
-        })
-    });
-    uploadMemory = multer({ storage: multer.memoryStorage() });
-    console.log("✅ AWS S3 Configurado com sucesso!");
-} catch (err) {
-    console.error("❌ Erro ao configurar AWS S3:", err.message);
+        });
+
+        uploadS3 = multer({
+            storage: multerS3({
+                s3: s3Client,
+                bucket: process.env.AWS_BUCKET_NAME,
+                contentType: multerS3.AUTO_CONTENT_TYPE,
+                key: function (req, file, cb) {
+                    const cleanName = file.originalname.replace(/\s+/g, '-').replace(/[^\w.-]/g, '');
+                    cb(null, Date.now().toString() + '-' + cleanName);
+                }
+            })
+        });
+        uploadMemory = multer({ storage: multer.memoryStorage() });
+        console.log("✅ AWS S3 Configurado com sucesso!");
+    } catch (err) {
+        console.error("❌ Erro ao configurar AWS S3:", err.message);
+        usarArmazenamentoLocal();
+    }
+} else {
+    console.log("⚠️ Variáveis AWS ausentes. Usando armazenamento local (uploads/).");
+    usarArmazenamentoLocal();
+}
+
+function usarArmazenamentoLocal() {
     const storageDisk = multer.diskStorage({
-        destination: (req, file, cb) => cb(null, 'uploads/'),
+        destination: (req, file, cb) => {
+            const dir = 'uploads/';
+            if (!fs.existsSync(dir)){ fs.mkdirSync(dir); }
+            cb(null, dir);
+        },
         filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
     });
     uploadS3 = multer({ storage: storageDisk });
@@ -166,7 +191,6 @@ const safeCurrency = (v) => {
 const safeInt = (v) => { if (!v || v === '' || v === 'null') return null; return isNaN(parseInt(v)) ? null : parseInt(v); };
 
 // --- FUNÇÃO MESTRA DE PERMISSÃO ---
-// Define quem manda no sistema (Admin e TI)
 const isMasterUser = (tipo) => (tipo === 'admin' || tipo === 'ti');
 
 // ==================================================
@@ -185,11 +209,11 @@ app.post('/login', async (req, res) => {
     } catch (error) { res.status(500).json({ message: "Erro interno." }); }
 });
 
-app.post('/forgot-password', async (req, res) => { /* ... */ res.json({message: "OK"}); });
-app.post('/reset-password', async (req, res) => { /* ... */ res.json({message: "OK"}); });
+app.post('/forgot-password', async (req, res) => { res.json({message: "OK"}); });
+app.post('/reset-password', async (req, res) => { res.json({message: "OK"}); });
 
 // ==================================================
-// 👤 GESTÃO DE USUÁRIOS
+// 👤 GESTÃO DE USUÁRIOS (FILTRADA)
 // ==================================================
 app.post('/registrar', authenticateToken, async (req, res) => {
     try {
@@ -204,7 +228,6 @@ app.get('/usuarios', authenticateToken, async (req, res) => {
         let query = 'SELECT id, nome, email, tipo FROM usuarios';
         let params = [];
 
-        // SE NÃO FOR MASTER (Admin ou TI), Filtra apenas o próprio
         if (!isMasterUser(req.user.tipo)) {
             query += ' WHERE id = ?';
             params.push(req.user.id);
@@ -232,7 +255,6 @@ app.put('/usuarios/:id', authenticateToken, async (req, res) => {
         const { nome, email, senha, tipo } = req.body;
         let tipoFinal = tipo;
         
-        // Se não for Master, não pode mudar seu próprio tipo
         if (!isMasterUser(req.user.tipo)) {
             const [u] = await pool.query('SELECT tipo FROM usuarios WHERE id = ?', [req.user.id]);
             tipoFinal = u[0].tipo;
@@ -247,10 +269,19 @@ app.put('/usuarios/:id', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// --- ROTA DE EXCLUSÃO DE USUÁRIOS (COM TRAVA DE SEGURANÇA PARA TI) ---
 app.delete('/usuarios/:id', authenticateToken, async (req, res) => {
     try { 
-        // Permite TI excluir também
         if (!isMasterUser(req.user.tipo)) return res.status(403).json({ message: "Apenas admin/TI pode excluir." });
+        
+        // REGRA: TI NÃO EXCLUI ADMIN
+        if (req.user.tipo === 'ti') {
+            const [target] = await pool.query('SELECT tipo FROM usuarios WHERE id = ?', [req.params.id]);
+            if (target.length > 0 && target[0].tipo === 'admin') {
+                return res.status(403).json({ message: "BLOQUEADO: Usuário TI não pode excluir um Administrador." });
+            }
+        }
+
         await pool.query('DELETE FROM usuarios WHERE id = ?', [req.params.id]); 
         res.json({ message: "Excluído" }); 
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -267,7 +298,6 @@ app.get('/dashboard/comissoes', authenticateToken, async (req, res) => {
         let query = "";
         let params = [];
 
-        // ADMIN ou TI veem TUDO
         if (isMasterUser(tipoUsuario)) {
             query = `SELECT SUM(valor_comissao) as total FROM apolices WHERE status = 'EMITIDA'`;
         } else {
@@ -337,7 +367,7 @@ app.get('/dashboard-graficos', authenticateToken, async (req, res) => {
 });
 
 // ==================================================
-// 📄 CRUD APÓLICES E PROPOSTAS (FILTRADO)
+// 📄 APÓLICES (COM ROTA DE LEITURA POR ID)
 // ==================================================
 app.get('/apolices', authenticateToken, async (req, res) => {
     try {
@@ -357,23 +387,24 @@ app.get('/apolices', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/propostas', authenticateToken, async (req, res) => { 
-    try { 
-        let query = 'SELECT * FROM propostas';
-        let params = [];
-        
-        if(!isMasterUser(req.user.tipo)) {
-            query += ' WHERE usuario_id = ?';
+// --- ROTA DE LEITURA INDIVIDUAL DE APÓLICE ---
+app.get('/apolices/:id', authenticateToken, async (req, res) => {
+    try {
+        let query = 'SELECT * FROM apolices WHERE id = ?';
+        let params = [req.params.id];
+
+        // Se não for master, garante que só acessa a dele
+        if (!isMasterUser(req.user.tipo)) {
+            query += ' AND usuario_id = ?';
             params.push(req.user.id);
         }
-        
-        query += ' ORDER BY id DESC';
-        const [rows] = await pool.query(query, params); 
-        res.json(rows); 
+
+        const [rows] = await pool.query(query, params);
+        if (rows.length === 0) return res.status(404).json({ message: "Apólice não encontrada ou acesso negado." });
+        res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Demais rotas POST/PUT mantêm a lógica de salvar o usuario_id do criador
 app.post('/cadastrar-apolice', authenticateToken, uploadS3.any(), async (req, res) => {
     try {
         const arquivo = (req.files && req.files.length > 0) ? req.files[0] : null;
@@ -405,23 +436,73 @@ app.put('/apolices/:id', authenticateToken, uploadS3.any(), async (req, res) => 
         res.status(200).json({ message: "Atualizado" });
     } catch(e) { console.error(e); res.status(500).json({ message: e.message }); }
 });
+
 app.delete('/apolices/:id', authenticateToken, async (req, res) => {
     try { await pool.query('DELETE FROM apolices WHERE id = ?', [req.params.id]); res.json({ message: "Excluído" }); } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
+// ==================================================
+// 📄 PROPOSTAS (CLIENTES) - COM ROTA DE LEITURA E OBSERVAÇÕES
+// ==================================================
+app.get('/propostas', authenticateToken, async (req, res) => { 
+    try { 
+        let query = 'SELECT * FROM propostas';
+        let params = [];
+        
+        if(!isMasterUser(req.user.tipo)) {
+            query += ' WHERE usuario_id = ?';
+            params.push(req.user.id);
+        }
+        
+        query += ' ORDER BY id DESC';
+        const [rows] = await pool.query(query, params); 
+        res.json(rows); 
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- NOVA ROTA ADICIONADA: BUSCAR UM CLIENTE POR ID ---
+app.get('/propostas/:id', authenticateToken, async (req, res) => {
+    try {
+        let query = 'SELECT * FROM propostas WHERE id = ?';
+        let params = [req.params.id];
+
+        // Se não for master, garante que só acessa o dele
+        if (!isMasterUser(req.user.tipo)) {
+            query += ' AND usuario_id = ?';
+            params.push(req.user.id);
+        }
+
+        const [rows] = await pool.query(query, params);
+        if (rows.length === 0) return res.status(404).json({ message: "Cliente não encontrado ou acesso negado." });
+        res.json(rows[0]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+// -----------------------------------------------------------
 
 app.post('/cadastrar-proposta', authenticateToken, async (req, res) => {
     try { 
         const d = req.body; 
         const usuarioId = req.user.id; 
-        await pool.query(`INSERT INTO propostas (nome, documento, email, telefone, placa, modelo, cep, endereco, bairro, cidade, uf, numero, complemento, fabricante, chassi, ano_modelo, fipe, utilizacao, blindado, kit_gas, zero_km, cep_pernoite, cobertura_casco, carro_reserva, forma_pagamento, usuario_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, 
-        [d.nome, d.documento, d.email, d.telefone, d.placa, d.modelo, d.cep, d.endereco, d.bairro, d.cidade, d.uf, d.numero, d.complemento, d.fabricante, d.chassi, d.ano_modelo, d.fipe, d.utilizacao, d.blindado, d.kit_gas, d.zero_km, d.cep_pernoite, d.cobertura_casco, d.carro_reserva, d.forma_pagamento, usuarioId]); 
+        // --- CAMPO OBSERVACOES ADICIONADO AO INSERT ---
+        await pool.query(`INSERT INTO propostas (nome, documento, email, telefone, placa, modelo, cep, endereco, bairro, cidade, uf, numero, complemento, fabricante, chassi, ano_modelo, fipe, utilizacao, blindado, kit_gas, zero_km, cep_pernoite, cobertura_casco, carro_reserva, forma_pagamento, observacoes, usuario_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, 
+        [d.nome, d.documento, d.email, d.telefone, d.placa, d.modelo, d.cep, d.endereco, d.bairro, d.cidade, d.uf, d.numero, d.complemento, d.fabricante, d.chassi, d.ano_modelo, d.fipe, d.utilizacao, d.blindado, d.kit_gas, d.zero_km, d.cep_pernoite, d.cobertura_casco, d.carro_reserva, d.forma_pagamento, d.observacoes, usuarioId]); 
         res.status(201).json({ message: "Criado" }); 
     } catch(e) { res.status(500).json({message: e.message}); }
 });
 
 app.put('/propostas/:id', authenticateToken, async (req, res) => {
-    try { const d = req.body; await pool.query(`UPDATE propostas SET nome=?, documento=?, email=?, telefone=?, placa=?, modelo=?, cep=?, endereco=?, bairro=?, cidade=?, uf=?, numero=?, complemento=?, fabricante=?, chassi=?, ano_modelo=?, fipe=?, utilizacao=?, blindado=?, kit_gas=?, zero_km=?, cep_pernoite=?, cobertura_casco=?, carro_reserva=?, forma_pagamento=? WHERE id=?`, [d.nome, d.documento, d.email, d.telefone, d.placa, d.modelo, d.cep, d.endereco, d.bairro, d.cidade, d.uf, d.numero, d.complemento, d.fabricante, d.chassi, d.ano_modelo, d.fipe, d.utilizacao, d.blindado, d.kit_gas, d.zero_km, d.cep_pernoite, d.cobertura_casco, d.carro_reserva, d.forma_pagamento, req.params.id]); res.json({ message: "Atualizado" }); } catch (e) { res.status(500).json({ error: e.message }); }
+    try { 
+        const d = req.body; 
+        if (!isMasterUser(req.user.tipo)) {
+            const [check] = await pool.query('SELECT id FROM propostas WHERE id = ? AND usuario_id = ?', [req.params.id, req.user.id]);
+            if (check.length === 0) return res.status(403).json({ message: "Acesso negado." });
+        }
+        // --- CAMPO OBSERVACOES ADICIONADO AO UPDATE ---
+        await pool.query(`UPDATE propostas SET nome=?, documento=?, email=?, telefone=?, placa=?, modelo=?, cep=?, endereco=?, bairro=?, cidade=?, uf=?, numero=?, complemento=?, fabricante=?, chassi=?, ano_modelo=?, fipe=?, utilizacao=?, blindado=?, kit_gas=?, zero_km=?, cep_pernoite=?, cobertura_casco=?, carro_reserva=?, forma_pagamento=?, observacoes=? WHERE id=?`, [d.nome, d.documento, d.email, d.telefone, d.placa, d.modelo, d.cep, d.endereco, d.bairro, d.cidade, d.uf, d.numero, d.complemento, d.fabricante, d.chassi, d.ano_modelo, d.fipe, d.utilizacao, d.blindado, d.kit_gas, d.zero_km, d.cep_pernoite, d.cobertura_casco, d.carro_reserva, d.forma_pagamento, d.observacoes, req.params.id]); 
+        res.json({ message: "Atualizado" }); 
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
 app.delete('/propostas/:id', authenticateToken, async (req, res) => { try { await pool.query('DELETE FROM propostas WHERE id = ?', [req.params.id]); res.json({ message: "Excluído" }); } catch (e) { res.status(500).json({ error: e.message }); }});
 
 app.post('/importar-pdf', authenticateToken, uploadMemory.any(), async (req, res) => {
