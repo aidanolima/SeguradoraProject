@@ -49,6 +49,15 @@
             </h3>
 
             <form id="form-registro">
+                
+                <div class="form-group" style="margin-bottom: 25px; text-align: center; border: 2px dashed #e0e0e0; padding: 20px; border-radius: 8px; background-color: #fafafa;">
+                    <label for="foto-perfil" style="cursor: pointer; display: block; margin: 0;">
+                        <img id="preview-foto" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/></svg>" alt="Preview" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #7b1fa2; margin-bottom: 10px; background-color: #fff;">
+                        <br>
+                        <span style="color: #7b1fa2; font-weight: bold; font-size: 14px;"><i class="fas fa-camera"></i> Clique para escolher a foto</span>
+                    </label>
+                    <input type="file" id="foto-perfil" class="form-control" accept="image/*" style="display: none;">
+                </div>
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label>Nome Completo</label>
                     <input type="text" id="nome" placeholder="Ex: João Silva" required>
@@ -75,7 +84,7 @@
                     </div>
                 </div>
 
-                <button type="submit" id="btn-salvar" class="btn-novo" style="background-color: #7b1fa2; margin-top: 20px;">
+                <button type="submit" id="btn-salvar" class="btn-novo" style="background-color: #7b1fa2; margin-top: 20px; width: 100%; padding: 12px; font-size: 16px;">
                     CADASTRAR USUÁRIO
                 </button>
             </form>
@@ -84,41 +93,24 @@
     </div>
 
     <script>
-        // Configuração de API (Local vs Produção)
         const BASE_API = (typeof API_URL !== 'undefined') ? API_URL : 'https://seguradoraproject.onrender.com';
-        
         const token = localStorage.getItem('token');
-        const tipoUsuarioLogado = localStorage.getItem('tipo_usuario'); // Recupera o tipo de usuário
+        const tipoUsuarioLogado = localStorage.getItem('tipo_usuario'); 
         
-        // Verifica se tem ID na URL (Modo Edição)
         const urlParams = new URLSearchParams(window.location.search);
         const idEdicao = urlParams.get('id');
 
-        // Inicialização
         if (!token) window.location.href = 'index.html';
 
-        // ==================================================
-        // 🔒 TRAVA DE SEGURANÇA (CRÍTICO)
-        // ==================================================
-        // Define quem é MASTER (Admin ou TI)
         const isMaster = (tipoUsuarioLogado === 'admin' || tipoUsuarioLogado === 'ti');
 
-        // Se NÃO é Master E NÃO tem ID na URL (tentativa de criar novo) -> BLOQUEIA
         if (!isMaster && !idEdicao) {
             Swal.fire({
-                icon: 'warning',
-                title: 'Acesso Restrito',
-                text: 'Seu perfil permite apenas editar seus próprios dados.',
-                confirmButtonColor: '#7b1fa2',
-                confirmButtonText: 'Voltar ao Painel',
-                allowOutsideClick: false
-            }).then(() => {
-                window.location.href = 'dashboard.html';
-            });
-            // Para a execução do script aqui para não carregar o resto
-            throw new Error("Acesso negado: Usuário padrão tentou criar novo registro.");
+                icon: 'warning', title: 'Acesso Restrito', text: 'Seu perfil permite apenas editar seus próprios dados.',
+                confirmButtonColor: '#7b1fa2', confirmButtonText: 'Voltar ao Painel', allowOutsideClick: false
+            }).then(() => { window.location.href = 'dashboard.html'; });
+            throw new Error("Acesso negado.");
         }
-        // ==================================================
         
         const nomeLogado = localStorage.getItem('usuario_logado');
         if(document.getElementById('user-name-display') && nomeLogado) 
@@ -128,75 +120,99 @@
             localStorage.clear(); window.location.href = 'index.html';
         });
 
-        // --- LÓGICA DE SEGURANÇA NO FRONT-END (DROPDOWN) ---
-        // Se NÃO for Master (Admin/TI), força o campo a ter apenas a opção 'padrao'
         if (!isMaster) {
             const selectTipo = document.getElementById('tipo');
             selectTipo.innerHTML = '<option value="padrao">Padrão (Visualizar)</option>';
-            selectTipo.disabled = true; // Visualmente travado
+            selectTipo.disabled = true; 
         }
 
-        // --- LÓGICA DE EDIÇÃO ---
-        if (idEdicao) {
-            prepararModoEdicao();
-        }
+        // --- PREVIEW DA FOTO LOCAL ---
+        let urlFotoSalva = null; 
+        const placeholderImg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/></svg>";
+
+        document.getElementById('foto-perfil').addEventListener('change', function(e) {
+            const preview = document.getElementById('preview-foto');
+            const file = e.target.files[0];
+            if (file) {
+                preview.src = URL.createObjectURL(file);
+            } else {
+                preview.src = urlFotoSalva ? urlFotoSalva : placeholderImg;
+            }
+        });
+
+        if (idEdicao) prepararModoEdicao();
 
         async function prepararModoEdicao() {
-            // 1. Ajustar Visual
             document.getElementById('titulo-pagina').innerHTML = '<i class="fas fa-user-edit"></i> Editar Usuário';
             document.getElementById('btn-salvar').innerText = "SALVAR ALTERAÇÕES";
-            document.getElementById('senha').required = false; // Senha opcional na edição
+            document.getElementById('senha').required = false; 
             document.getElementById('senha').placeholder = "(Não alterada)";
             document.getElementById('dica-senha').style.display = 'block';
 
-            // 2. Carregar Dados
             try {
-                const res = await fetch(`${BASE_API}/usuarios/${idEdicao}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const res = await fetch(`${BASE_API}/usuarios/${idEdicao}`, { headers: { 'Authorization': `Bearer ${token}` } });
                 if(!res.ok) throw new Error("Erro ao buscar usuário");
-                
                 const user = await res.json();
                 
                 document.getElementById('nome').value = user.nome;
                 document.getElementById('email').value = user.email;
                 
-                // Se for Master (Admin/TI), carrega o valor real. 
-                // Se não for, já travamos como 'padrao' acima.
-                if (isMaster) {
-                    document.getElementById('tipo').value = user.tipo;
+                if (user.url_foto) {
+                    urlFotoSalva = user.url_foto;
+                    document.getElementById('preview-foto').src = urlFotoSalva;
                 }
+                if (isMaster) document.getElementById('tipo').value = user.tipo;
 
-            } catch (error) {
-                console.error(error);
-                Swal.fire('Erro', 'Não foi possível carregar os dados.', 'error');
-            }
+            } catch (error) { Swal.fire('Erro', 'Não foi possível carregar os dados.', 'error'); }
         }
 
-        // --- SALVAR (CRIAR OU ATUALIZAR) ---
         document.getElementById('form-registro').addEventListener('submit', async (e) => {
             e.preventDefault();
-
-            const dados = {
-                nome: document.getElementById('nome').value,
-                email: document.getElementById('email').value,
-                senha: document.getElementById('senha').value,
-                tipo: document.getElementById('tipo').value
-            };
-
-            // Define URL e Método baseado no modo (Edição ou Criação)
-            const endpoint = idEdicao ? `${BASE_API}/usuarios/${idEdicao}` : `${BASE_API}/registrar`;
-            const method = idEdicao ? 'PUT' : 'POST';
+            const btnSalvar = document.getElementById('btn-salvar');
+            const textoOriginal = btnSalvar.innerText;
+            btnSalvar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+            btnSalvar.disabled = true;
 
             try {
-                Swal.fire({ title: 'Salvando...', didOpen: () => Swal.showLoading() });
-                
+                const inputFoto = document.getElementById('foto-perfil');
+                let urlFotoFinal = urlFotoSalva;
+
+                if (inputFoto.files.length > 0) {
+                    Swal.fire({ title: 'Enviando foto...', text: 'Aguarde...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    
+                    const formData = new FormData();
+                    formData.append('foto', inputFoto.files[0]);
+
+                    const uploadRes = await fetch(`${BASE_API}/api/upload-perfil`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                    });
+
+                    const uploadData = await uploadRes.json();
+                    if (uploadRes.ok) {
+                        urlFotoFinal = uploadData.url;
+                    } else {
+                        throw new Error(uploadData.message || "Falha ao enviar a foto.");
+                    }
+                }
+
+                Swal.fire({ title: 'Salvando dados...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                const dados = {
+                    nome: document.getElementById('nome').value,
+                    email: document.getElementById('email').value,
+                    senha: document.getElementById('senha').value,
+                    tipo: document.getElementById('tipo').value,
+                    url_foto: urlFotoFinal 
+                };
+
+                const endpoint = idEdicao ? `${BASE_API}/usuarios/${idEdicao}` : `${BASE_API}/registrar`;
+                const method = idEdicao ? 'PUT' : 'POST';
+
                 const res = await fetch(endpoint, {
                     method: method,
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify(dados)
                 });
 
@@ -209,9 +225,11 @@
                 }
             } catch (error) {
                 Swal.fire('Erro', error.message, 'error');
+            } finally {
+                btnSalvar.innerHTML = textoOriginal;
+                btnSalvar.disabled = false;
             }
         });
     </script>
-
 </body>
 </html>

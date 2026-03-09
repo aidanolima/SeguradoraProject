@@ -320,7 +320,7 @@ function renderizarTabela(tipo) {
     tbody.innerHTML = '';
 
     if (totalItens === 0) {
-        const cols = tipo === 'apolices' ? 7 : (tipo === 'clientes' ? 5 : 4);
+        const cols = tipo === 'apolices' ? 7 : (tipo === 'clientes' ? 5 : 5); // 5 cols no usuarios agora com foto
         tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center; padding: 20px;">Nenhum registro encontrado.</td></tr>`;
         if(containerPaginacao) containerPaginacao.innerHTML = '';
         return;
@@ -379,7 +379,7 @@ window.mudarPagina = function(tipo, novaPagina) {
 };
 
 // ==================================================
-// 7. FUNÇÕES DE LINHA (BADGES)
+// 7. FUNÇÕES DE LINHA (BADGES E CONTEÚDO DA TABELA)
 // ==================================================
 
 function renderLinhaApolice(a, tbody) {
@@ -414,10 +414,8 @@ function renderLinhaApolice(a, tbody) {
 }
 
 function renderLinhaCliente(c, tbody) {
-    // LÓGICA DO BOTÃO DE OBSERVAÇÃO
     let btnObs;
     if (c.observacoes && c.observacoes.trim() !== "") {
-        // Escapa aspas para não quebrar o HTML do onclick
         const obsTexto = c.observacoes.replace(/"/g, '&quot;').replace(/\n/g, ' ');
         btnObs = `<button class="action-btn btn-obs-on" onclick="verObservacao('${obsTexto}')" title="Ver Observação"><i class="fas fa-comment-dots"></i></button>`;
     } else {
@@ -438,6 +436,7 @@ function renderLinhaCliente(c, tbody) {
     tbody.appendChild(tr);
 }
 
+// === LÓGICA ATUALIZADA COM FOTO DO USUÁRIO ===
 function renderLinhaUsuario(u, tbody) {
     const badgeClass = u.tipo === 'admin' ? 'badge-admin' : (u.tipo === 'ti' ? 'badge-admin' : 'badge-user');
     
@@ -448,13 +447,21 @@ function renderLinhaUsuario(u, tbody) {
 
     const isMaster = (tipoLogado === 'admin' || tipoLogado === 'ti');
 
+    // Usuário padrão só pode ver ele mesmo
     if (!isMaster && String(u.id) !== String(idLogado)) {
         return; 
     }
 
+    // Avatar Padrão (Fallback)
+    const placeholderImg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/></svg>";
+    const fotoSrc = u.url_foto ? u.url_foto : placeholderImg;
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
-        <td>${u.nome}</td>
+        <td style="text-align: center;">
+            <img src="${fotoSrc}" alt="Foto" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid #7b1fa2; background-color: white;">
+        </td>
+        <td style="font-weight: bold; color: #2c3e50; text-transform: uppercase;">${u.nome}</td>
         <td>${u.email}</td>
         <td><span class="badge ${badgeClass}">${u.tipo.toUpperCase()}</span></td>
         <td style="text-align:center;">
@@ -468,7 +475,6 @@ function renderLinhaUsuario(u, tbody) {
 // 8. FUNÇÕES DE AÇÃO
 // ==================================================
 
-// Nova função para exibir a observação
 window.verObservacao = function(texto) {
     Swal.fire({
         title: 'Observações Gerais',
