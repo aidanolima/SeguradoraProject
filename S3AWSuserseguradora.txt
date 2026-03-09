@@ -1,0 +1,7 @@
+userseguradora
+
+Access Key S3 AWS
+ 
+
+Secret access key
+0vwjdCcOzfMl5pskwqIH9rNi9NJt8t1a+fv1Lkl6

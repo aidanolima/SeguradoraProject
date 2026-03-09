@@ -29,13 +29,14 @@ const port = process.env.PORT || 10000;
 const JWT_SECRET = process.env.JWT_SECRET || 'seguradora_chave_secreta_super_segura_2024';
 
 // ==================================================
-// ☁️ CONFIGURAÇÃO S3 (AWS) - BLINDADA
+// ☁️ CONFIGURAÇÃO S3 (AWS) - BLINDADA E ADAPTADA
 // ==================================================
 let uploadS3; 
 let uploadMemory; 
+let uploadPerfilS3; // <-- NOVO: Exclusivo para fotos públicas
 let s3Client; 
 
-// Verifica se as chaves existem antes de tentar conectar (Evita crash)
+// Verifica se as chaves existem antes de tentar conectar
 const hasAwsKeys = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && process.env.AWS_BUCKET_NAME;
 
 if (hasAwsKeys) {
@@ -48,6 +49,7 @@ if (hasAwsKeys) {
             }
         });
 
+        // Upload padrão (PDFs - Privado)
         uploadS3 = multer({
             storage: multerS3({
                 s3: s3Client,
@@ -59,6 +61,22 @@ if (hasAwsKeys) {
                 }
             })
         });
+
+        // Upload de Perfil (Fotos - Público)
+        uploadPerfilS3 = multer({
+            storage: multerS3({
+                s3: s3Client,
+                bucket: process.env.AWS_BUCKET_NAME,
+                contentType: multerS3.AUTO_CONTENT_TYPE,
+                acl: 'public-read', // Torna a imagem acessível via URL direta
+                key: function (req, file, cb) {
+                    const extensao = file.originalname.split('.').pop();
+                    const nomeUnico = Date.now() + '-' + Math.round(Math.random() * 1E9);
+                    cb(null, `perfil/${nomeUnico}.${extensao}`);
+                }
+            })
+        });
+
         uploadMemory = multer({ storage: multer.memoryStorage() });
         console.log("✅ AWS S3 Configurado com sucesso!");
     } catch (err) {
@@ -80,6 +98,7 @@ function usarArmazenamentoLocal() {
         filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
     });
     uploadS3 = multer({ storage: storageDisk });
+    uploadPerfilS3 = multer({ storage: storageDisk }); // Fallback local para perfil
     uploadMemory = multer({ storage: storageDisk });
 }
 
@@ -199,13 +218,14 @@ const isMasterUser = (tipo) => (tipo === 'admin' || tipo === 'ti');
 app.post('/login', async (req, res) => {
     try {
         const { email, senha } = req.body;
+        // Puxando url_foto para enviar no login (útil para o frontend mostrar a foto no header)
         const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
         if (rows.length === 0) return res.status(401).json({ message: "Usuário não encontrado." });
         const usuario = rows[0];
         if (senha !== usuario.senha) return res.status(401).json({ message: "Senha incorreta." });
         
         const token = jwt.sign({ id: usuario.id, email: usuario.email, tipo: usuario.tipo }, JWT_SECRET, { expiresIn: '24h' });
-        res.json({ auth: true, token: token, usuario: { nome: usuario.nome, tipo: usuario.tipo } });
+        res.json({ auth: true, token: token, usuario: { nome: usuario.nome, tipo: usuario.tipo, foto: usuario.url_foto } });
     } catch (error) { res.status(500).json({ message: "Erro interno." }); }
 });
 
@@ -213,19 +233,36 @@ app.post('/forgot-password', async (req, res) => { res.json({message: "OK"}); })
 app.post('/reset-password', async (req, res) => { res.json({message: "OK"}); });
 
 // ==================================================
-// 👤 GESTÃO DE USUÁRIOS (FILTRADA)
+// 📸 ROTA DE UPLOAD DE FOTO DE PERFIL
+// ==================================================
+app.post('/api/upload-perfil', authenticateToken, uploadPerfilS3.single('foto'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'Nenhuma imagem enviada.' });
+        }
+        // Se usar S3 usa req.file.location, se fallback local usa req.file.filename
+        const fotoUrl = req.file.location || `/uploads/${req.file.filename}`;
+        res.status(200).json({ message: 'Upload ok!', url: fotoUrl });
+    } catch (error) {
+        console.error("Erro upload perfil:", error);
+        res.status(500).json({ message: 'Erro upload' });
+    }
+});
+
+// ==================================================
+// 👤 GESTÃO DE USUÁRIOS (FILTRADA E COM FOTO)
 // ==================================================
 app.post('/registrar', authenticateToken, async (req, res) => {
     try {
-        const { nome, email, senha, tipo } = req.body;
-        await pool.query('INSERT INTO usuarios (nome, email, senha, tipo) VALUES (?, ?, ?, ?)', [nome, email, senha, tipo]);
+        const { nome, email, senha, tipo, url_foto } = req.body;
+        await pool.query('INSERT INTO usuarios (nome, email, senha, tipo, url_foto) VALUES (?, ?, ?, ?, ?)', [nome, email, senha, tipo, url_foto || null]);
         res.status(201).json({ message: "Usuário criado" });
     } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
 app.get('/usuarios', authenticateToken, async (req, res) => {
     try { 
-        let query = 'SELECT id, nome, email, tipo FROM usuarios';
+        let query = 'SELECT id, nome, email, tipo, url_foto FROM usuarios';
         let params = [];
 
         if (!isMasterUser(req.user.tipo)) {
@@ -243,7 +280,7 @@ app.get('/usuarios/:id', authenticateToken, async (req, res) => {
         if (!isMasterUser(req.user.tipo) && parseInt(req.params.id) !== req.user.id) {
             return res.status(403).json({ message: "Acesso negado." });
         }
-        const [rows] = await pool.query('SELECT id, nome, email, tipo FROM usuarios WHERE id = ?', [req.params.id]);
+        const [rows] = await pool.query('SELECT id, nome, email, tipo, url_foto FROM usuarios WHERE id = ?', [req.params.id]);
         if (rows.length > 0) res.json(rows[0]); else res.status(404).json({ message: "Não encontrado" });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -252,7 +289,7 @@ app.put('/usuarios/:id', authenticateToken, async (req, res) => {
     try {
         if (!isMasterUser(req.user.tipo) && parseInt(req.params.id) !== req.user.id) return res.status(403).json({ message: "Acesso negado." });
         
-        const { nome, email, senha, tipo } = req.body;
+        const { nome, email, senha, tipo, url_foto } = req.body;
         let tipoFinal = tipo;
         
         if (!isMasterUser(req.user.tipo)) {
@@ -261,9 +298,9 @@ app.put('/usuarios/:id', authenticateToken, async (req, res) => {
         }
 
         if (senha && senha.trim() !== '') {
-            await pool.query('UPDATE usuarios SET nome=?, email=?, senha=?, tipo=? WHERE id=?', [nome, email, senha, tipoFinal, req.params.id]);
+            await pool.query('UPDATE usuarios SET nome=?, email=?, senha=?, tipo=?, url_foto=? WHERE id=?', [nome, email, senha, tipoFinal, url_foto || null, req.params.id]);
         } else {
-            await pool.query('UPDATE usuarios SET nome=?, email=?, tipo=? WHERE id=?', [nome, email, tipoFinal, req.params.id]);
+            await pool.query('UPDATE usuarios SET nome=?, email=?, tipo=?, url_foto=? WHERE id=?', [nome, email, tipoFinal, url_foto || null, req.params.id]);
         }
         res.json({ message: "Atualizado" });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -288,8 +325,9 @@ app.delete('/usuarios/:id', authenticateToken, async (req, res) => {
 });
 
 // ==================================================
-// 📊 DASHBOARD (COMISSÕES TOTALIZADAS PARA ADMIN E TI)
+// O RESTO DO SEU CÓDIGO (Dashboard, Apólices, Propostas) CONTINUA IGUAL ABAIXO
 // ==================================================
+
 app.get('/dashboard/comissoes', authenticateToken, async (req, res) => {
     try {
         const usuarioId = req.user.id;
@@ -366,9 +404,6 @@ app.get('/dashboard-graficos', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ==================================================
-// 📄 APÓLICES (COM ROTA DE LEITURA POR ID)
-// ==================================================
 app.get('/apolices', authenticateToken, async (req, res) => {
     try {
         let query = `SELECT a.*, p.nome as cliente_nome, p.placa as veiculo_placa FROM apolices a LEFT JOIN propostas p ON a.veiculo_id = p.id`;
@@ -387,13 +422,11 @@ app.get('/apolices', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// --- ROTA DE LEITURA INDIVIDUAL DE APÓLICE ---
 app.get('/apolices/:id', authenticateToken, async (req, res) => {
     try {
         let query = 'SELECT * FROM apolices WHERE id = ?';
         let params = [req.params.id];
 
-        // Se não for master, garante que só acessa a dele
         if (!isMasterUser(req.user.tipo)) {
             query += ' AND usuario_id = ?';
             params.push(req.user.id);
@@ -441,9 +474,6 @@ app.delete('/apolices/:id', authenticateToken, async (req, res) => {
     try { await pool.query('DELETE FROM apolices WHERE id = ?', [req.params.id]); res.json({ message: "Excluído" }); } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ==================================================
-// 📄 PROPOSTAS (CLIENTES) - COM ROTA DE LEITURA E OBSERVAÇÕES
-// ==================================================
 app.get('/propostas', authenticateToken, async (req, res) => { 
     try { 
         let query = 'SELECT * FROM propostas';
@@ -460,13 +490,11 @@ app.get('/propostas', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// --- NOVA ROTA ADICIONADA: BUSCAR UM CLIENTE POR ID ---
 app.get('/propostas/:id', authenticateToken, async (req, res) => {
     try {
         let query = 'SELECT * FROM propostas WHERE id = ?';
         let params = [req.params.id];
 
-        // Se não for master, garante que só acessa o dele
         if (!isMasterUser(req.user.tipo)) {
             query += ' AND usuario_id = ?';
             params.push(req.user.id);
@@ -477,13 +505,11 @@ app.get('/propostas/:id', authenticateToken, async (req, res) => {
         res.json(rows[0]);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
-// -----------------------------------------------------------
 
 app.post('/cadastrar-proposta', authenticateToken, async (req, res) => {
     try { 
         const d = req.body; 
         const usuarioId = req.user.id; 
-        // --- CAMPO OBSERVACOES ADICIONADO AO INSERT ---
         await pool.query(`INSERT INTO propostas (nome, documento, email, telefone, placa, modelo, cep, endereco, bairro, cidade, uf, numero, complemento, fabricante, chassi, ano_modelo, fipe, utilizacao, blindado, kit_gas, zero_km, cep_pernoite, cobertura_casco, carro_reserva, forma_pagamento, observacoes, usuario_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, 
         [d.nome, d.documento, d.email, d.telefone, d.placa, d.modelo, d.cep, d.endereco, d.bairro, d.cidade, d.uf, d.numero, d.complemento, d.fabricante, d.chassi, d.ano_modelo, d.fipe, d.utilizacao, d.blindado, d.kit_gas, d.zero_km, d.cep_pernoite, d.cobertura_casco, d.carro_reserva, d.forma_pagamento, d.observacoes, usuarioId]); 
         res.status(201).json({ message: "Criado" }); 
@@ -497,7 +523,6 @@ app.put('/propostas/:id', authenticateToken, async (req, res) => {
             const [check] = await pool.query('SELECT id FROM propostas WHERE id = ? AND usuario_id = ?', [req.params.id, req.user.id]);
             if (check.length === 0) return res.status(403).json({ message: "Acesso negado." });
         }
-        // --- CAMPO OBSERVACOES ADICIONADO AO UPDATE ---
         await pool.query(`UPDATE propostas SET nome=?, documento=?, email=?, telefone=?, placa=?, modelo=?, cep=?, endereco=?, bairro=?, cidade=?, uf=?, numero=?, complemento=?, fabricante=?, chassi=?, ano_modelo=?, fipe=?, utilizacao=?, blindado=?, kit_gas=?, zero_km=?, cep_pernoite=?, cobertura_casco=?, carro_reserva=?, forma_pagamento=?, observacoes=? WHERE id=?`, [d.nome, d.documento, d.email, d.telefone, d.placa, d.modelo, d.cep, d.endereco, d.bairro, d.cidade, d.uf, d.numero, d.complemento, d.fabricante, d.chassi, d.ano_modelo, d.fipe, d.utilizacao, d.blindado, d.kit_gas, d.zero_km, d.cep_pernoite, d.cobertura_casco, d.carro_reserva, d.forma_pagamento, d.observacoes, req.params.id]); 
         res.json({ message: "Atualizado" }); 
     } catch (e) { res.status(500).json({ error: e.message }); }
