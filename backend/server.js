@@ -580,5 +580,6 @@ app.get('/apolices/:id/pdf-seguro', authenticateToken, async (req, res) => {
         } else { return res.json({ url: arquivo }); }
     } catch (e) { console.error("Erro link:", e); res.status(500).json({ message: "Erro ao gerar link." }); }
 });
+
 cron.schedule('0 9 * * *', async () => {});
 app.listen(port, () => { console.log(`🚀 SERVER NA PORTA ${port}`); });
