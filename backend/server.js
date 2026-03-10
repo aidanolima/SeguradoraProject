@@ -66,13 +66,16 @@ if (hasAwsKeys) {
         uploadPerfilS3 = multer({
             storage: multerS3({
                 s3: s3Client,
-                bucket: process.env.AWS_BUCKET_NAME,
+                bucket: process.env.AWS_BUCKET_NAME, // ex: seguradora-uploads
                 contentType: multerS3.AUTO_CONTENT_TYPE,
-                acl: 'public-read', // Torna a imagem acessível via URL direta
+                acl: 'public-read',
                 key: function (req, file, cb) {
                     const extensao = file.originalname.split('.').pop();
                     const nomeUnico = Date.now() + '-' + Math.round(Math.random() * 1E9);
-                    cb(null, `perfil/${nomeUnico}.${extensao}`);
+                    
+                    // 👇 AQUI ESTÁ A MÁGICA DA PASTA!
+                    // Ele vai criar: seguradora-auto/perfil/123456-foto.jpg
+                    cb(null, `seguradora-auto/perfil/${nomeUnico}.${extensao}`);
                 }
             })
         });
