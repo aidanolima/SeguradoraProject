@@ -552,18 +552,33 @@ app.get('/apolices/:id/pdf-seguro', authenticateToken, async (req, res) => {
         const [rows] = await pool.query('SELECT arquivo_pdf FROM apolices WHERE id = ?', [req.params.id]);
         if (rows.length === 0 || !rows[0].arquivo_pdf) return res.status(404).json({ message: "Arquivo não encontrado." });
         const arquivo = rows[0].arquivo_pdf;
+        
         if (!arquivo.startsWith('http')) return res.json({ url: `/uploads/${arquivo}` });
+        
         if (s3Client) {
             try {
                 const urlObj = new URL(arquivo);
                 let key = decodeURIComponent(urlObj.pathname.substring(1));
-                const command = new GetObjectCommand({ Bucket: process.env.AWS_BUCKET_NAME, Key: key });
+                
+                // 1. Extrair o nome limpo (removendo os números de data do começo)
+                // Ex: "1771595443978-ANDRE-LUIZ.pdf" vira apenas "ANDRE-LUIZ.pdf"
+                let nomeLimpo = key;
+                if (key.includes('-')) {
+                    nomeLimpo = key.substring(key.indexOf('-') + 1);
+                }
+
+                // 2. Adiciona o comando para forçar o nome do arquivo no navegador
+                const command = new GetObjectCommand({ 
+                    Bucket: process.env.AWS_BUCKET_NAME, 
+                    Key: key,
+                    ResponseContentDisposition: `inline; filename="${nomeLimpo}"` 
+                });
+                
                 const urlAssinada = await getSignedUrl(s3Client, command, { expiresIn: 900 });
                 return res.json({ url: urlAssinada });
             } catch (urlError) { return res.json({ url: arquivo }); }
         } else { return res.json({ url: arquivo }); }
     } catch (e) { console.error("Erro link:", e); res.status(500).json({ message: "Erro ao gerar link." }); }
 });
-
 cron.schedule('0 9 * * *', async () => {});
 app.listen(port, () => { console.log(`🚀 SERVER NA PORTA ${port}`); });
