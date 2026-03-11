@@ -100,7 +100,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const idEdicao = urlParams.get('id');
 
-        if (!token) window.location.href = 'index.html';
+        if (!token) window.location.href = 'login.html';
 
         const isMaster = (tipoUsuarioLogado === 'admin' || tipoUsuarioLogado === 'ti');
 

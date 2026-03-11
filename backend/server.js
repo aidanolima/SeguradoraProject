@@ -162,7 +162,8 @@ const servir = (res, arquivo) => {
 
 app.get('/', (req, res) => servir(res, 'index.html'));
 app.get('/index.html', (req, res) => servir(res, 'index.html'));
-app.get('/login', (req, res) => servir(res, 'index.html'));
+app.get('/login.html', (req, res) => servir(res, 'login.html')); // Nova rota
+app.get('/login', (req, res) => servir(res, 'login.html')); // Ajustado
 app.get('/dashboard.html', (req, res) => servir(res, 'dashboard.html'));
 app.get('/apolice.html', (req, res) => servir(res, 'apolice.html'));
 app.get('/registro.html', (req, res) => servir(res, 'registro.html'));
