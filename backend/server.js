@@ -69,7 +69,7 @@ const transporter = nodemailer.createTransport({
     secure: true,
     auth: {
         user: 'resend',
-        pass: 're_TZo5VLQD_5JvVe6nxqog7JynaX2ogF2f9' 
+        pass: 're_BPodXTYW_CoK4424SBJzfTpqs79wTfdM4' 
     }
 });
 
