@@ -204,7 +204,7 @@ const transporter = nodemailer.createTransport({
     secure: true,
     auth: {
         user: 'resend',
-        pass: 're_TZo5VLQD_5JvVe6nxqog7JynaX2ogF2f9' // ⚠️ COLOQUE AQUI A SUA CHAVE DO RESEND!
+        pass: 're_TZo5VLQD_5JvVe6nxqog7JynaX2ogF2f9' 
     }
 });
 
