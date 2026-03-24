@@ -61,7 +61,7 @@ app.use(express.json());
 app.use(cors());
 
 // ==================================================
-// 📧 CONFIGURAÇÃO DO CARTEIRO (RESEND)
+// 📧 CONFIGURAÇÃO DO CARTEIRO (RESEND) - PROTEGIDA
 // ==================================================
 const transporter = nodemailer.createTransport({
     host: 'smtp.resend.com',
@@ -69,7 +69,8 @@ const transporter = nodemailer.createTransport({
     secure: true,
     auth: {
         user: 'resend',
-        pass: 're_BPodXTYW_CoK4424SBJzfTpqs79wTfdM4' 
+        // Agora ele pega a chave lá das configurações do Render, protegida!
+        pass: process.env.RESEND_API_KEY 
     }
 });
 
