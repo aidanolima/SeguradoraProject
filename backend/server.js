@@ -161,5 +161,34 @@ app.get('/dashboard-resumo', async (req, res) => {
     } catch (e) { res.status(500).send(); }
 });
 
+// ==================================================
+// 🔐 ROTA PARA SALVAR A NOVA SENHA (FINALIZAÇÃO)
+// ==================================================
+app.post('/reset-password', async (req, res) => {
+    const { email, token, novaSenha } = req.body;
+
+    console.log(`🔑 Tentando atualizar senha para o e-mail: ${email}`);
+
+    try {
+        // No futuro, aqui checaremos o token. Por enquanto, vamos direto ao UPDATE:
+        const [result] = await pool.query(
+            'UPDATE usuarios SET senha = ? WHERE email = ?',
+            [novaSenha, email]
+        );
+
+        if (result.affectedRows === 0) {
+            console.log("❌ Usuário não encontrado no banco.");
+            return res.status(404).json({ message: "Usuário não encontrado." });
+        }
+
+        console.log("✅ Senha atualizada no banco de dados!");
+        res.status(200).json({ message: "Senha atualizada com sucesso!" });
+
+    } catch (error) {
+        console.error("❌ Erro ao atualizar senha no MySQL:", error);
+        res.status(500).json({ message: "Erro interno ao atualizar senha." });
+    }
+});
+
 // Iniciar servidor
 app.listen(port, () => { console.log(`🚀 SERVER RODANDO NA PORTA ${port}`); });
