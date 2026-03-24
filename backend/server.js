@@ -1,17 +1,18 @@
 require('dotenv').config();
-const path = require('path');
-const fs = require('fs');
+const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
 const multer = require('multer');
-const pdf = require('pdf-extraction');
-const jwt = require('jsonwebtoken');
-const express = require('express');
-const nodemailer = require('nodemailer');
-const cron = require('node-cron');
+const multerS3 = require('multer-s3');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
-const multerS3 = require('multer-s3');
+const pdf = require('pdf-extraction');
+const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer'); // Importado apenas UMA vez!
+const crypto = require('crypto');
+const path = require('path');
+const fs = require('fs');
+const cron = require('node-cron');
 
 console.log("⏳ Iniciando configurações do servidor...");
 
@@ -29,14 +30,13 @@ const port = process.env.PORT || 10000;
 const JWT_SECRET = process.env.JWT_SECRET || 'seguradora_chave_secreta_super_segura_2024';
 
 // ==================================================
-// ☁️ CONFIGURAÇÃO S3 (AWS) - BLINDADA E ADAPTADA
+// ☁️ CONFIGURAÇÃO S3 (AWS)
 // ==================================================
 let uploadS3; 
 let uploadMemory; 
-let uploadPerfilS3; // <-- NOVO: Exclusivo para fotos públicas
+let uploadPerfilS3; 
 let s3Client; 
 
-// Verifica se as chaves existem antes de tentar conectar
 const hasAwsKeys = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && process.env.AWS_BUCKET_NAME;
 
 if (hasAwsKeys) {
@@ -49,7 +49,6 @@ if (hasAwsKeys) {
             }
         });
 
-        // Upload padrão (PDFs - Privado)
         uploadS3 = multer({
             storage: multerS3({
                 s3: s3Client,
@@ -62,19 +61,15 @@ if (hasAwsKeys) {
             })
         });
 
-        // Upload de Perfil (Fotos - Público)
         uploadPerfilS3 = multer({
             storage: multerS3({
                 s3: s3Client,
-                bucket: process.env.AWS_BUCKET_NAME, // ex: seguradora-uploads
+                bucket: process.env.AWS_BUCKET_NAME,
                 contentType: multerS3.AUTO_CONTENT_TYPE,
                 acl: 'public-read',
                 key: function (req, file, cb) {
                     const extensao = file.originalname.split('.').pop();
                     const nomeUnico = Date.now() + '-' + Math.round(Math.random() * 1E9);
-                    
-                    // 👇 AQUI ESTÁ A MÁGICA DA PASTA!
-                    // Ele vai criar: seguradora-auto/perfil/123456-foto.jpg
                     cb(null, `seguradora-auto/perfil/${nomeUnico}.${extensao}`);
                 }
             })
@@ -101,39 +96,8 @@ function usarArmazenamentoLocal() {
         filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
     });
     uploadS3 = multer({ storage: storageDisk });
-    uploadPerfilS3 = multer({ storage: storageDisk }); // Fallback local para perfil
+    uploadPerfilS3 = multer({ storage: storageDisk }); 
     uploadMemory = multer({ storage: storageDisk });
-}
-
-// ==================================================
-// 📧 E-MAIL
-// ==================================================
-let transporter;
-async function configurarEmail() {
-    if (process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-        transporter = nodemailer.createTransport({
-            host: process.env.EMAIL_HOST,
-            port: process.env.EMAIL_PORT || 587,
-            secure: false,
-            auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-        });
-    } else {
-        const testAccount = await nodemailer.createTestAccount();
-        transporter = nodemailer.createTransport({
-            host: "smtp.ethereal.email", port: 587, secure: false,
-            auth: { user: testAccount.user, pass: testAccount.pass },
-        });
-    }
-}
-configurarEmail();
-async function enviarNotificacao(para, assunto, texto) {
-    if (!transporter) return;
-    try {
-        await transporter.sendMail({
-            from: process.env.EMAIL_FROM || '"Seguradora System" <sistema@seguradora.com>',
-            to: para, subject: assunto, text: texto
-        });
-    } catch (erro) { console.error(`❌ Falha envio email:`, erro.message); }
 }
 
 // ==================================================
@@ -162,8 +126,8 @@ const servir = (res, arquivo) => {
 
 app.get('/', (req, res) => servir(res, 'index.html'));
 app.get('/index.html', (req, res) => servir(res, 'index.html'));
-app.get('/login.html', (req, res) => servir(res, 'login.html')); // Nova rota
-app.get('/login', (req, res) => servir(res, 'login.html')); // Ajustado
+app.get('/login.html', (req, res) => servir(res, 'login.html'));
+app.get('/login', (req, res) => servir(res, 'login.html'));
 app.get('/dashboard.html', (req, res) => servir(res, 'dashboard.html'));
 app.get('/apolice.html', (req, res) => servir(res, 'apolice.html'));
 app.get('/registro.html', (req, res) => servir(res, 'registro.html'));
@@ -213,16 +177,14 @@ const safeCurrency = (v) => {
 };
 const safeInt = (v) => { if (!v || v === '' || v === 'null') return null; return isNaN(parseInt(v)) ? null : parseInt(v); };
 
-// --- FUNÇÃO MESTRA DE PERMISSÃO ---
 const isMasterUser = (tipo) => (tipo === 'admin' || tipo === 'ti');
 
 // ==================================================
-// 🌐 API (LOGIN E SENHAS)
+// 🌐 API (LOGIN)
 // ==================================================
 app.post('/login', async (req, res) => {
     try {
         const { email, senha } = req.body;
-        // Puxando url_foto para enviar no login (útil para o frontend mostrar a foto no header)
         const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
         if (rows.length === 0) return res.status(401).json({ message: "Usuário não encontrado." });
         const usuario = rows[0];
@@ -233,18 +195,74 @@ app.post('/login', async (req, res) => {
     } catch (error) { res.status(500).json({ message: "Erro interno." }); }
 });
 
-app.post('/forgot-password', async (req, res) => { res.json({message: "OK"}); });
-app.post('/reset-password', async (req, res) => { res.json({message: "OK"}); });
+// ==================================================
+// 📧 ROTA DE ENVIO DE EMAIL (RECUPERAÇÃO DE SENHA)
+// ==================================================
+const transporter = nodemailer.createTransport({
+    host: 'smtp.resend.com',
+    port: 465,
+    secure: true,
+    auth: {
+        user: 'resend',
+        pass: 're_TZo5VLQD_5JvVe6nxqog7JynaX2ogF2f9' // ⚠️ COLOQUE AQUI A SUA CHAVE DO RESEND!
+    }
+});
+
+app.post('/forgot-password', async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        // 1. VERIFICAR SE O E-MAIL EXISTE NO BANCO DE DADOS
+        /* const [userQuery] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
+        if (userQuery.length === 0) {
+            return res.status(404).json({ message: 'E-mail não encontrado no sistema.' });
+        }
+        */
+
+        const token = crypto.randomBytes(20).toString('hex');
+        const expiracao = new Date(Date.now() + 3600000); // 1 hora
+        
+        // 3. SALVAR ESSE TOKEN NO BANCO DE DADOS
+        /*
+        await pool.query('UPDATE usuarios SET reset_token = ?, reset_token_expires = ? WHERE email = ?', [token, expiracao, email]);
+        */
+
+        const resetLink = `https://gestaoclienteseapolices.com.br/nova-senha.html?token=${token}&email=${email}`;
+
+        const mailOptions = {
+            from: 'Gestão de Apólices <onboarding@resend.dev>', 
+            to: email,
+            subject: 'Recuperação de Senha - Gestão de Apólices',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                    <h2 style="color: #003366; text-align: center;">Recuperação de Senha</h2>
+                    <p style="color: #333; font-size: 16px;">Olá,</p>
+                    <p style="color: #333; font-size: 16px;">Você solicitou a recuperação de senha do sistema Gestão de Apólices. Clique no botão abaixo para cadastrar uma nova senha:</p>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${resetLink}" style="background-color: #00a86b; color: white; padding: 14px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">Redefinir Minha Senha</a>
+                    </div>
+                </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+        res.status(200).json({ message: 'E-mail com instruções enviado com sucesso!' });
+
+    } catch (error) {
+        console.error("Erro fatal na recuperação de senha:", error);
+        res.status(500).json({ message: 'Erro interno no servidor ao tentar enviar o e-mail.' });
+    }
+});
+
+app.post('/reset-password', async (req, res) => { res.json({message: "Ainda vamos construir!"}); });
 
 // ==================================================
 // 📸 ROTA DE UPLOAD DE FOTO DE PERFIL
 // ==================================================
 app.post('/api/upload-perfil', authenticateToken, uploadPerfilS3.single('foto'), (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ message: 'Nenhuma imagem enviada.' });
-        }
-        // Se usar S3 usa req.file.location, se fallback local usa req.file.filename
+        if (!req.file) return res.status(400).json({ message: 'Nenhuma imagem enviada.' });
         const fotoUrl = req.file.location || `/uploads/${req.file.filename}`;
         res.status(200).json({ message: 'Upload ok!', url: fotoUrl });
     } catch (error) {
@@ -254,7 +272,7 @@ app.post('/api/upload-perfil', authenticateToken, uploadPerfilS3.single('foto'),
 });
 
 // ==================================================
-// 👤 GESTÃO DE USUÁRIOS (FILTRADA E COM FOTO)
+// 👤 GESTÃO DE USUÁRIOS
 // ==================================================
 app.post('/registrar', authenticateToken, async (req, res) => {
     try {
@@ -268,12 +286,10 @@ app.get('/usuarios', authenticateToken, async (req, res) => {
     try { 
         let query = 'SELECT id, nome, email, tipo, url_foto FROM usuarios';
         let params = [];
-
         if (!isMasterUser(req.user.tipo)) {
             query += ' WHERE id = ?';
             params.push(req.user.id);
         }
-
         const [rows] = await pool.query(query, params);
         res.json(rows); 
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -310,61 +326,49 @@ app.put('/usuarios/:id', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// --- ROTA DE EXCLUSÃO DE USUÁRIOS (COM TRAVA DE SEGURANÇA PARA TI) ---
 app.delete('/usuarios/:id', authenticateToken, async (req, res) => {
     try { 
         if (!isMasterUser(req.user.tipo)) return res.status(403).json({ message: "Apenas admin/TI pode excluir." });
-        
-        // REGRA: TI NÃO EXCLUI ADMIN
         if (req.user.tipo === 'ti') {
             const [target] = await pool.query('SELECT tipo FROM usuarios WHERE id = ?', [req.params.id]);
             if (target.length > 0 && target[0].tipo === 'admin') {
                 return res.status(403).json({ message: "BLOQUEADO: Usuário TI não pode excluir um Administrador." });
             }
         }
-
         await pool.query('DELETE FROM usuarios WHERE id = ?', [req.params.id]); 
         res.json({ message: "Excluído" }); 
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ==================================================
-// O RESTO DO SEU CÓDIGO (Dashboard, Apólices, Propostas) CONTINUA IGUAL ABAIXO
+// 📊 DASHBOARD & APÓLICES
 // ==================================================
-
 app.get('/dashboard/comissoes', authenticateToken, async (req, res) => {
     try {
         const usuarioId = req.user.id;
         const tipoUsuario = req.user.tipo;
-        
         let query = "";
         let params = [];
-
         if (isMasterUser(tipoUsuario)) {
             query = `SELECT SUM(valor_comissao) as total FROM apolices WHERE status = 'EMITIDA'`;
         } else {
             query = `SELECT SUM(valor_comissao) as total FROM apolices WHERE usuario_id = ? AND status = 'EMITIDA'`;
             params = [usuarioId];
         }
-
         const [rows] = await pool.query(query, params);
         const total = rows[0].total ? parseFloat(rows[0].total) : 0.00;
         res.json({ totalComissoes: total });
-    } catch (e) { 
-        console.error("Erro comissões:", e); res.status(500).json({ message: "Erro comissões" }); 
-    }
+    } catch (e) { res.status(500).json({ message: "Erro comissões" }); }
 });
 
 app.get('/dashboard-resumo', authenticateToken, async (req, res) => {
     try {
         let where = "";
         let params = [];
-        
         if(!isMasterUser(req.user.tipo)) {
             where = " WHERE usuario_id = ?";
             params = [req.user.id];
         }
-
         const [u] = await pool.query('SELECT COUNT(*) as total FROM usuarios');
         const [a] = await pool.query(`SELECT COUNT(*) as total FROM apolices ${where}`, params);
         const [v] = await pool.query(`SELECT COUNT(*) as total FROM propostas ${where}`, params);
@@ -412,12 +416,10 @@ app.get('/apolices', authenticateToken, async (req, res) => {
     try {
         let query = `SELECT a.*, p.nome as cliente_nome, p.placa as veiculo_placa FROM apolices a LEFT JOIN propostas p ON a.veiculo_id = p.id`;
         let params = [];
-
         if (!isMasterUser(req.user.tipo)) {
             query += ` WHERE a.usuario_id = ?`;
             params.push(req.user.id);
         }
-
         query += ` ORDER BY a.id DESC`;
         
         const [rows] = await pool.query(query, params);
@@ -430,12 +432,10 @@ app.get('/apolices/:id', authenticateToken, async (req, res) => {
     try {
         let query = 'SELECT * FROM apolices WHERE id = ?';
         let params = [req.params.id];
-
         if (!isMasterUser(req.user.tipo)) {
             query += ' AND usuario_id = ?';
             params.push(req.user.id);
         }
-
         const [rows] = await pool.query(query, params);
         if (rows.length === 0) return res.status(404).json({ message: "Apólice não encontrada ou acesso negado." });
         res.json(rows[0]);
@@ -482,12 +482,10 @@ app.get('/propostas', authenticateToken, async (req, res) => {
     try { 
         let query = 'SELECT * FROM propostas';
         let params = [];
-        
         if(!isMasterUser(req.user.tipo)) {
             query += ' WHERE usuario_id = ?';
             params.push(req.user.id);
         }
-        
         query += ' ORDER BY id DESC';
         const [rows] = await pool.query(query, params); 
         res.json(rows); 
@@ -498,12 +496,10 @@ app.get('/propostas/:id', authenticateToken, async (req, res) => {
     try {
         let query = 'SELECT * FROM propostas WHERE id = ?';
         let params = [req.params.id];
-
         if (!isMasterUser(req.user.tipo)) {
             query += ' AND usuario_id = ?';
             params.push(req.user.id);
         }
-
         const [rows] = await pool.query(query, params);
         if (rows.length === 0) return res.status(404).json({ message: "Cliente não encontrado ou acesso negado." });
         res.json(rows[0]);
@@ -560,15 +556,10 @@ app.get('/apolices/:id/pdf-seguro', authenticateToken, async (req, res) => {
             try {
                 const urlObj = new URL(arquivo);
                 let key = decodeURIComponent(urlObj.pathname.substring(1));
-                
-                // 1. Extrair o nome limpo (removendo os números de data do começo)
-                // Ex: "1771595443978-ANDRE-LUIZ.pdf" vira apenas "ANDRE-LUIZ.pdf"
                 let nomeLimpo = key;
                 if (key.includes('-')) {
                     nomeLimpo = key.substring(key.indexOf('-') + 1);
                 }
-
-                // 2. Adiciona o comando para forçar o nome do arquivo no navegador
                 const command = new GetObjectCommand({ 
                     Bucket: process.env.AWS_BUCKET_NAME, 
                     Key: key,
