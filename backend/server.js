@@ -84,39 +84,40 @@ const transporter = nodemailer.createTransport({
 // ==================================================
 app.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
+    console.log(`📧 Solicitação de recuperação para: ${email}`);
+
     try {
         const token = crypto.randomBytes(20).toString('hex');
         const resetLink = `https://gestaoclienteseapolices.com.br/redefinir-senha.html?token=${token}&email=${email}`;
 
-        console.log("🚀 Enviando via Resend SDK (HTTP)...");
-        
+        console.log("🚀 Enviando via Resend SDK (Caminho Seguro HTTP)...");
+
         const { data, error } = await resend.emails.send({
             from: 'Gestão de Apólices <onboarding@resend.dev>',
             to: [email],
             subject: 'Recuperação de Senha - Gestão de Apólices',
-            html: `<h2>Recuperação de Senha</h2><p>Clique abaixo:</p><a href="${resetLink}">Redefinir Senha</a>`
+            html: `
+                <div style="font-family: Arial; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px;">
+                    <h2 style="color: #003366;">Recuperação de Senha</h2>
+                    <p>Você solicitou a alteração de senha. Clique no botão abaixo para prosseguir:</p>
+                    <a href="${resetLink}" style="display: inline-block; padding: 12px 20px; background: #00a86b; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">Redefinir Minha Senha</a>
+                    <p style="margin-top: 20px; font-size: 12px; color: #777;">Se não foi você, ignore este e-mail.</p>
+                </div>
+            `
         });
 
         if (error) {
-            console.error("❌ Erro do Resend:", error);
-            return res.status(400).json({ error });
+            console.error("❌ Erro retornado pelo Resend:", error);
+            return res.status(400).json({ message: "Erro no serviço de e-mail." });
         }
 
         console.log("✅ E-mail enviado com sucesso! ID:", data.id);
-        res.status(200).json({ message: 'E-mail enviado!' });
+        res.status(200).json({ message: 'E-mail enviado com sucesso!' });
 
     } catch (err) {
-        console.error("❌ Erro fatal:", err);
-        res.status(500).json({ message: 'Erro interno.' });
+        console.error("❌ Erro fatal no servidor:", err);
+        res.status(500).json({ message: 'Erro interno ao processar e-mail.' });
     }
-});
-
-app.post('/reset-password', async (req, res) => {
-    const { email, novaSenha } = req.body;
-    try {
-        await pool.query('UPDATE usuarios SET senha = ? WHERE email = ?', [novaSenha, email]);
-        res.json({ message: "Senha atualizada com sucesso!" });
-    } catch (error) { res.status(500).json({ message: "Erro ao atualizar senha." }); }
 });
 
 // ==================================================
