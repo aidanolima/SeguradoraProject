@@ -81,7 +81,20 @@
         .mobile-menu-btn { display: none; background: none; border: none; color: white; font-size: 24px; cursor: pointer; margin-right: 15px; }
         .close-menu-btn { display: none; }
         .sidebar-logo { display: none; }
-        
+        /* --- CORREÇÃO DO LOGO NO HEADER --- */
+        .header-brand {
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+        .header-logo {
+            height: 45px; /* Tamanho ideal para o logo colorido caber na barra */
+            width: auto;
+            border-radius: 0; /* Remove a forma de bolinha */
+            background: transparent; /* Remove o fundo branco */
+            object-fit: contain;
+            margin-left: 20px;
+        }
         @media (max-width: 992px) {
             .app-header { justify-content: space-between; padding: 0 15px; position: relative; z-index: 10005; }
             .mobile-menu-btn { display: block; }
