@@ -18,6 +18,8 @@
     <link rel="icon" href="assets/logo.png" type="image/png">
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
         body, html {
@@ -96,18 +98,6 @@
             margin-bottom: 30px;
         }
 
-        /* Caixa de erro elegante integrada ao design */
-        #mensagem-erro {
-            color: #d9534f;
-            font-size: 14px;
-            margin-bottom: 20px;
-            display: none;
-            background-color: #fdf2f2;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #f2dede;
-        }
-
         .input-group {
             margin-bottom: 20px;
             text-align: left;
@@ -123,7 +113,6 @@
             top: 50%;
             transform: translateY(-50%);
             color: #888;
-            font-style: normal;
             font-size: 16px;
         }
 
@@ -241,23 +230,21 @@
             <div class="form-content">
                 <h2 class="login-title">Acesse sua Conta</h2>
                 
-                <div id="mensagem-erro"></div>
-                
                 <form id="form-login">
                     <div class="input-group">
                         <div class="input-wrapper">
-                            <i>&#9993;</i>
-                            <input type="email" id="email" placeholder="bruno@bruno.com" required>
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="email" placeholder="E-mail Corporativo" required>
                         </div>
                     </div>
                     <div class="input-group">
                         <div class="input-wrapper">
-                            <i>&#128274;</i>
-                            <input type="password" id="senha" placeholder="••••••" required>
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="senha" placeholder="Sua Senha" required>
                         </div>
                     </div>
                     <button type="submit" class="btn-entrar">ENTRAR</button>
-                    <a href="#" class="forgot-password">Esqueci minha senha</a>
+                    <a href="recuperar.html" class="forgot-password">Esqueci minha senha</a>
                 </form>
             </div>
 
@@ -269,7 +256,78 @@
     </div>
 
     <script src="js/config.js"></script>
-    <script src="js/api/auth.js"></script>     
-    
+
+    <script>
+        // Verifica se já está logado e redireciona
+        if (localStorage.getItem('token')) {
+            window.location.href = 'dashboard.html';
+        }
+
+        document.getElementById('form-login').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const senha = document.getElementById('senha').value.trim();
+            const btn = document.querySelector('.btn-entrar');
+            const originalText = btn.innerText;
+
+            if(!email || !senha) {
+                Swal.fire('Atenção', 'Preencha todos os campos.', 'warning');
+                return;
+            }
+
+            try {
+                // Estado de Carregamento
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validando...';
+                btn.disabled = true;
+                btn.style.opacity = '0.7';
+
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, senha })
+                });
+
+                const data = await response.json(); 
+
+                if (response.ok) {
+                    // Login Sucesso: Salva tudo
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('usuario_logado', data.usuario.nome);
+                    localStorage.setItem('tipo_usuario', data.usuario.tipo);
+                    
+                    // Feedback Visual Rápido
+                    const Toast = Swal.mixin({
+                        toast: true, position: 'top-end', showConfirmButton: false, timer: 1000
+                    });
+                    
+                    await Toast.fire({ icon: 'success', title: 'Login realizado!' });
+                    
+                    // Redireciona
+                    window.location.href = 'dashboard.html';
+                } else {
+                    throw new Error(data.message || 'Dados inválidos');
+                }
+            } catch (error) {
+                console.error("Erro Login:", error);
+                
+                let msg = error.message;
+                if (msg.includes('Unexpected token') || msg.includes('JSON')) {
+                    msg = "Erro de conexão com o servidor. Verifique se o Backend está rodando.";
+                }
+
+                Swal.fire({ 
+                    icon: 'error', 
+                    title: 'Acesso Negado', 
+                    text: msg,
+                    confirmButtonColor: '#003366'
+                });
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        });
+    </script>
 </body>
 </html>
