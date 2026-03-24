@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Nova Senha | Gestão de Apólices</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { background: #f4f6f8; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; }
+        .card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #00a86b; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Criar Nova Senha</h2>
+        <p>Digite sua nova senha abaixo.</p>
+        <form id="form-reset">
+            <input type="password" id="nova_senha" placeholder="Nova Senha" required>
+            <input type="password" id="confirma_senha" placeholder="Confirme a Nova Senha" required>
+            <button type="submit" id="btn-reset">Atualizar Senha</button>
+        </form>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const email = urlParams.get('email');
+
+        document.getElementById('form-reset').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const senha = document.getElementById('nova_senha').value;
+            const confirma = document.getElementById('confirma_senha').value;
+
+            if (senha !== confirma) {
+                return Swal.fire('Erro', 'As senhas não coincidem!', 'error');
+            }
+
+            const btn = document.getElementById('btn-reset');
+            btn.innerText = "Processando...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, token, novaSenha: senha })
+                });
+
+                const res = await response.json();
+                if (response.ok) {
+                    await Swal.fire('Sucesso', 'Senha atualizada com sucesso!', 'success');
+                    window.location.href = 'index.html';
+                } else {
+                    Swal.fire('Erro', res.message, 'error');
+                }
+            } catch (err) {
+                Swal.fire('Erro', 'Falha ao conectar ao servidor', 'error');
+            } finally {
+                btn.innerText = "Atualizar Senha";
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

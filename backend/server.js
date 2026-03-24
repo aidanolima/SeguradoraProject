@@ -227,7 +227,7 @@ app.post('/forgot-password', async (req, res) => {
         await pool.query('UPDATE usuarios SET reset_token = ?, reset_token_expires = ? WHERE email = ?', [token, expiracao, email]);
         */
 
-        const resetLink = `https://gestaoclienteseapolices.com.br/nova-senha.html?token=${token}&email=${email}`;
+        const resetLink = `https://gestaoclienteseapolices.com.br/redefinir-senha.html?token=${token}&email=${email}`;
 
         const mailOptions = {
             from: 'Gestão de Apólices <onboarding@resend.dev>', 
@@ -255,7 +255,29 @@ app.post('/forgot-password', async (req, res) => {
     }
 });
 
-app.post('/reset-password', async (req, res) => { res.json({message: "Ainda vamos construir!"}); });
+app.post('/reset-password', async (req, res) => {
+    const { email, token, novaSenha } = req.body;
+
+    try {
+        // 1. Verificar se o token e e-mail batem (No momento estamos em teste, mas a lógica seria buscar no banco)
+        // Por enquanto, vamos simular que o token é válido e atualizar a senha diretamente.
+        
+        const [result] = await pool.query(
+            'UPDATE usuarios SET senha = ? WHERE email = ?',
+            [novaSenha, email]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "Usuário não encontrado." });
+        }
+
+        res.json({ message: "Senha atualizada com sucesso!" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Erro ao atualizar senha." });
+    }
+});
 
 // ==================================================
 // 📸 ROTA DE UPLOAD DE FOTO DE PERFIL
