@@ -61,16 +61,19 @@ app.use(express.json());
 app.use(cors());
 
 // ==================================================
-// 📧 CONFIGURAÇÃO DO CARTEIRO (RESEND) - PROTEGIDA
+// 📧 CONFIGURAÇÃO DO CARTEIRO (RESEND) - VERSÃO NUVEM
 // ==================================================
 const transporter = nodemailer.createTransport({
     host: 'smtp.resend.com',
-    port: 465,
-    secure: true,
+    port: 587, // Mudamos de 465 para 587 (Padrão para Render/Nuvem)
+    secure: false, // Para a porta 587, isso deve ser FALSE
     auth: {
         user: 'resend',
-        // Agora ele pega a chave lá das configurações do Render, protegida!
-        pass: process.env.RESEND_API_KEY 
+        pass: process.env.re_aaNkzPUh_767j3NqfgFU6WokdMouQytgD 
+    },
+    // Adicional para evitar bloqueios de certificados em nuvem
+    tls: {
+        rejectUnauthorized: false
     }
 });
 
