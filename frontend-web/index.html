@@ -25,21 +25,19 @@
             padding: 0;
             height: 100vh;
             font-family: 'Inter', sans-serif;
-            overflow: hidden; /* Evita rolagem na tela */
+            overflow: hidden;
             background-color: white;
         }
 
-        /* Container Principal Split-Screen */
         .login-main-container {
             display: flex;
             height: 100vh;
             width: 100vw;
         }
 
-        /* Lado Esquerdo (60% - Branding/Marketing) */
         .login-left-panel {
             flex: 0 0 60%;
-            background-color: #003366; /* Azul escuro da sua marca */
+            background-color: #003366;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -72,7 +70,6 @@
             line-height: 1.5;
         }
 
-        /* Lado Direito (40% - Formulário) */
         .login-right-panel {
             flex: 1; 
             background-color: white;
@@ -97,6 +94,18 @@
             font-weight: 700;
             color: #003366;
             margin-bottom: 30px;
+        }
+
+        /* Caixa de erro elegante integrada ao design */
+        #mensagem-erro {
+            color: #d9534f;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+            background-color: #fdf2f2;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #f2dede;
         }
 
         .input-group {
@@ -182,10 +191,9 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Responsividade para Mobile */
         @media (max-width: 900px) {
             body, html {
-                overflow: auto; /* Permite rolar no celular */
+                overflow: auto;
             }
             .login-main-container {
                 flex-direction: column;
@@ -210,7 +218,7 @@
             .login-right-panel {
                 flex: 1;
                 padding: 40px 20px;
-                justify-content: flex-start; /* Joga o form para cima */
+                justify-content: flex-start;
             }
             .footer-login {
                 position: static;
@@ -232,6 +240,8 @@
         <div class="login-right-panel">
             <div class="form-content">
                 <h2 class="login-title">Acesse sua Conta</h2>
+                
+                <div id="mensagem-erro"></div>
                 
                 <form id="form-login">
                     <div class="input-group">
@@ -260,5 +270,11 @@
 
     <script src="js/config.js"></script>
     <script src="js/api/auth.js"></script> 
+    
+    <script>
+        document.getElementById('form-login').addEventListener('submit', function(e) {
+            e.preventDefault(); 
+        });
+    </script>
 </body>
 </html>
