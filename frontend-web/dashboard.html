@@ -127,7 +127,7 @@
             <div class="user-info">
                 <span class="user-name" style="color: white;">Olá, <strong id="user-name-display">...</strong></span>
             </div>
-            <button id="btn-logout" class="btn-logout-panel">SAIR</button>
+            <button id="btn-logout" class="btn-logout-panel" onclick="sairDoSistema()">SAIR</button>
         </div>
     </header>
 
@@ -280,6 +280,16 @@
             const overlay = document.getElementById('menu-overlay');
             nav.classList.toggle('active');
             overlay.classList.toggle('active');
+        }
+
+        // --- Nova Função Blindada de Logout ---
+        function sairDoSistema() {
+            // Limpa todos os dados de login salvos no navegador
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Redireciona para o index.html principal
+            window.location.replace('index.html');
         }
 
         document.addEventListener('DOMContentLoaded', () => {
