@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Clientes e Apólices | Em Breve</title>
+    <title>Gestão de Clientes e Apólices | Acesso</title>
     
     <meta name="description" content="Plataforma completa para gestão de clientes e apólices de seguro. Revolucione sua corretora.">
-    <meta name="theme-color" content="#7b1fa2">
+    <meta name="theme-color" content="#003366">
     
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://www.gestaoclienteseapolices.com.br/">
@@ -17,97 +17,248 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/logo.png" type="image/png">
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        /* (MANTENHA AQUI TODO O SEU CSS QUE JÁ ESTAVA NO INDEX) */
         body, html {
             margin: 0;
             padding: 0;
-            height: 100%;
+            height: 100vh;
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            overflow: hidden; /* Evita rolagem na tela */
+            background-color: white;
+        }
+
+        /* Container Principal Split-Screen */
+        .login-main-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Lado Esquerdo (60% - Branding/Marketing) */
+        .login-left-panel {
+            flex: 0 0 60%;
+            background-color: #003366; /* Azul escuro da sua marca */
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            padding: 60px;
+            color: white;
             text-align: center;
-            color: #2c3e50;
-        }
-
-        .landing-container {
-            background: white;
-            padding: 50px 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-            max-width: 500px;
-            width: 90%;
+            box-sizing: border-box;
+            border-right: 1px solid rgba(255,255,255,0.1);
             animation: fadeIn 1s ease-in-out;
         }
 
-        .logo {
-            width: 180px;
+        .left-logo {
+            width: 250px;
             height: auto;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
-        h1 {
-            font-size: 24px;
+        .left-headline {
+            font-size: 32px;
             font-weight: 800;
-            color: #003366;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            line-height: 1.2;
         }
 
-        p {
-            font-size: 16px;
-            color: #666;
+        .left-subheadline {
+            font-size: 18px;
+            color: rgba(255,255,255,0.8);
+            max-width: 500px;
             line-height: 1.5;
+        }
+
+        /* Lado Direito (40% - Formulário) */
+        .login-right-panel {
+            flex: 1; 
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 50px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .form-content {
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+            animation: fadeIn 1.2s ease-in-out;
+        }
+
+        .login-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #003366;
             margin-bottom: 30px;
         }
 
-        .badge-lancamento {
-            display: inline-block;
-            background-color: #7b1fa2;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
         }
 
-        .footer-link {
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+            font-style: normal;
+            font-size: 16px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 14px 14px 40px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            background-color: #F0F5FA;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #003366;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1);
+        }
+
+        .btn-entrar {
+            width: 100%;
+            padding: 14px;
+            background-color: #003366;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .btn-entrar:hover {
+            background-color: #002244;
+        }
+
+        .forgot-password {
+            display: block;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #666;
+            text-decoration: none;
+        }
+
+        .forgot-password:hover {
+            color: #003366;
+            text-decoration: underline;
+        }
+
+        .footer-login {
             position: absolute;
             bottom: 20px;
-            font-size: 12px;
+            font-size: 11px;
             color: #999;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .footer-link:hover {
-            color: #7b1fa2;
+            text-align: center;
+            width: 100%;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsividade para Mobile */
+        @media (max-width: 900px) {
+            body, html {
+                overflow: auto; /* Permite rolar no celular */
+            }
+            .login-main-container {
+                flex-direction: column;
+                height: auto;
+                min-height: 100vh;
+            }
+            .login-left-panel {
+                flex: none;
+                padding: 40px 20px;
+                border-right: none;
+            }
+            .left-logo {
+                width: 160px;
+                margin-bottom: 20px;
+            }
+            .left-headline {
+                font-size: 24px;
+            }
+            .left-subheadline {
+                font-size: 15px;
+            }
+            .login-right-panel {
+                flex: 1;
+                padding: 40px 20px;
+                justify-content: flex-start; /* Joga o form para cima */
+            }
+            .footer-login {
+                position: static;
+                margin-top: 50px;
+                padding-bottom: 20px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="landing-container">
-        <img src="assets/logo.png" alt="Logo Gestão de Clientes e Apólices" class="logo">
-        
-        <h1>O Futuro da Gestão de Clientes e Apólices</h1>
-        <p>Estamos preparando uma plataforma completa para revolucionar a forma como você gerencia suas apólices e clientes.</p>
-        
-        <div class="badge-lancamento">Lançamento em Breve</div>
+    <div class="login-main-container">
+        <div class="login-left-panel">
+            <img src="assets/logo.png" alt="Logo Gestão de Clientes e Apólices" class="left-logo">
+            <h1 class="left-headline">O Futuro da Gestão de Clientes e Apólices</h1>
+            <p class="left-subheadline">Gerencie apólices, clientes e comissões em um único lugar, de forma rápida, segura e escalável.</p>
+        </div>
+
+        <div class="login-right-panel">
+            <div class="form-content">
+                <h2 class="login-title">Acesse sua Conta</h2>
+                
+                <form id="form-login">
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <i>&#9993;</i>
+                            <input type="email" id="email" placeholder="bruno@bruno.com" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <i>&#128274;</i>
+                            <input type="password" id="senha" placeholder="••••••" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-entrar">ENTRAR</button>
+                    <a href="#" class="forgot-password">Esqueci minha senha</a>
+                </form>
+            </div>
+
+            <div class="footer-login">
+                © 2026 Seguradora System.<br>
+                Todos os direitos reservados ASL TECH Aidano Lima.
+            </div>
+        </div>
     </div>
 
-    <a href="login.html" class="footer-link">Acesso Restrito</a>
-
+    <script src="js/config.js"></script>
+    <script src="js/api/auth.js"></script> 
 </body>
 </html>
