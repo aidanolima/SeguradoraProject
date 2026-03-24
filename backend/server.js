@@ -13,6 +13,8 @@ const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
+const { Resend } = require('resend');
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 console.log("⏳ Iniciando configurações do servidor...");
 
@@ -82,37 +84,30 @@ const transporter = nodemailer.createTransport({
 // ==================================================
 app.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
-    console.log(`📧 Solicitação de recuperação para: ${email}`);
-
     try {
         const token = crypto.randomBytes(20).toString('hex');
         const resetLink = `https://gestaoclienteseapolices.com.br/redefinir-senha.html?token=${token}&email=${email}`;
 
-        const mailOptions = {
-            from: 'Gestão de Apólices <onboarding@resend.dev>', 
-            to: email,
+        console.log("🚀 Enviando via Resend SDK (HTTP)...");
+        
+        const { data, error } = await resend.emails.send({
+            from: 'Gestão de Apólices <onboarding@resend.dev>',
+            to: [email],
             subject: 'Recuperação de Senha - Gestão de Apólices',
-            html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-                    <h2 style="color: #003366; text-align: center;">Recuperação de Senha</h2>
-                    <p>Você solicitou a recuperação de senha. Clique no botão abaixo:</p>
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="${resetLink}" style="background-color: #00a86b; color: white; padding: 14px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Redefinir Minha Senha</a>
-                    </div>
-                    <p style="font-size: 12px; color: #999;">Se não solicitou, ignore este e-mail.</p>
-                </div>
-            `
-        };
+            html: `<h2>Recuperação de Senha</h2><p>Clique abaixo:</p><a href="${resetLink}">Redefinir Senha</a>`
+        });
 
-        console.log("🚀 Enviando via Resend...");
-        const info = await transporter.sendMail(mailOptions);
-        console.log("✅ E-mail enviado com sucesso! ID:", info.messageId);
+        if (error) {
+            console.error("❌ Erro do Resend:", error);
+            return res.status(400).json({ error });
+        }
 
-        res.status(200).json({ message: 'E-mail enviado com sucesso!' });
+        console.log("✅ E-mail enviado com sucesso! ID:", data.id);
+        res.status(200).json({ message: 'E-mail enviado!' });
 
-    } catch (error) {
-        console.error("❌ Erro ao enviar e-mail:", error);
-        res.status(500).json({ message: 'Erro ao enviar o e-mail.' });
+    } catch (err) {
+        console.error("❌ Erro fatal:", err);
+        res.status(500).json({ message: 'Erro interno.' });
     }
 });
 
