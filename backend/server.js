@@ -208,6 +208,16 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+// ADICIONE ESTE LOG AQUI PARA RASTREAR NO RENDER
+        console.log(`📧 Tentando enviar e-mail para: ${email} via Resend...`);
+
+        // 6. ENVIAR O E-MAIL!
+        const info = await transporter.sendMail(mailOptions);
+        
+        console.log("✅ Resposta do servidor de e-mail:", info.messageId);
+
+        res.status(200).json({ message: 'E-mail com instruções enviado com sucesso!' });
+
 app.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
 
