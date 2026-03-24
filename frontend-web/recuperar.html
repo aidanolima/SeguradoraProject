@@ -147,15 +147,9 @@
 
     </div>
     
+    <script src="js/config.js"></script>
+    
     <script>
-        // Configuração da API
-        // Ajuste aqui se sua rota base for diferente
-        //const API_BASE_URL = 'https://seguradoraproject.onrender.com'; 
-        
-        // Use a porta onde seu Node está rodando (3000 ou 10000)
-        // Olhe no terminal do VS Code qual porta ele abriu
-        const API_BASE_URL = 'http://localhost:3000';
-
         async function enviarRecuperacao() {
             const emailInput = document.getElementById('rec_email');
             const btnSubmit = document.getElementById('btn-submit');
@@ -178,9 +172,8 @@
             btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
 
             try {
-                // 2. Requisição ao Backend
-                // A rota sugerida é /forgot-password. Verifique se ela existe no seu server.js
-                const response = await fetch(`${API_BASE_URL}/forgot-password`, {
+                // 2. Requisição ao Backend usando a variável global API_URL (que vem do config.js)
+                const response = await fetch(`${API_URL}/forgot-password`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
@@ -200,14 +193,17 @@
                     window.location.href = 'index.html';
                 } else {
                     // ERRO DO SERVIDOR (ex: Usuário não encontrado)
-                    throw new Error(result.message || 'Erro ao processar solicitação.');
+                    throw new Error(result.message || 'Erro ao processar solicitação. E-mail não encontrado.');
                 }
 
             } catch (error) {
                 console.error("Erro na recuperação:", error);
                 
-                let msgErro = 'Não foi possível conectar ao servidor.';
-                if (error.message) msgErro = error.message;
+                let msgErro = 'Não foi possível conectar ao servidor. Tente novamente mais tarde.';
+                // Pega a mensagem de erro que veio do 'throw new Error' acima
+                if (error.message && !error.message.includes('Failed to fetch')) {
+                    msgErro = error.message; 
+                }
 
                 Swal.fire({
                     icon: 'error',
@@ -222,6 +218,5 @@
             }
         }
     </script>
-
     </body>
 </html>
