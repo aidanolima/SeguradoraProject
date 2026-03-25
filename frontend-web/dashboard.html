@@ -82,21 +82,28 @@
         .close-menu-btn { display: none; }
         .sidebar-logo { display: none; }
 
-        /* --- CORREÇÃO DO LOGO NO HEADER - FORÇANDO REGRAS --- */
-        .header-brand {
-            display: flex;
-            align-items: center;
-            height: 100%;
+        /* --- CORREÇÃO DEFINITIVA DO LOGO NO HEADER --- */
+        .header-brand, .header-brand a {
+            display: flex !important;
+            align-items: center !important;
+            height: 100% !important;
+            background: transparent !important; /* Garante que não há fundo branco atrás */
         }
         
         .header-logo {
-            height: 50px !important; /* Ajuste a altura conforme necessário */
+            height: 50px !important; 
             width: auto !important;
-            border-radius: 0 !important; /* Força a não ser redondo */
-            background: transparent !important; /* Remove qualquer fundo branco forçado */
+            border-radius: 0 !important; 
+            background: transparent !important; 
             object-fit: contain !important;
             margin-left: 15px !important;
-            padding: 0 !important; /* Remove qualquer espaçamento interno */
+            padding: 0 !important; 
+            
+            /* A MÁGICA QUE REMOVE O "EFEITO FANTASMA" BRANCO */
+            filter: none !important;
+            -webkit-filter: none !important;
+            mix-blend-mode: normal !important;
+            box-shadow: none !important;
         }
 
         @media (max-width: 992px) {
