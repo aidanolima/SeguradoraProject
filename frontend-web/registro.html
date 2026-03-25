@@ -19,6 +19,40 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+
+        /* --- CORREÇÃO DEFINITIVA DO LOGO NO HEADER --- */
+        .header-brand, .header-brand a {
+            display: flex !important;
+            align-items: center !important;
+            height: 100% !important;
+            background: transparent !important; /* Garante que não há fundo branco atrás */
+        }
+        
+        .header-logo {
+            height: 50px !important; 
+            width: auto !important;
+            border-radius: 0 !important; 
+            background: transparent !important; 
+            object-fit: contain !important;
+            margin-left: 15px !important;
+            padding: 0 !important; 
+            
+            /* A MÁGICA QUE REMOVE O "EFEITO FANTASMA" BRANCO */
+            filter: none !important;
+            -webkit-filter: none !important;
+            mix-blend-mode: normal !important;
+            box-shadow: none !important;
+        }
+        .loading { color: #666; font-style: italic; }
+        .btn-processar { background-color: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .btn-processar:hover { background-color: #1b5e20; }
+        .btn-salvar { width: 100%; margin-top: 20px; padding: 15px; background-color: #1976d2; color: white; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        .btn-salvar:hover { background-color: #1565c0; }
+        .upload-container { background-color: #e3f2fd; border: 2px dashed #1976d2; padding: 20px; border-radius: 8px; margin-top: 15px; text-align: center; }
+        #status-pdf { font-weight: bold; margin-top: 10px; min-height: 20px; }
+    </style>
 </head>
 <body class="dashboard-body">
 
