@@ -15,6 +15,29 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
+        /* --- CORREÇÃO DEFINITIVA DO LOGO NO HEADER --- */
+        .header-brand, .header-brand a {
+            display: flex !important;
+            align-items: center !important;
+            height: 100% !important;
+            background: transparent !important; /* Garante que não há fundo branco atrás */
+        }
+        
+        .header-logo {
+            height: 50px !important; 
+            width: auto !important;
+            border-radius: 0 !important; 
+            background: transparent !important; 
+            object-fit: contain !important;
+            margin-left: 15px !important;
+            padding: 0 !important; 
+            
+            /* A MÁGICA QUE REMOVE O "EFEITO FANTASMA" BRANCO */
+            filter: none !important;
+            -webkit-filter: none !important;
+            mix-blend-mode: normal !important;
+            box-shadow: none !important;
+        }
         /* --- ESTILOS DE TELA (PADRÃO) --- */
         .filter-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
