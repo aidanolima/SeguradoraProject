@@ -2,7 +2,7 @@
   "name": "Gestão de Clientes e Apólices",
   "short_name": "Gestão Seguros",
   "description": "Sistema completo para corretoras de seguros.",
-  "start_url": "/login.html",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#f5f7fa",
   "theme_color": "#7b1fa2",
