@@ -1,5 +1,4 @@
 require('dotenv').config();
-const nodemailer = require('nodemailer');
 const crypto = require('crypto'); // Biblioteca nativa do Node para gerar tokens de segurança
 const path = require('path');
 const fs = require('fs');
