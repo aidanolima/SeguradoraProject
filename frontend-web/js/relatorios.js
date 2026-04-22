@@ -3,19 +3,6 @@ const API_BASE_URL = (typeof API_URL !== 'undefined') ? API_URL : 'https://segur
 let dadosParaExportacao = []; // Variável global para guardar o filtro atual
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Verifica e exibe usuário
-    const nome = localStorage.getItem('usuario_logado');
-    const tipo = localStorage.getItem('tipo_usuario');
-    if(nome) document.getElementById('user-name-display').innerText = nome.split(' ')[0];
-
-    // Botão Logout
-    const btnLogout = document.getElementById('btn-logout');
-    if(btnLogout) {
-        btnLogout.addEventListener('click', () => {
-            localStorage.clear(); 
-            window.location.href = 'index.html';
-        });
-    }
 });
 
 // --- FUNÇÃO AUXILIAR DE CONVERSÃO ---

@@ -27,42 +27,37 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="js/navbar.js"></script>
+
+    <style>
+        /* 🛡️ CORREÇÃO DA NÉVOA NO LOGOTIPO DA SIDEBAR */
+        #global-sidebar img {
+            filter: none !important;
+            opacity: 1 !important;
+            mix-blend-mode: normal !important;
+        }
+    </style>
 </head>
 <body class="dashboard-body">
 
-    <header class="app-header">
-        <div class="header-brand">
-            <a href="dashboard.html">
-                <img src="assets/logo.png" alt="Logo" class="header-logo">
-            </a>
-        </div>
-
-        <nav class="header-nav">
-            <a href="dashboard.html" class="header-link active">PROPOSTAS</a>
-            <a href="apolice.html" class="header-link">APÓLICES</a>
-            <a href="registro.html?origin=dashboard" class="header-link">USUÁRIOS</a>
-            <a href="relatorios.html" class="header-link">RELATÓRIOS</a>
-        </nav>
-
-        <div class="header-user-area">
-            <div class="user-info">
-                <span class="user-name">Olá, <strong id="user-name-display">Visitante</strong></span>
-                <span class="user-role" id="user-role-display">...</span>
-            </div>
-            <button id="btn-logout" class="btn-logout-panel">SAIR</button>
-        </div>
-    </header>
+    <div id="global-sidebar"></div>
 
     <div class="main-container">
         
-        <div style="margin-bottom: 20px; border-left: 5px solid #4caf50; padding-left: 15px;">
-            <h2 id="titulo-pagina" style="color: #444; margin:0;">Cadastro de Cliente</h2>
-            <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Preencha os dados completos para gerar a proposta.</p>
+        <div style="margin-bottom: 20px;">
+            <a href="dashboard.html" style="text-decoration: none; color: #666; font-size: 13px;">
+                <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+            </a>
+        </div>
+
+        <div style="background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; border-left: 5px solid #00a86b;">
+            <h2 id="header-titulo" style="margin: 0; color: #333; font-size: 22px;">Cadastro de Cliente</h2>
+            <p id="header-subtitulo" style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Preencha os dados completos para gerar a proposta.</p>
         </div>
 
         <div class="card" id="painel-cadastro">
             
-            <h3 style="margin:0 0 20px 0; color:#4caf50; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+            <h3 style="margin:0 0 20px 0; color:#00a86b; border-bottom: 1px solid #eee; padding-bottom: 10px;">
                 <i class="fas fa-user"></i> 1. Dados do Segurado
             </h3>
             
@@ -92,7 +87,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="cep">CEP</label>
-                        <input type="text" id="cep" class="form-control mask-cep" placeholder="00000-000" maxlength="9" placeholder="00000-000" onblur="buscarEndereco(this.value)" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        <input type="text" id="cep" class="form-control mask-cep" placeholder="00000-000" maxlength="9" onblur="buscarEndereco(this.value)" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
                     </div>
                     <div class="form-group" style="flex: 2;">
                         <label for="endereco">Endereço</label>
@@ -125,7 +120,7 @@
                 </div>
             </fieldset>
 
-            <h3 style="margin:0 0 20px 0; color:#4caf50; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+            <h3 style="margin:0 0 20px 0; color:#00a86b; border-bottom: 1px solid #eee; padding-bottom: 10px;">
                 <i class="fas fa-car"></i> 2. Dados do Veículo
             </h3>
 
@@ -170,7 +165,6 @@
                             <option value="moto">Motocicleta</option>                            
                             <option value="aplicativo">Motorista de Aplicativo</option>
                             <option value="taxi">Motorista de Taxi</option>
-
                         </select>
                     </div>
                 </div>
@@ -197,7 +191,7 @@
                 </div>
             </fieldset>
 
-            <h3 style="margin:0 0 20px 0; color:#4caf50; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+            <h3 style="margin:0 0 20px 0; color:#00a86b; border-bottom: 1px solid #eee; padding-bottom: 10px;">
                 <i class="fas fa-shield-alt"></i> 3. Cobertura e Pagamento
             </h3>
 
@@ -231,7 +225,7 @@
                 </div>
             </fieldset>
 
-            <h3 style="margin:0 0 20px 0; color:#4caf50; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+            <h3 style="margin:0 0 20px 0; color:#00a86b; border-bottom: 1px solid #eee; padding-bottom: 10px;">
                 <i class="fas fa-comment-alt"></i> 4. Observações Gerais
             </h3>
             
@@ -244,7 +238,7 @@
                 </div>
             </fieldset>
 
-            <button type="button" onclick="salvarCliente()" id="btn-salvar" class="btn-novo" style="width:100%; margin-top:10px; padding: 15px; background-color: #4caf50; color: white; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; font-size: 16px;">
+            <button type="button" onclick="salvarCliente()" id="btn-salvar" class="btn-novo" style="width:100%; margin-top:10px; padding: 15px; background-color: #00a86b; color: white; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; font-size: 16px;">
                 <i class="fas fa-save"></i> SALVAR NOVO CLIENTE
             </button>
         </div>
@@ -283,19 +277,10 @@
         document.addEventListener('DOMContentLoaded', () => {
             if (!token) { window.location.href = 'index.html'; return; }
 
-            const nomeUser = localStorage.getItem('usuario_logado');
-            const tipoUser = localStorage.getItem('tipo_usuario');
-            
-            if (nomeUser) document.getElementById('user-name-display').innerText = nomeUser.split(' ')[0];
-            if (tipoUser) document.getElementById('user-role-display').innerText = tipoUser.toUpperCase();
-
-            document.getElementById('btn-logout').addEventListener('click', function() {
-                localStorage.clear();
-                window.location.href = 'index.html';
-            });
-
             if (idEdicao) {
-                document.getElementById('titulo-pagina').innerText = `Editando Cliente #${idEdicao}`;
+                document.getElementById('header-titulo').innerText = "Edição de Cliente";
+                document.getElementById('header-subtitulo').innerText = "Atualize as informações cadastradas.";
+                
                 const btn = document.getElementById('btn-salvar');
                 btn.innerHTML = '<i class="fas fa-sync-alt"></i> ATUALIZAR CLIENTE';
                 btn.style.backgroundColor = "#ffa000"; 
@@ -365,7 +350,7 @@
                 cobertura_casco: document.getElementById('cobertura_casco').value,
                 carro_reserva: document.getElementById('carro_reserva').value,
                 forma_pagamento: document.getElementById('forma_pagamento').value,
-                observacoes: document.getElementById('observacoes').value // NOVO CAMPO
+                observacoes: document.getElementById('observacoes').value 
             };
 
             const endpoint = idEdicao ? `${BASE_API}/propostas/${idEdicao}` : `${BASE_API}/cadastrar-proposta`;
@@ -388,7 +373,7 @@
                         icon: 'success',
                         title: 'Sucesso',
                         text: idEdicao ? "Cliente atualizado!" : "Cliente cadastrado!",
-                        confirmButtonColor: '#4caf50'
+                        confirmButtonColor: '#00a86b'
                     });
                     window.location.href = 'dashboard.html';
                 } else {
@@ -438,7 +423,7 @@
                 document.getElementById('cobertura_casco').value = d.cobertura_casco || 100;
                 document.getElementById('carro_reserva').value = d.carro_reserva || 'nao';
                 document.getElementById('forma_pagamento').value = d.forma_pagamento || 'boleto';
-                document.getElementById('observacoes').value = d.observacoes || ''; // PREENCHIMENTO NOVO
+                document.getElementById('observacoes').value = d.observacoes || ''; 
 
                 Swal.close(); 
             } catch (e) {

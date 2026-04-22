@@ -67,16 +67,4 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     }
-
-    // ======================================================
-    // 2. LOGOUT (Para usar no dashboard depois)
-    // ======================================================
-    const btnLogout = document.getElementById('btn-logout');
-    if (btnLogout) {
-        btnLogout.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.clear();
-            window.location.href = 'index.html';
-        });
-    }
 });

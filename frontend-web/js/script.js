@@ -1,33 +1,6 @@
 document.addEventListener("DOMContentLoaded", async function() {
 
     // ============================================================
-    // 1. GESTÃO DE SESSÃO E MENU
-    // ============================================================
-    const nomeUsuario = localStorage.getItem('usuario_logado');
-    const greetingElement = document.getElementById('user-greeting');
-    const linkSair = document.getElementById('btn-logout');
-
-    if (greetingElement) {
-        if (nomeUsuario && nomeUsuario !== 'undefined') {
-            greetingElement.innerText = `Olá, ${nomeUsuario}`;
-            greetingElement.style.color = "#2e7d32"; 
-            greetingElement.style.fontWeight = "bold";
-        } else {
-            console.warn("Sem sessão. Redirecionando...");
-            window.location.href = 'index.html';
-            return; 
-        }
-    }
-
-    if (linkSair) {
-        linkSair.addEventListener('click', function(e) {
-            e.preventDefault();
-            localStorage.clear();
-            window.location.href = 'index.html';
-        });
-    }
-
-    // ============================================================
     // 2. MODO EDIÇÃO (CARREGAR DADOS)
     // ============================================================
     const urlParams = new URLSearchParams(window.location.search);

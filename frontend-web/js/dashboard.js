@@ -41,9 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
     carregarResumoCards();
     inicializarDados();
 
-    configurarBusca('busca-apolices', 'apolices');
-    configurarBusca('busca-clientes', 'clientes');
-    configurarBusca('busca-usuarios', 'usuarios');
+    configuraBusca('busca-apolices', 'apolices');
+    configuraBusca('busca-clientes', 'clientes');
+    configuraBusca('busca-usuarios', 'usuarios');
 });
 
 async function inicializarDados() {
@@ -55,7 +55,7 @@ async function inicializarDados() {
     carregarGraficos();
 }
 
-function configurarBusca(inputId, tipo) {
+function configuraBusca(inputId, tipo) {
     const input = document.getElementById(inputId);
     if(input) {
         input.addEventListener('input', (e) => {
@@ -88,20 +88,12 @@ function verificarLogin() {
         return;
     }
     
-    const nome = localStorage.getItem('usuario_logado');
-    const tipo = localStorage.getItem('tipo_usuario'); 
-    
-    if (document.getElementById('user-name-display') && nome) 
-        document.getElementById('user-name-display').innerText = nome.split(' ')[0];
-    if (document.getElementById('user-role-display') && tipo) 
-        document.getElementById('user-role-display').innerText = tipo.toUpperCase();
-
     const secaoUsers = document.getElementById('secao-usuarios');
     const cardAdmin = document.getElementById('card-admin-stat');
     
     if(secaoUsers) secaoUsers.style.display = 'block'; 
 
-    const isMaster = (tipo === 'admin' || tipo === 'ti');
+    const isMaster = (payload.tipo === 'admin' || payload.tipo === 'ti');
 
     if (!isMaster) {
         if(cardAdmin) cardAdmin.style.display = 'none';
@@ -112,9 +104,6 @@ function verificarLogin() {
         const btnNovoUser = document.querySelector('#secao-usuarios .btn-novo');
         if(btnNovoUser) btnNovoUser.style.display = 'inline-block';
     }
-
-    const btnLogout = document.getElementById('btn-logout');
-    if(btnLogout) btnLogout.addEventListener('click', realizarLogout);
 }
 
 function realizarLogout() {
@@ -320,7 +309,7 @@ function renderizarTabela(tipo) {
     tbody.innerHTML = '';
 
     if (totalItens === 0) {
-        const cols = tipo === 'apolices' ? 7 : (tipo === 'clientes' ? 5 : 5); // 5 cols no usuarios agora com foto
+        const cols = tipo === 'apolices' ? 7 : (tipo === 'clientes' ? 5 : 5); 
         tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align:center; padding: 20px;">Nenhum registro encontrado.</td></tr>`;
         if(containerPaginacao) containerPaginacao.innerHTML = '';
         return;
@@ -417,9 +406,11 @@ function renderLinhaCliente(c, tbody) {
     let btnObs;
     if (c.observacoes && c.observacoes.trim() !== "") {
         const obsTexto = c.observacoes.replace(/"/g, '&quot;').replace(/\n/g, ' ');
-        btnObs = `<button class="action-btn btn-obs-on" onclick="verObservacao('${obsTexto}')" title="Ver Observação"><i class="fas fa-comment-dots"></i></button>`;
+        // 🛠️ INLINE STYLE APLICADO: AMARELO PARA BOTÃO ATIVO
+        btnObs = `<button class="action-btn btn-obs-on" style="background-color: #ffc107; color: #000; border: none;" onclick="verObservacao('${obsTexto}')" title="Ver Observação"><i class="fas fa-comment-dots"></i></button>`;
     } else {
-        btnObs = `<button class="action-btn btn-obs-off" title="Sem observações" disabled><i class="fas fa-comment-slash"></i></button>`;
+        // 🛠️ INLINE STYLE APLICADO: CINZA PARA BOTÃO DESATIVADO
+        btnObs = `<button class="action-btn btn-obs-off" style="background-color: #e0e0e0; color: #888; border: none; cursor: not-allowed;" title="Sem observações" disabled><i class="fas fa-comment-slash"></i></button>`;
     }
 
     const tr = document.createElement('tr');
@@ -436,7 +427,6 @@ function renderLinhaCliente(c, tbody) {
     tbody.appendChild(tr);
 }
 
-// === LÓGICA ATUALIZADA COM FOTO DO USUÁRIO ===
 function renderLinhaUsuario(u, tbody) {
     const badgeClass = u.tipo === 'admin' ? 'badge-admin' : (u.tipo === 'ti' ? 'badge-admin' : 'badge-user');
     
@@ -447,12 +437,10 @@ function renderLinhaUsuario(u, tbody) {
 
     const isMaster = (tipoLogado === 'admin' || tipoLogado === 'ti');
 
-    // Usuário padrão só pode ver ele mesmo
     if (!isMaster && String(u.id) !== String(idLogado)) {
         return; 
     }
 
-    // Avatar Padrão (Fallback)
     const placeholderImg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/></svg>";
     const fotoSrc = u.url_foto ? u.url_foto : placeholderImg;
 

@@ -13,68 +13,37 @@
     content="default-src * 'self' blob: data: gap:; 
     style-src * 'self' 'unsafe-inline' blob: data: gap:; 
     script-src * 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net blob: data: gap:; 
-    connect-src 'self' http://localhost:10000 http://localhost:3000 https://apolicesystem.onrender.com * 'unsafe-inline' blob: data: gap:;">
+    connect-src 'self' http://localhost:10000 http://localhost:3000 https://seguradoraproject.onrender.com * 'unsafe-inline' blob: data: gap:;">
     
     <link rel="icon" href="assets/logo.png" type="image/png">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/navbar.js"></script>
 
     <style>
-
-        /* --- CORREÇÃO DEFINITIVA DO LOGO NO HEADER --- */
-        .header-brand, .header-brand a {
-            display: flex !important;
-            align-items: center !important;
-            height: 100% !important;
-            background: transparent !important; /* Garante que não há fundo branco atrás */
-        }
-        
-        .header-logo {
-            height: 50px !important; 
-            width: auto !important;
-            border-radius: 0 !important; 
-            background: transparent !important; 
-            object-fit: contain !important;
-            margin-left: 15px !important;
-            padding: 0 !important; 
-            
-            /* A MÁGICA QUE REMOVE O "EFEITO FANTASMA" BRANCO */
+        /* 🛡️ CORREÇÃO DA NÉVOA NO LOGOTIPO DA SIDEBAR */
+        #global-sidebar img {
             filter: none !important;
-            -webkit-filter: none !important;
+            opacity: 1 !important;
             mix-blend-mode: normal !important;
-            box-shadow: none !important;
         }
-        .loading { color: #666; font-style: italic; }
-        .btn-processar { background-color: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; }
-        .btn-processar:hover { background-color: #1b5e20; }
-        .btn-salvar { width: 100%; margin-top: 20px; padding: 15px; background-color: #1976d2; color: white; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        .btn-salvar:hover { background-color: #1565c0; }
-        .upload-container { background-color: #e3f2fd; border: 2px dashed #1976d2; padding: 20px; border-radius: 8px; margin-top: 15px; text-align: center; }
-        #status-pdf { font-weight: bold; margin-top: 10px; min-height: 20px; }
     </style>
 </head>
 <body class="dashboard-body">
 
-    <header class="app-header">
-        <div class="header-brand"><a href="dashboard.html"><img src="assets/logo.png" alt="Logo" class="header-logo"></a></div>
-        <nav class="header-nav">
-            <a href="dashboard.html" class="header-link">DASHBOARD</a>
-            <a href="apolice.html" class="header-link">APÓLICES</a>
-            <a href="registro.html" class="header-link active">USUÁRIOS</a>
-            <a href="relatorios.html" class="header-link">RELATÓRIOS</a>
-        </nav>
-        <div class="header-user-area">
-            <div class="user-info"><span class="user-name">Olá, <strong id="user-name-display">...</strong></span></div>
-            <button id="btn-logout" class="btn-logout-panel">SAIR</button>
-        </div>
-    </header>
+    <div id="global-sidebar"></div>
 
     <div class="main-container">
         <div style="margin-bottom: 20px;">
             <a href="dashboard.html" style="text-decoration: none; color: #666; font-size: 13px;">
                 <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
             </a>
+        </div>
+
+        <div style="background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; border-left: 5px solid #7b1fa2;">
+            <h2 id="header-titulo" style="margin: 0; color: #333; font-size: 22px;">Cadastro de Usuário</h2>
+            <p id="header-subtitulo" style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Cadastre os dados e permissões de acesso do novo colaborador.</p>
         </div>
 
         <div class="card" style="max-width: 600px; margin: 0 auto; border-top: 4px solid #7b1fa2;">
@@ -146,38 +115,16 @@
             throw new Error("Acesso negado.");
         }
         
-        const nomeLogado = localStorage.getItem('usuario_logado');
-        if(document.getElementById('user-name-display') && nomeLogado) 
-            document.getElementById('user-name-display').innerText = nomeLogado.split(' ')[0];
-
-        document.getElementById('btn-logout').addEventListener('click', () => {
-            localStorage.clear(); window.location.href = 'index.html';
-        });
-
-        if (!isMaster) {
-            const selectTipo = document.getElementById('tipo');
-            selectTipo.innerHTML = '<option value="padrao">Padrão (Visualizar)</option>';
-            selectTipo.disabled = true; 
-        }
-
-        // --- PREVIEW DA FOTO LOCAL ---
-        let urlFotoSalva = null; 
-        const placeholderImg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/></svg>";
-
-        document.getElementById('foto-perfil').addEventListener('change', function(e) {
-            const preview = document.getElementById('preview-foto');
-            const file = e.target.files[0];
-            if (file) {
-                preview.src = URL.createObjectURL(file);
-            } else {
-                preview.src = urlFotoSalva ? urlFotoSalva : placeholderImg;
-            }
-        });
-
         if (idEdicao) prepararModoEdicao();
 
         async function prepararModoEdicao() {
+            // Ajusta o título pequeno dentro do card
             document.getElementById('titulo-pagina').innerHTML = '<i class="fas fa-user-edit"></i> Editar Usuário';
+            
+            // Ajusta o título grande do cabeçalho
+            document.getElementById('header-titulo').innerText = 'Edição de Usuário';
+            document.getElementById('header-subtitulo').innerText = 'Atualize os dados e as permissões do usuário selecionado.';
+            
             document.getElementById('btn-salvar').innerText = "SALVAR ALTERAÇÕES";
             document.getElementById('senha').required = false; 
             document.getElementById('senha').placeholder = "(Não alterada)";
@@ -209,7 +156,7 @@
 
             try {
                 const inputFoto = document.getElementById('foto-perfil');
-                let urlFotoFinal = urlFotoSalva;
+                let urlFotoFinal = typeof urlFotoSalva !== 'undefined' ? urlFotoSalva : null;
 
                 if (inputFoto.files.length > 0) {
                     Swal.fire({ title: 'Enviando foto...', text: 'Aguarde...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
