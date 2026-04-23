@@ -379,6 +379,8 @@ function renderLinhaApolice(a, tbody) {
         dFim = new Date(parts[0], parts[1]-1, parts[2]);
     }
     const diffDays = Math.ceil((dFim - hoje) / (1000 * 60 * 60 * 24));
+    
+    // As classes abaixo definem as cores e as bordas que você configurou no dashboard.html
     let statusClass = 'badge-vigente', statusTexto = 'VIGENTE';
     if (diffDays < 0) { statusClass = 'badge-vencida'; statusTexto = 'VENCIDA'; } 
     else if (diffDays >= 0 && diffDays <= 30) { statusClass = 'badge-avencer'; statusTexto = 'A VENCER'; }
@@ -386,18 +388,27 @@ function renderLinhaApolice(a, tbody) {
     const valTotal = parseFloat(a.premio_total) || 0;
     const valComissao = parseFloat(a.valor_comissao) || 0;
 
+    // 🚀 LÓGICA DO PDF: Cor verde/cinza como no original
+    let btnPdf;
+    if (a.arquivo_pdf && a.arquivo_pdf.trim() !== '') {
+        btnPdf = `<button class="action-btn btn-pdf-active" style="background-color: #4caf50; color: white; border: none; padding: 6px 10px; border-radius: 4px;" onclick="abrirPdfSeguro('${a.id}')" title="Ver PDF"><i class="fas fa-file-pdf"></i></button>`;
+    } else {
+        btnPdf = `<button class="action-btn btn-pdf-off" style="background-color: #e0e0e0; color: #a0a0a0; border: none; padding: 6px 10px; border-radius: 4px; cursor: not-allowed;" title="Sem PDF anexo" disabled><i class="fas fa-file-pdf"></i></button>`;
+    }
+
+    const btnEdit = `<button class="action-btn btn-edit" style="background-color: #1976d2; color: white; border: none; padding: 6px 10px; border-radius: 4px; margin-left: 5px;" onclick="window.location.href='apolice.html?id=${a.id}'" title="Editar"><i class="fas fa-edit"></i></button>`;
+    const btnDel = `<button class="action-btn btn-delete" style="background-color: #d32f2f; color: white; border: none; padding: 6px 10px; border-radius: 4px; margin-left: 5px;" onclick="deletarItem('apolices', ${a.id})" title="Excluir"><i class="fas fa-trash"></i></button>`;
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
         <td>${a.cliente || 'Excluído'}</td>
         <td><span class="badge-placa">${a.placa || '-'}</span></td>
         <td>${a.numero_apolice || '-'}</td>
-        <td>${dFim.toLocaleDateString('pt-BR')} <br><span class="badge ${statusClass}" style="font-size:9px;">${statusTexto}</span></td>
+        <td>${dFim.toLocaleDateString('pt-BR')} <br><span class="${statusClass}" style="font-size:10px;">${statusTexto}</span></td>
         <td>${valTotal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</td>
         <td style="color:#00a86b; font-weight:bold;">${parseFloat(a.valor_comissao||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</td>
-        <td style="text-align:center;">
-            <button class="action-btn btn-pdf-active" onclick="abrirPdfSeguro('${a.id}')" title="Ver PDF"><i class="fas fa-file-pdf"></i></button>
-            <button class="action-btn btn-edit" onclick="window.location.href='apolice.html?id=${a.id}'" title="Editar"><i class="fas fa-edit"></i></button>
-            <button class="action-btn btn-delete" onclick="deletarItem('apolices', ${a.id})" title="Excluir"><i class="fas fa-trash"></i></button>
+        <td style="text-align:center; white-space: nowrap;">
+            ${btnPdf} ${btnEdit} ${btnDel}
         </td>`;
     tbody.appendChild(tr);
 }
@@ -406,12 +417,13 @@ function renderLinhaCliente(c, tbody) {
     let btnObs;
     if (c.observacoes && c.observacoes.trim() !== "") {
         const obsTexto = c.observacoes.replace(/"/g, '&quot;').replace(/\n/g, ' ');
-        // 🛠️ INLINE STYLE APLICADO: AMARELO PARA BOTÃO ATIVO
-        btnObs = `<button class="action-btn btn-obs-on" style="background-color: #ffc107; color: #000; border: none;" onclick="verObservacao('${obsTexto}')" title="Ver Observação"><i class="fas fa-comment-dots"></i></button>`;
+        btnObs = `<button class="action-btn btn-obs-on" style="background-color: #ffc107; color: #000; border: none; padding: 6px 10px; border-radius: 4px;" onclick="verObservacao('${obsTexto}')" title="Ver Observação"><i class="fas fa-comment-dots"></i></button>`;
     } else {
-        // 🛠️ INLINE STYLE APLICADO: CINZA PARA BOTÃO DESATIVADO
-        btnObs = `<button class="action-btn btn-obs-off" style="background-color: #e0e0e0; color: #888; border: none; cursor: not-allowed;" title="Sem observações" disabled><i class="fas fa-comment-slash"></i></button>`;
+        btnObs = `<button class="action-btn btn-obs-off" style="background-color: #e0e0e0; color: #888; border: none; padding: 6px 10px; border-radius: 4px; cursor: not-allowed;" title="Sem observações" disabled><i class="fas fa-comment-slash"></i></button>`;
     }
+
+    const btnEdit = `<button class="action-btn btn-edit" style="background-color: #1976d2; color: white; border: none; padding: 6px 10px; border-radius: 4px; margin-left: 5px;" onclick="window.location.href='cadastro.html?id=${c.id}'" title="Editar"><i class="fas fa-edit"></i></button>`;
+    const btnDel = `<button class="action-btn btn-delete" style="background-color: #d32f2f; color: white; border: none; padding: 6px 10px; border-radius: 4px; margin-left: 5px;" onclick="deletarItem('propostas', ${c.id})" title="Excluir"><i class="fas fa-trash"></i></button>`;
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -419,10 +431,8 @@ function renderLinhaCliente(c, tbody) {
         <td>${c.documento || '-'}</td>
         <td><span class="badge-placa">${c.placa || '-'}</span></td>
         <td>${c.modelo || c.modelo_veiculo || '-'}</td>
-        <td style="text-align:center;">
-            ${btnObs}
-            <button class="action-btn btn-edit" onclick="window.location.href='cadastro.html?id=${c.id}'" title="Editar"><i class="fas fa-edit"></i></button>
-            <button class="action-btn btn-delete" onclick="deletarItem('propostas', ${c.id})" title="Excluir"><i class="fas fa-trash"></i></button>
+        <td style="text-align:center; white-space: nowrap;">
+            ${btnObs} ${btnEdit} ${btnDel}
         </td>`;
     tbody.appendChild(tr);
 }
@@ -444,6 +454,9 @@ function renderLinhaUsuario(u, tbody) {
     const placeholderImg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/></svg>";
     const fotoSrc = u.url_foto ? u.url_foto : placeholderImg;
 
+    const btnEdit = `<button class="action-btn btn-edit" style="background-color: #1976d2; color: white; border: none; padding: 6px 10px; border-radius: 4px; margin-left: 5px;" onclick="window.location.href='registro.html?id=${u.id}&origin=dashboard'" title="Editar"><i class="fas fa-edit"></i></button>`;
+    const btnDel = `<button class="action-btn btn-delete" style="background-color: #d32f2f; color: white; border: none; padding: 6px 10px; border-radius: 4px; margin-left: 5px;" onclick="deletarItem('usuarios', ${u.id})" title="Excluir"><i class="fas fa-trash"></i></button>`;
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
         <td style="text-align: center;">
@@ -452,9 +465,9 @@ function renderLinhaUsuario(u, tbody) {
         <td style="font-weight: bold; color: #2c3e50; text-transform: uppercase;">${u.nome}</td>
         <td>${u.email}</td>
         <td><span class="badge ${badgeClass}">${u.tipo.toUpperCase()}</span></td>
-        <td style="text-align:center;">
-            <button class="action-btn btn-edit" onclick="window.location.href='registro.html?id=${u.id}&origin=dashboard'" title="Editar"><i class="fas fa-edit"></i></button>
-            ${isMaster ? `<button class="action-btn btn-delete" onclick="deletarItem('usuarios', ${u.id})" title="Excluir"><i class="fas fa-trash"></i></button>` : ''}
+        <td style="text-align:center; white-space: nowrap;">
+            ${btnEdit}
+            ${isMaster ? btnDel : ''}
         </td>`;
     tbody.appendChild(tr);
 }
