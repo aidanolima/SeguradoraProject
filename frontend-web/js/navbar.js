@@ -70,7 +70,7 @@ document.addEventListener("DOMContentLoaded", function() {
         <aside class="app-sidebar" id="app-sidebar">
             <div class="sidebar-brand">
                 <img src="assets/logo.png" alt="Logo" class="sidebar-logo">
-                <span class="sidebar-title">Apólices System</span>
+                <span class="sidebar-title">Gestão Clientes</span>
             </div>
 
             <nav class="sidebar-nav">
