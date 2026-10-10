@@ -8,7 +8,7 @@ const pool = new Pool({
     database: process.env.DB_NAME || 'seguradora_auto',
     port: Number(process.env.DB_PORT || 5432),
     max: Number(process.env.DB_CONNECTION_LIMIT || 10),
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
+    ssl: process.env.DB_HOST && process.env.DB_HOST.includes('render.com') ? { rejectUnauthorized: false } : false
 });
 
 const normalizeSql = (sql) => {
