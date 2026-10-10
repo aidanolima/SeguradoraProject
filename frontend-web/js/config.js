@@ -14,7 +14,8 @@ const CONFIG = {
 
 // 2. DEFINIÇÃO GLOBAL DA API (A Mágica acontece aqui)
 // Isso escolhe qual URL usar baseada no ambiente
-const API_URL = isLocal ? CONFIG.development.API_BASE_URL : CONFIG.production.API_BASE_URL;
+// Altere para o endereço exato do seu novo backend
+const API_URL = "https://seguradora-backend.onrender.com";
 
 // 3. LOG PARA DEBUG (Para você saber onde está rodando)
 console.log(`[Ambiente] Rodando em: ${isLocal ? 'DESENVOLVIMENTO (Local)' : 'PRODUÇÃO (Nuvem)'}`);
