@@ -9,7 +9,7 @@ exports.register = async (req, res) => {
         const [existing] = await db.execute('SELECT * FROM Usuarios WHERE email = ?', [email]);
         if (existing.length > 0) return res.status(409).json({ message: 'E-mail já cadastrado.' });
 
-        const [result] = await db.execute('INSERT INTO Usuarios (nome, email, senha) VALUES (?, ?, ?)', [nome, email, senha]);
+        const [, result] = await db.execute('INSERT INTO Usuarios (nome, email, senha) VALUES (?, ?, ?) RETURNING id_usuario', [nome, email, senha]);
         res.status(201).json({ message: 'Usuário criado!', id: result.insertId });
     } catch (error) {
         res.status(500).json({ message: 'Erro ao criar usuário.' });

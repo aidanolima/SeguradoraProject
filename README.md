@@ -24,7 +24,7 @@ O projeto foi construído utilizando as seguintes tecnologias:
 
 -   **Node.js:** Ambiente de execução para o servidor.
 -   **Express.js:** Framework para a construção da API REST.
--   **MongoDB:** Banco de dados NoSQL para armazenamento dos dados (inferido a partir do uso comum com Mongoose/Node.js).
+-   **PostgreSQL:** Banco de dados relacional para armazenamento dos dados, administrável pelo pgAdmin.
 -   **Multer:** Middleware para o upload de arquivos.
 -   **Dotenv:** Para gerenciamento de variáveis de ambiente.
 
@@ -42,7 +42,7 @@ Para executar o projeto em seu ambiente local, siga os passos abaixo.
 #### **Pré-requisitos**
 
 -   [Node.js](https://nodejs.org/en/) instalado.
--   Um servidor de banco de dados (como o MongoDB) em execução.
+-   PostgreSQL em execução. O pgAdmin pode ser usado para criar e administrar o banco.
 
 #### **1. Configurando o Backend**
 
@@ -59,11 +59,23 @@ Instale as dependências:
 npm install
 ```
 
-Crie um arquivo `.env` na pasta `backend` e adicione as variáveis de ambiente necessárias. Um exemplo básico seria:
+Crie um banco no pgAdmin, por exemplo `seguradora_auto`. Depois crie um arquivo `.env` na pasta `backend` com as variáveis de conexão:
 
 ```
-DB_CONNECT=mongodb://localhost:27017/seguradora
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=sua_senha_do_postgres
+DB_NAME=seguradora_auto
+DB_SSL=false
+JWT_SECRET=troque_esta_chave
 PORT=3000
+```
+
+No pgAdmin, abra o banco criado, acesse **Query Tool** e execute o script:
+
+```bash
+backend/schema.postgres.sql
 ```
 
 Finalmente, inicie o servidor:

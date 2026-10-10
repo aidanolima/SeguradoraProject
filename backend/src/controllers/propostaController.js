@@ -72,7 +72,7 @@ exports.atualizar = async (req, res) => {
             WHERE id_cliente=?`,
             [
                 dados.fabricante, dados.modelo, dados.ano_modelo, dados.placa, dados.chassi, dados.fipe,
-                dados.utilizacao, dados.blindado ? 1 : 0, dados.kit_gas ? 1 : 0, dados.zero_km ? 1 : 0, 
+                dados.utilizacao, Boolean(dados.blindado), Boolean(dados.kit_gas), Boolean(dados.zero_km), 
                 id
             ]
         );

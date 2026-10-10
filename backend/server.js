@@ -1,9 +1,9 @@
 require('dotenv').config();
+const bcrypt = require('bcrypt');
 const crypto = require('crypto'); // Biblioteca nativa do Node para gerar tokens de segurança
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
-const mysql = require('mysql2/promise');
 const multer = require('multer');
 const pdf = require('pdf-extraction');
 const jwt = require('jsonwebtoken');
@@ -13,6 +13,7 @@ const cron = require('node-cron');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const multerS3 = require('multer-s3');
+const db = require('./src/config/db');
 
 console.log("⏳ Iniciando configurações do servidor...");
 
@@ -198,19 +199,11 @@ app.get('/recuperar.html', (req, res) => servir(res, 'recuperar.html'));
 // ==================================================
 // 🛢️ BANCO DE DADOS
 // ==================================================
-const pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT,
-    ssl: { rejectUnauthorized: false }, 
-    waitForConnections: true, connectionLimit: 5, queueLimit: 0
-});
+const pool = db;
 
 console.log("---------------------------------------------------");
-console.log("🔍 O SERVIDOR ESTÁ CONECTANDO EM:", process.env.DB_HOST);
-console.log("📂 NOME DO BANCO:", process.env.DB_NAME);
+console.log("🔍 O SERVIDOR ESTÁ CONECTANDO EM:", process.env.DB_HOST || 'localhost');
+console.log("📂 NOME DO BANCO:", process.env.DB_NAME || 'seguradora_auto');
 console.log("---------------------------------------------------");
 
 // ==================================================
@@ -242,19 +235,26 @@ const isMasterUser = (tipo) => (tipo === 'admin' || tipo === 'ti');
 // 🌐 API (LOGIN E SENHAS)
 // ==================================================
 app.post('/login', async (req, res) => {
-    try {
-        const { email, senha } = req.body;
-        // Puxando url_foto para enviar no login (útil para o frontend mostrar a foto no header)
-        const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
-        if (rows.length === 0) return res.status(401).json({ message: "Usuário não encontrado." });
-        const usuario = rows[0];
-        if (senha !== usuario.senha) return res.status(401).json({ message: "Senha incorreta." });
-        
-        const token = jwt.sign({ id: usuario.id, email: usuario.email, tipo: usuario.tipo }, JWT_SECRET, { expiresIn: '24h' });
-        res.json({ auth: true, token: token, usuario: { nome: usuario.nome, tipo: usuario.tipo, foto: usuario.url_foto } });
-    } catch (error) { res.status(500).json({ message: "Erro interno." }); }
+    try {
+        const { email, senha } = req.body;
+        const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
+        
+        if (rows.length === 0) return res.status(401).json({ message: "Usuário não encontrado." });
+        
+        const usuario = rows[0];
+        
+        // 🔥 A MÁGICA ACONTECE AQUI: O bcrypt compara o "123456" com a hash encriptada do banco
+        const senhaValida = await bcrypt.compare(senha, usuario.senha);
+        
+        if (!senhaValida) return res.status(401).json({ message: "Senha incorreta." });
+        
+        const token = jwt.sign({ id: usuario.id, email: usuario.email, tipo: usuario.tipo }, JWT_SECRET, { expiresIn: '24h' });
+        res.json({ auth: true, token: token, usuario: { nome: usuario.nome, tipo: usuario.tipo, foto: usuario.url_foto } });
+    } catch (error) { 
+        console.error("Erro no login:", error);
+        res.status(500).json({ message: "Erro interno." }); 
+    }
 });
-
 // ==================================================
 // ROTA DE ENVIO DE EMAIL (RECUPERAÇÃO DE SENHA)
 // ==================================================
@@ -349,11 +349,37 @@ app.post('/api/upload-perfil', authenticateToken, uploadPerfilS3.single('foto'),
 // 👤 GESTÃO DE USUÁRIOS (FILTRADA E COM FOTO)
 // ==================================================
 app.post('/registrar', authenticateToken, async (req, res) => {
-    try {
-        const { nome, email, senha, tipo, url_foto } = req.body;
-        await pool.query('INSERT INTO usuarios (nome, email, senha, tipo, url_foto) VALUES (?, ?, ?, ?, ?)', [nome, email, senha, tipo, url_foto || null]);
-        res.status(201).json({ message: "Usuário criado" });
-    } catch (e) { res.status(500).json({ message: e.message }); }
+    try {
+        const { nome, email, senha, tipo, url_foto } = req.body;
+        // Encriptar a senha antes de salvar no banco
+        const senhaCriptografada = await bcrypt.hash(senha, 10);
+        
+        await pool.query('INSERT INTO usuarios (nome, email, senha, tipo, url_foto) VALUES (?, ?, ?, ?, ?)', [nome, email, senhaCriptografada, tipo, url_foto || null]);
+        res.status(201).json({ message: "Usuário criado" });
+    } catch (e) { res.status(500).json({ message: e.message }); }
+});
+
+app.put('/usuarios/:id', authenticateToken, async (req, res) => {
+    try {
+        if (!isMasterUser(req.user.tipo) && parseInt(req.params.id) !== req.user.id) return res.status(403).json({ message: "Acesso negado." });
+        
+        const { nome, email, senha, tipo, url_foto } = req.body;
+        let tipoFinal = tipo;
+        
+        if (!isMasterUser(req.user.tipo)) {
+            const [u] = await pool.query('SELECT tipo FROM usuarios WHERE id = ?', [req.user.id]);
+            tipoFinal = u[0].tipo;
+        }
+
+        if (senha && senha.trim() !== '') {
+            // Encriptar a nova senha caso o usuário decida alterá-la
+            const senhaCriptografada = await bcrypt.hash(senha, 10);
+            await pool.query('UPDATE usuarios SET nome=?, email=?, senha=?, tipo=?, url_foto=? WHERE id=?', [nome, email, senhaCriptografada, tipoFinal, url_foto || null, req.params.id]);
+        } else {
+            await pool.query('UPDATE usuarios SET nome=?, email=?, tipo=?, url_foto=? WHERE id=?', [nome, email, tipoFinal, url_foto || null, req.params.id]);
+        }
+        res.json({ message: "Atualizado" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/usuarios', authenticateToken, async (req, res) => {

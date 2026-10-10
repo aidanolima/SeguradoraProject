@@ -13,6 +13,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.966.0",
     "@aws-sdk/s3-request-presigner": "^3.967.0",
+    "bcrypt": "^6.0.0",
     "body-parse": "^0.1.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -20,10 +21,10 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "multer-s3": "^3.0.1",
-    "mysql2": "^3.16.0",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.13",
     "pdf-extraction": "^1.0.2",
+    "pg": "^8.23.1",
     "resend": "^6.9.4"
   }
 }
