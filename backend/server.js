@@ -523,7 +523,7 @@ app.get('/apolices/:id/pdf-seguro', authenticateToken, async (req, res) => {
         if (rows.length === 0 || !rows[0].arquivo_pdf) return res.status(404).json({ message: "Arquivo não encontrado." });
         
         const arquivo = rows[0].arquivo_pdf;
-        if (!arquivo.startsWith('http')) return res.json({ url: `/uploads/${arquivo}` });
+        if (!arquivo.startsWith('http')) return res.json({ url: `https://seguradora-backend.onrender.com/uploads/${arquivo}` });
         
         if (s3Client) {
             try {
