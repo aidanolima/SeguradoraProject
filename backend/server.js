@@ -41,9 +41,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'seguradora_chave_secreta_super_seg
 // ☁️ CONFIGURAÇÃO S3 (AWS) E MULTER
 // ==================================================
 let uploadS3; 
-let uploadMemory; 
 let uploadPerfilS3; 
 let s3Client; 
+
+// 🔥 CORREÇÃO: O leitor de PDFs fica SEMPRE na memória, nunca no disco!
+let uploadMemory = multer({ storage: multer.memoryStorage() }); 
 
 const hasAwsKeys = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && process.env.AWS_BUCKET_NAME;
 
@@ -83,7 +85,6 @@ if (hasAwsKeys) {
             })
         });
 
-        uploadMemory = multer({ storage: multer.memoryStorage() });
         console.log("✅ AWS S3 Configurado com sucesso!");
     } catch (err) {
         console.error("❌ Erro ao configurar AWS S3:", err.message);
@@ -105,9 +106,8 @@ function usarArmazenamentoLocal() {
     });
     uploadS3 = multer({ storage: storageDisk });
     uploadPerfilS3 = multer({ storage: storageDisk });
-    uploadMemory = multer({ storage: storageDisk });
+    // 🔥 APAGAMOS A LINHA DO uploadMemory AQUI!
 }
-
 // ==================================================
 // 🛢️ BANCO DE DADOS
 // ==================================================
@@ -452,7 +452,10 @@ app.post('/importar-pdf', authenticateToken, uploadMemory.any(), async (req, res
         if(matchPlaca) dados.placa = matchPlaca[0].toUpperCase();
         
         res.json({ mensagem: "Sucesso", dados });
-    } catch (e) { res.status(500).json({message: "Erro ao ler PDF"}); }
+    } catch (e) { 
+        console.error("🚨 Erro ao extrair dados do PDF:", e); // <-- Novo log
+        res.status(500).json({message: "Erro ao ler PDF"}); 
+    }
 });
 
 // ==================================================
