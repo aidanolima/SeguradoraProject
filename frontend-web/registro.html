@@ -196,6 +196,25 @@
                 });
 
                 if (res.ok) {
+                    // 👇 MÁGICA DA ATUALIZAÇÃO AO VIVO NO MENU
+                    // Se estiver a editar o próprio perfil (ou se for o Admin a editar o próprio Admin)
+                    if (idEdicao && (!localStorage.getItem('usuario_id') || localStorage.getItem('usuario_id') == idEdicao || isMaster)) {
+                        // Atualiza a foto na memória do navegador
+                        if (urlFotoFinal) {
+                            localStorage.setItem('url_foto', urlFotoFinal);
+                            
+                            // Procura a imagem do menu lateral e troca o link imediatamente
+                            const imgMenu = document.querySelector('#global-sidebar img.perfil-foto, .user-avatar img, .sidebar-profile img');
+                            if (imgMenu) imgMenu.src = urlFotoFinal;
+                        }
+                        
+                        // Atualiza o nome na memória se ele tiver mudado
+                        const nomeAtualizado = document.getElementById('nome').value;
+                        if (nomeAtualizado) {
+                            localStorage.setItem('nome_usuario', nomeAtualizado);
+                        }
+                    }
+
                     await Swal.fire('Sucesso!', idEdicao ? 'Dados atualizados.' : 'Usuário cadastrado.', 'success');
                     window.location.href = 'dashboard.html';
                 } else {
